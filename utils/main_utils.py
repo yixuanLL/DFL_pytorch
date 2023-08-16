@@ -22,11 +22,12 @@ def save_progress(args, Accuracy_accountant, Budgets_accountant=None, nbytes1=No
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    file_name = '{}{}{}{}{}'.format(args.num_clients,
+    file_name = '{}{}{}{}{}{}'.format(args.num_clients,
                               ('-'+str(args.grad_norm)),
                               ('-DR' if args.DR else ''),
-                              ('-'+str(args.rate_dr) if args.DR else ''),
-                              ('-'+str(args.grad_perp_norm) if args.DR else ''))
+                              ('-Topk' if args.Topk else ''),
+                              ('-'+str(args.rate_dr) if args.DR or args.Topk else ''),
+                              ('-'+str(args.grad_perp_norm) if args.DR or args.Topk else ''))
 
     with open(os.path.join(save_dir, file_name + '.csv'), 'w') as file:
         writer = csv.writer(file, delimiter=',')

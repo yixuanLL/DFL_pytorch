@@ -61,13 +61,10 @@ class TopkDPOptimizer(DPOptimizer):
             return False
 
         self.topk_process()
+        
         self.add_noise()
 
         self.scale_grad()
-        
-
- 
-        
 
         if self.step_hook:
             self.step_hook(self)
@@ -77,8 +74,10 @@ class TopkDPOptimizer(DPOptimizer):
 
     def topk_process(self): # baseline V.S. dr_process
         grad = copy.deepcopy([p.grad_sample for p in self.params])
-        g_topk = [torch.sum(self.top_mask(g), dim=0) for g in grad]
-        for p,gi in zip(self.params, g_topk):
+        gi_topk = self.top_mask(grad)        
+        gi_topk_clipped = self.clip_g_perp(gi_topk)
+        g_topk_clipped = [torch.sum(g, dim=0) for g in gi_topk_clipped]
+        for p,gi in zip(self.params, g_topk_clipped):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
@@ -93,7 +92,8 @@ class TopkDPOptimizer(DPOptimizer):
             # if g.shape[0]<20:
             #     topk_num = g.shape[0]
             if mod == 'topk':
-                idx_topk = torch.topk(torch.abs(g), topk_num)[1]
+                # idx_topk = torch.topk(torch.abs(g), topk_num)[1]
+                idx_topk = exp_topk(torch.abs(g), topk_num, 1/(2*topk_num))
             else:
                 idx_topk = torch.randint(0, len(g), (topk_num,))
             #  for DP
@@ -102,7 +102,7 @@ class TopkDPOptimizer(DPOptimizer):
             mask[idx_topk] = 1
             for j in range(len(gi_perp[i])):
                 gi_perp[i][j] *= torch.reshape(mask, gi_perp[i].shape[1:])
-            return gi_perp
+        return gi_perp
 
     def clip_and_accumulate(self):
         """
@@ -150,12 +150,28 @@ class TopkDPOptimizer(DPOptimizer):
                 generator=self.generator,
                 secure_mode=self.secure_mode,
             )
-            # p.grad = (p.summed_grad + noise).view_as(p)
+            p.grad = (p.summed_grad + noise).view_as(p)
             # test without DP 
-            p.grad = (p.summed_grad).view_as(p)
+            # p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
 
+    def clip_g_perp(self, g_perp):
+        per_param_norms = [
+            g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp
+        ] # norm of per laryer of per sample gradient
+        per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
+        per_sample_clip_factor = (
+            self.perp_grad_norm / (per_sample_norms + 1e-6)
+        ).clamp(max=1.0) # clip [ max min ]
+
+        g_perp_clipped = []
+        for p in g_perp:
+            # grad_sample = self._get_flat_grad_sample(p) # change in to one tensor
+            # grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
+            grad = torch.reshape(per_sample_clip_factor, [len(p)]+[1]*(len(p.shape)-1)) * p
+            g_perp_clipped.append(grad)
+        return g_perp_clipped
 
 
 

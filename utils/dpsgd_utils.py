@@ -121,9 +121,9 @@ def exp_topk(idx_topk, topk_num, epsilon):
         probabilities = [np.exp(epsilon * score / (2 * sensitivity)) for score in scores]
     except:
         print(idx_topk)
-    probabilities = torch.tensor(probabilities / np.linalg.norm(probabilities, ord=1))
+    probabilities = torch.tensor(probabilities / np.linalg.norm(probabilities, ord=1), dtype=torch.float64)
 
     # 根据概率分布选择回复结果
-    idx_exp = torch.multinomial(probabilities, topk_num)
-    res = idx_topk.gather(0, idx_exp)
-    return res
+    idx_exp = torch.multinomial(probabilities, topk_num).to('cuda')
+    # res = idx_topk.gather(0, idx_exp)
+    return idx_exp

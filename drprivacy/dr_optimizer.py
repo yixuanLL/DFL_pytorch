@@ -6,8 +6,9 @@ import torch
 from opt_einsum.contract import contract
 import copy
 from utils.dpsgd_utils import exp_topk
+import math
 
-class DrDPOptimizer(DPOptimizer):
+class DrOptimizer(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -41,6 +42,8 @@ class DrDPOptimizer(DPOptimizer):
         self.perp_grad_norm = max_grad_norm[1]
         self.rate_dr = max_grad_norm[2]
         self.last_grad = []
+        self.g_perp_sum = []
+        self.cos_sum = []
 
         
     def pre_step(
@@ -60,19 +63,19 @@ class DrDPOptimizer(DPOptimizer):
             self._is_last_step_skipped = True
             return False
 
-        # self.topk_process()
         self.dr_process()
         self.add_noise()
+        
+        # v1: use local last grad
+        # norm = [p.grad.reshape(-1).norm(2, dim=-1) for p in self.params]
+        # self.last_grad = [p.grad/n for p,n in zip(self.params, norm)] 
+        
+        # v2: use global last grad
+        norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
+        self.last_grad = [p/n for p,n in zip(self.last_grad, norm)] 
 
-        norm = [p.grad.reshape(-1).norm(2, dim=-1) for p in self.params]
-        self.last_grad = [p.grad/n for p,n in zip(self.params, norm)] 
-        # self.last_grad = []
 
         self.scale_grad()
-        
-
- 
-        
 
         if self.step_hook:
             self.step_hook(self)
@@ -80,66 +83,59 @@ class DrDPOptimizer(DPOptimizer):
         self._is_last_step_skipped = False
         return True  
 
-    def topk_process(self): # baseline V.S. dr_process
-        grad = copy.deepcopy([p.grad_sample for p in self.params])
-        g_topk = [torch.sum(self.top_mask(g), dim=0) for g in grad]
-        for p,gi in zip(self.params, g_topk):
-            if p.summed_grad is not None:
-                p.summed_grad += gi
-            else:
-                p.summed_grad = gi
-        return
-
     def dr_process(self):
         gi_perp, costheta, per_param_norms = self.decompose_grad()        
         gi_perp_topk = self.top_mask(gi_perp, 'topk')
         gi_perp_topk_clipped = self.clip_g_perp(gi_perp_topk)
-        self.recover_grad(gi_perp_topk_clipped, per_param_norms, costheta)   
- 
+        # if self.last_grad!=[]:
+        #     costheta = [c/len(self.grad_samples[0]) for c in costheta] # mean of cos
+        sum_param_norms = [torch.sum(n) for n in per_param_norms]
+        mean_param_norms = [p/len(self.grad_samples[0]) for p in sum_param_norms]
+        g_perp = self.recover_grad(gi_perp_topk_clipped, mean_param_norms, costheta) 
+        # if self.g_perp_sum == []:
+        #     self.g_perp_sum = g_perp
+        #     self.cos_sum = costheta
+        # else:
+        #     self.g_perp_sum = [gps+gp for gps, gp in zip(self.g_perp_sum, g_perp)]
+        #     self.cos_sum = [cs+c for cs, c in zip(self.cos_sum, costheta)]
+        # g_perp = self.recover_grad(gi_perp_topk_clipped, per_param_norms, costheta, mean_param_norms)   
 
     def decompose_grad(self):
         if self.last_grad == []:      
-            return self.grad_samples, 1, 1
+            return self.grad_samples, torch.tensor([1.]*len(self.grad_samples)).to('cuda'), torch.tensor([1.]*len(self.grad_samples)).to('cuda')
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
-        costheta = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
+        # costheta = [torch.sum(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
+        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
+
         gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, self.last_grad)]
-        # gi_paral = []
-        # for i in range(len(self.last_grad)):
-        #     tmp = torch.zeros_like(self.grad_samples[i])
-        #     for j in range(len(self.grad_samples[i])):
-        #         tmp[j] = per_param_norms[i][j] * costheta[i][j] * self.last_grad[i]
-        #     gi_paral.append(tmp)
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)]
-        # norm = torch.stack([p.reshape(len(p), -1).norm(2, dim=-1) for p in gi_perp], dim=1).norm(2, dim=-1) # norm of whole gi_perp
         norm = [p.reshape(len(p), -1).norm(2, dim=-1) for p in gi_perp] # norm of per laryer of per gi_perp
-        ratio = [ngp/ng for ng, ngp in zip(per_param_norms, norm)]
+        # ratio = [ngp/ng for ng, ngp in zip(per_param_norms, norm)]
         # print('ratio', ratio)
-        gi_perp = [g/torch.reshape(n, [len(g)]+[1]*(len(g.shape)-1)) for g,n in zip(gi_perp,norm)]       
+        gi_perp = [g/torch.reshape(n, [len(g)]+[1]*(len(g.shape)-1)) for g,n in zip(gi_perp,norm)]   
         return gi_perp, costheta, per_param_norms
 
     def recover_grad(self, gi_perp, g_norm, costheta):
         if self.last_grad == []:
             g = [torch.sum(gp, dim=0) for gp in gi_perp]
+            g_perp = g
         else:
             # 为什么norm后有0.2的acc误差？
-            g = [contract("i,i...", gn*torch.sqrt(1-cos**2), gp)  + contract("i,i...", gn * cos, torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape))) for gp, gn, cos, lg in zip(gi_perp, g_norm, costheta, self.last_grad)]
-            # g = [contract("i,i...", gn/gn, gp) + contract("i,i...", gn * cos, torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape))) for gp, gn, cos, lg in zip(gi_perp, g_norm, costheta, self.last_grad)]
+            # g = [contract("i,i...", gn*torch.sqrt(1-cos**2), gp)  + contract("i,i...", gn * cos, torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape))) for gp, gn, cos, lg in zip(gi_perp, g_norm, costheta, self.last_grad)]
+            # g_perp = g
+            g_perp = [torch.sum(gn*torch.sqrt(1-cos**2) * gp, dim=0) for gp, gn, cos in zip(gi_perp, g_norm, costheta)]
+            g = [torch.sum(gn*torch.sqrt(1-cos**2) * gp, dim=0)  + torch.sum(gn * cos * torch.tile(lg.unsqueeze(0),[len(gp)]+[1]*len(lg.shape)), dim=0) for gp, gn, cos, lg in zip(gi_perp, g_norm, costheta, self.last_grad)]
         # per_param_sum = [torch.sum(g, dim=0) for g in self.grad_samples]
         for p,gi in zip(self.params, g):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        return
+        return g_perp
 
     def top_mask(self, gi_perp, mod='topk'):
         gi_perp_summed = [torch.sum(g, dim=0).reshape(-1) for g in gi_perp] # sum of a batch
-        # idx_topk = torch.topk(gi_perp_summed, gi_perp_summed.shape[0]*self.rate_dr).index # topk of each layer #TODO
-        # mask = torch.zeros_like(gi_perp_summed) 
-        # mask[idx_topk] = 1
-        # masked_g = gi_perp * torch.reshape(mask, gi_perp.shape)
-        masked_g = []
         for i in range(len(gi_perp_summed)):
             g = gi_perp_summed[i]
             topk_num = int(g.shape[0]*self.rate_dr)
@@ -149,14 +145,12 @@ class DrDPOptimizer(DPOptimizer):
                 idx_topk = torch.topk(torch.abs(g), topk_num)[1]
             else:
                 idx_topk = torch.randint(0, len(g), (topk_num,))
-            #  for DP
-            # idx_topk = exp_topk(idx_topk, topk_num, 100)
             mask = torch.zeros_like(g)
             mask[idx_topk] = 1
             # masked_g.append(gi_perp[i] * torch.reshape(mask, gi_perp[i].shape[1:]))
             for j in range(len(gi_perp[i])):
                 gi_perp[i][j] *= torch.reshape(mask, gi_perp[i].shape[1:])
-            return gi_perp
+        return gi_perp
 
         # return masked_g
 
@@ -199,7 +193,7 @@ class DrDPOptimizer(DPOptimizer):
         for p in self.params:
             _check_processed_flag(p.grad_sample)
             grad_sample = self._get_flat_grad_sample(p)
-            grad = contract("i,i...", per_sample_clip_factor, grad_sample)
+            # grad = contract("i,i...", per_sample_clip_factor, grad_sample)
             p.grad_sample = torch.reshape(per_sample_clip_factor, [len(grad_sample)]+[1]*(len(grad_sample.shape)-1)) * grad_sample
 
             # if p.summed_grad is not None:
@@ -229,7 +223,6 @@ class DrDPOptimizer(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
-
 
 
 

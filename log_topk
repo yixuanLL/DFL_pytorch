@@ -1,0 +1,26 @@
+nohup: ignoring input
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=1 --grad_norm=10 --grad_perp_norm=10
+[time] build py time is 4min 10s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=1 --grad_norm=10 --grad_perp_norm=1
+[time] build py time is 4min 8s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=1 --grad_norm=1 --grad_perp_norm=10
+[time] build py time is 4min 11s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=1 --grad_norm=1 --grad_perp_norm=1
+[time] build py time is 4min 6s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.1 --grad_norm=10 --grad_perp_norm=10
+[time] build py time is 3min 48s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.1 --grad_norm=10 --grad_perp_norm=1
+[time] build py time is 3min 48s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.1 --grad_norm=1 --grad_perp_norm=10
+[time] build py time is 3min 40s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.1 --grad_norm=1 --grad_perp_norm=1
+[time] build py time is 3min 41s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.01 --grad_norm=10 --grad_perp_norm=10
+[time] build py time is 3min 40s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.01 --grad_norm=10 --grad_perp_norm=1
+[time] build py time is 3min 43s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.01 --grad_norm=1 --grad_perp_norm=10
+[time] build py time is 3min 41s
+python /home/yixuan/workspace/DFL_pytorch/main.py --Topk=True --rate_dr=0.01 --grad_norm=1 --grad_perp_norm=1
+[time] build py time is 3min 40s
+[finished]!

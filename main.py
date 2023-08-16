@@ -14,6 +14,8 @@ from models.server import Server
 from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 
 def main(args):
     accuracy_accountant = []
@@ -51,6 +53,7 @@ def main(args):
                         y_train=y_train,
                         dataset=dataset[i],
                         batch_size=args.batch_size,
+                        FLalg=args.FLalg, 
                         dp=args.dp,
                         DR=args.DR,
                         Topk=args.Topk,
@@ -65,8 +68,13 @@ def main(args):
     mod = importlib.import_module(model_path)
     model = getattr(mod, 'Model')
     server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test)
-    server.init_alg(dp=args.dp) # init server algo: fedavg + dp
-    server_model = server.init_global_model() # global model
+    server.init_alg(dp=args.dp, FLalg=args.FLalg) # init server algo: fedavg + dp
+    # server_model = server.init_global_model() # global model why use server_model?
+    global_model = server.init_global_model() # global model
+    if args.FLalg == 'FedDrAvg':
+        # server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
+        server.global_last_grad = []
+
 
     # communication round
     communication_round = args.global_round // args.local_round
@@ -76,11 +84,12 @@ def main(args):
     for r in range(communication_round):   
         # precheck and pick up candidates
         candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
-
+        last_parameters = copy.deepcopy(global_model).parameters()
         # local update
         for p_id, participant in enumerate(candidates):
             # download global model
-            clients[participant].download(copy.deepcopy(server_model))
+            # clients[participant].download(copy.deepcopy(server_model)) # why use server_model?
+            clients[participant].download(copy.deepcopy(global_model), server.global_last_grad)
             # update
             model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
             # communication cost
@@ -96,6 +105,9 @@ def main(args):
                       % ((participant+1), args.delta, clients[participant].budget_accountant.epsilon, clients[participant].budget_accountant.accum_bgts))
         # load average weight
         global_model = server.update()
+        # if args.FLalg == 'FedDrAvg':
+        # for global_last_grad
+        server.global_last_grad = [(p1.data-p2.data).to('cuda') for p1,p2 in zip(global_model.parameters(), last_parameters)]
 
         # test
         test_accuracy, test_loss = server.test(global_model)
@@ -118,15 +130,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
     parser.add_argument('--dataset', type=str, default='MNIST')
+    parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--Topk', type=bool, default=False)
-    parser.add_argument('--rate_dr', type=float, default=0.001, help='sparse rate in directional reduction')
-    parser.add_argument('--global_round', type=int, default=10)
+    parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
+    parser.add_argument('--global_round', type=int, default=20)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=2) 
+    parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
+    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=2)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=1)

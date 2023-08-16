@@ -1,0 +1,53 @@
+#!/bin/bash
+cur_path=`pwd`
+
+cur_date="`date +%Y%m%d`" 
+
+logfile_path=${cur_path}/logs/
+logfile=${cur_path}/logs/log_topk_$cur_date
+if [ ! -x $logfile_path ]; then
+ mkdir "$logfile_path"
+fi
+
+if [ ! -f "$logfile" ]; then
+ touch "$logfile"
+fi
+
+
+rate=(1 0.1 0.01)
+g_norm=(10 1)
+g_p_norm=(10 1)
+
+time=$(date "+%Y-%m-%d %H:%M:%S")
+echo "${time}">>$logfile
+
+for r in ${rate[@]}
+do
+    for gn in ${g_norm[@]}
+    do
+        for gpn in ${g_p_norm[@]}
+        do
+            py_req="python ${cur_path}/main.py --Topk=True --rate_dr=${r} --grad_norm=${gn} --grad_perp_norm=${gpn}";
+            echo "${py_req}"
+            echo "${py_req}">>$logfile
+            start_time=$(date +%s)
+            output=`${py_req}`;
+            end_time=$(date +%s)
+            if [ $? -ne 0 ]; then
+                echo "[FAILED] ${py_req}"
+                echo "[FAILED] ${py_req}">>$logfile
+                exit 8
+            fi
+            sleep 1;
+            echo "${output}">>$logfile
+            cost_time=$[ $end_time-$start_time ]
+            echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
+            echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
+        done
+    done
+done
+
+time=$(date "+%Y-%m-%d %H:%M:%S")
+echo "${time}">>$logfile
+echo "[finished]!"
+echo "[finished]!">>$logfile

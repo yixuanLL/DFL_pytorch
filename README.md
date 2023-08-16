@@ -32,4 +32,16 @@ sgd acc 0.9103,0.895,0.9504,0.9601,0.9621
 - 不同model可以采用不同的clip/lr
 
 - 新的算法
+
+## 8.7 V2
+v2: 采用8.4的ppt算法，即聚合后再加noise的方案
   
+- 修改的点：
+  1. cos求和后扰动:几乎相当，略低一点--check
+  2. 添加三个扰动
+  3. 下发的修改--check..采用全局global grad会影响acc
+  4. 上传的修改--跑错了。。需要debug
+- 一个奇怪的问题，为什么server_model和global_model没有统一
+- 对g_perp_norm的clip非常敏感
+
+- testing: why LOSS explode even when last_grad=0: global_model的参数没找对:没有deepcopy！解决

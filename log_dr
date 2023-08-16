@@ -1,0 +1,10 @@
+nohup: ignoring input
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --rate_dr=0.1 --grad_norm=10 --grad_perp_norm=0.1
+[time] build py time is 3min 29s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --rate_dr=0.1 --grad_norm=10 --grad_perp_norm=0.5
+[time] build py time is 3min 28s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --rate_dr=0.1 --grad_norm=10 --grad_perp_norm=1
+[time] build py time is 3min 23s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --rate_dr=0.1 --grad_norm=10 --grad_perp_norm=10
+[time] build py time is 3min 26s
+[finished]!

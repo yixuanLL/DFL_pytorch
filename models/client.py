@@ -13,7 +13,7 @@ from operator import mul
 
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, dp, DR, Topk, rate_dr, local_round, grad_norm, grad_perp_norm, budget_accountant):
+    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, Topk, rate_dr, local_round, grad_norm, grad_perp_norm, budget_accountant):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -24,6 +24,7 @@ class Client(nn.Module):
         self.dp = dp
         self.DR = DR
         self.Topk = Topk
+        self.FLalg = FLalg
         self.rate_dr = rate_dr
         self.grad_norm = grad_norm
         self.grad_perp_norm = grad_perp_norm
@@ -34,9 +35,11 @@ class Client(nn.Module):
         self.Vks = None
         self.means = None
         self.is_private = None
+        self.global_last_grad = []
 
-    def download(self, model):
+    def download(self, model, global_last_grad):
         self.model = model.to('cuda')
+        self.global_last_grad = [g.to('cuda') for g in global_last_grad]
 
     def set_projection(self, Vks=None, means=None, is_private=None):
         self.Vks = Vks
@@ -63,32 +66,35 @@ class Client(nn.Module):
         data_batch = TensorDataset(x_batch, y_batch)
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
 
-        if self.dp and not self.DR:
-            grad_norm = self.grad_norm
-            clipping = 'flat'
-            # privacy_engine = PrivacyEngine(secure_mode=False)
-            # model, optimizer, train_loader = privacy_engine.make_private(module=model,
-            #                                                              optimizer=optimizer,
-            #                                                              clipping="flat",
-            #                                                              data_loader=data_loader,
-            #                                                              noise_multiplier=self.budget_accountant.noise_multiplier,
-            #                                                              max_grad_norm=self.grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
+        noise = 0
+        if self.dp:
+            noise = self.budget_accountant.noise_multiplier
 
-        if self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'dr_flat'
-        if self.dp and self.Topk:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'topk_flat'
-        privacy_engine = PrivacyEngine(secure_mode=False)
-        model, optimizer, train_loader = privacy_engine.make_private(module=model,
-                                                                        optimizer=optimizer,
-                                                                        clipping=clipping,
-                                                                        data_loader=data_loader,
-                                                                        noise_multiplier=self.budget_accountant.noise_multiplier,
-                                                                        max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
+        if self.dp or self.Topk or self.DR:
+            if self.dp and not self.DR and not self.Topk:
+                grad_norm = self.grad_norm
+                clipping = 'flat'
+            if not self.dp and self.DR:
+                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+                clipping = 'dr_flat'
+            if self.dp and self.DR:
+                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+                clipping = 'dr_dp_flat'                
+            if self.Topk:
+                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+                clipping = 'topk_flat'
+            print('clipping:', clipping)
+            privacy_engine = PrivacyEngine(secure_mode=False)
+            model, optimizer, train_loader = privacy_engine.make_private(module=model,
+                                                                            optimizer=optimizer,
+                                                                            clipping=clipping,
+                                                                            data_loader=data_loader,
+                                                                            noise_multiplier=noise,
+                                                                            max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
 
 
+        # global_last_grad
+        optimizer.last_grad = self.global_last_grad
         # train
         for epoch in range(self.local_round):
             train_acc = 0
@@ -109,13 +115,14 @@ class Client(nn.Module):
                 train_acc += correct.item()
                 train_loss += loss.item()
 
-            print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
+            # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
 
         updates = [weight.data for weight in model.state_dict().values()]
-
+        if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta
+            updates = [optimizer.g_perp_sum, optimizer.cos_sum]
         num_parameter1 = 0
-        for u in updates:
-            num_parameter1 += reduce(mul, u.shape)  # mul对u.shape进行相乘， reduce对这些相乘之后的每个u.shape进行相加
+        # for u in updates:
+        #     num_parameter1 += reduce(mul, u.shape)  # mul对u.shape进行相乘， reduce对这些相乘之后的每个u.shape进行相加
 
         Bytes1 = num_parameter1 * 4
         print('num parameters: %d, Bytes: %d, M: %.8f' % (num_parameter1, Bytes1, Bytes1/(1024**2)))
