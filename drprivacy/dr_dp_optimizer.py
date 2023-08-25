@@ -42,6 +42,7 @@ class DrDPOptimizer(DPOptimizer):
         self.perp_grad_norm = max_grad_norm[1]
         self.rate_dr = max_grad_norm[2]
         self.last_grad = []
+        self.global_last_grad = []
         self.g_perp_sum = []
         self.cos_sum = []
 
@@ -86,14 +87,16 @@ class DrDPOptimizer(DPOptimizer):
 
     def dr_process(self):
         gi_perp, costheta, per_param_norms = self.decompose_grad()        
-        gi_perp_topk = self.top_mask(gi_perp, 'topk')
+        gi_perp_topk = self.top_mask(gi_perp, 'rank')
         gi_perp_topk_clipped = self.clip_g_perp(gi_perp_topk)
         # preserve costheta
-        # costheta = torch.clamp(costheta, -0.2, 0.2)
-        costheta = self.add_noise_mean(costheta, 1, 1e-6, 0.2) # mean of cos
+        costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
+        costheta = self.add_noise_mean(costheta, 42.66, 0.2) #noise=21.333 for eps=0.1; 42.66 for eps=0.05
+        # costheta = self.add_noise_mean(costheta, 0.1, 1e-6, 0.2) # mean of cos
         # preserve norm
         sum_param_norms = [torch.sum(n) for n in per_param_norms]
-        mean_param_norms = self.add_noise_mean([p/len(self.grad_samples[0]) for p in sum_param_norms], 1, 1e-6, 0.2) 
+        mean_param_norms = self.add_noise_mean([p/len(self.grad_samples[0]) for p in sum_param_norms], 42.66, self.max_grad_norm)  #noise=21.333 for eps=0.1; 42.66 for eps=0.05
+        # mean_param_norms = self.add_noise_mean([p/len(self.grad_samples[0]) for p in sum_param_norms], 0.1, 1e-6, 1) 
         # mean_param_norms = [p/len(self.grad_samples[0]) for p in sum_param_norms]
         g_perp = self.recover_grad(gi_perp_topk_clipped, mean_param_norms, costheta) 
         if self.g_perp_sum == []:
@@ -141,7 +144,7 @@ class DrDPOptimizer(DPOptimizer):
             # if g.shape[0]<20:
             #     topk_num = g.shape[0]
             if mod == 'topk':
-                idx_topk = exp_topk(torch.abs(g), topk_num, 0.1/(2*topk_num))
+                idx_topk = exp_topk(torch.abs(g), topk_num, 0.01/(2*topk_num))
             else:
                 idx_topk = torch.randint(0, len(g), (topk_num,))
             mask = torch.zeros_like(g)
@@ -223,11 +226,12 @@ class DrDPOptimizer(DPOptimizer):
 
             _mark_as_processed(p.summed_grad)
 
-    def add_noise_mean(self, cos, eps, delta, sensitivity):
+    def add_noise_mean(self, cos, noise_multiplier, sensitivity): #eps, delta, sensitivity):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-        std = (sensitivity/eps) * math.sqrt(2 * math.log(1.25/delta))
+        # std = (sensitivity/eps) * math.sqrt(2 * math.log(1.25/delta))
+        std = noise_multiplier * sensitivity
         std /= (len(self.grad_samples[0]))**2
         for c in cos:
             noise = torch.normal(

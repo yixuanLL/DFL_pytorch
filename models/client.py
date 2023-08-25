@@ -13,7 +13,7 @@ from operator import mul
 
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, Topk, rate_dr, local_round, grad_norm, grad_perp_norm, budget_accountant):
+    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, budget_accountant):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -24,6 +24,7 @@ class Client(nn.Module):
         self.dp = dp
         self.DR = DR
         self.Topk = Topk
+        self.cpl = cpl
         self.FLalg = FLalg
         self.rate_dr = rate_dr
         self.grad_norm = grad_norm
@@ -83,6 +84,9 @@ class Client(nn.Module):
             if self.Topk:
                 grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
                 clipping = 'topk_flat'
+            if self.cpl:
+                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+                clipping = 'cpl_flat'               
             print('clipping:', clipping)
             privacy_engine = PrivacyEngine(secure_mode=False)
             model, optimizer, train_loader = privacy_engine.make_private(module=model,
@@ -94,7 +98,9 @@ class Client(nn.Module):
 
 
         # global_last_grad
-        optimizer.last_grad = self.global_last_grad
+        if self.DR:
+            optimizer.last_grad = self.global_last_grad
+        optimizer.global_last_grad = self.global_last_grad
         # train
         for epoch in range(self.local_round):
             train_acc = 0

@@ -67,6 +67,7 @@ class FedDrAvg():
         self.__model_state = []
         return mean_updates
 
+
 class Server:
     def __init__(self, num_clients, model, sample_ratio, x_test, y_test):
         super(Server, self).__init__()

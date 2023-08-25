@@ -57,6 +57,7 @@ def main(args):
                         dp=args.dp,
                         DR=args.DR,
                         Topk=args.Topk,
+                        cpl=args.cpl,
                         rate_dr=args.rate_dr,
                         local_round=args.local_round,
                         grad_norm=args.grad_norm,
@@ -74,6 +75,8 @@ def main(args):
     if args.FLalg == 'FedDrAvg':
         # server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
         server.global_last_grad = []
+    if args.cpl:
+        server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
 
 
     # communication round
@@ -133,13 +136,14 @@ if __name__ == '__main__':
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--Topk', type=bool, default=False)
+    parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--global_round', type=int, default=20)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=2)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=1)
