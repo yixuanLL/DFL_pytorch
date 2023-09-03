@@ -22,12 +22,14 @@ def save_progress(args, Accuracy_accountant, Budgets_accountant=None, nbytes1=No
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    file_name = '{}{}{}{}{}{}'.format(args.num_clients,
-                              ('-'+str(args.grad_norm)),
+    file_name = '{}{}{}{}{}{}{}{}'.format(args.lr,
+                              ('-'+str(args.num_clients)),
                               ('-DR' if args.DR else ''),
                               ('-Topk' if args.Topk else ''),
-                              ('-'+str(args.rate_dr) if args.DR or args.Topk else ''),
-                              ('-'+str(args.grad_perp_norm) if args.DR or args.Topk else ''))
+                              ('-cpl' if args.cpl else ''),
+                              ('-'+str(args.grad_norm)),
+                              ('-'+str(args.grad_perp_norm) if args.DR or args.Topk or args.cpl else ''),
+                              ('-'+str(args.global_round)))
 
     with open(os.path.join(save_dir, file_name + '.csv'), 'w') as file:
         writer = csv.writer(file, delimiter=',')
@@ -44,9 +46,9 @@ def save_progress(args, Accuracy_accountant, Budgets_accountant=None, nbytes1=No
 
 
 def print_accuracy_and_loss(r, test_accuracy, test_loss):
-    print('-------------------------------------------------------------------------------------')
+    # print('-------------------------------------------------------------------------------------')
     print('round %d global model has test acc: %.4f  test loss: %.4f' % (r, test_accuracy, test_loss))
-    print('-------------------------------------------------------------------------------------')
+    # print('-------------------------------------------------------------------------------------')
 
 
 def setup_seed(seed):

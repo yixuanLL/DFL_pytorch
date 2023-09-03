@@ -34,7 +34,8 @@ class BudgetsAccountant:
         tmp_accum_bgts = 10 * q * math.sqrt(tmp_steps * (-math.log10(self.delta))) / self.noise_multiplier
 
         # If so, set the status as 'finished' and will not participate the rest training anymore; else, return True
-        if self.epsilon - tmp_accum_bgts < 0:
+        if self.epsilon - tmp_accum_bgts < -1e-5:
+            print(tmp_steps, q, batch_size, dataset_size, tmp_accum_bgts)
             self.finished = True
             return False
         else:

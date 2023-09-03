@@ -34,7 +34,8 @@ class FedAvg:
         self.__model_state = add_weights(self.num_vars, update_model_state, self.__model_state) # concat weights
 
     def average(self, global_model=None, global_last_grad=None):
-        mean_updates = [torch.mean(self.__model_state[i], 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+        a = self.__model_state
+        mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
         self.__model_state = []
         return mean_updates
 
@@ -69,14 +70,11 @@ class FedDrAvg():
 
 
 class Server:
-    def __init__(self, num_clients, model, sample_ratio, x_test, y_test):
+    def __init__(self, num_clients, model, sample_ratio, x_test, y_test, model_param):
         super(Server, self).__init__()
         self.num_clients = num_clients
         self.sample_ratio = sample_ratio
-
-        # self.model = CNN(input_dim=1, output_dim=10)
-        # self.model = model(input_dim=1, output_dim=10)
-        self.model = model(784,10)
+        self.model = model(model_param[0], model_param[1])
         self.state_dict_key = self.model.state_dict().keys()
 
         self.num_vars = None

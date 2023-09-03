@@ -73,8 +73,8 @@ class DrDPOptimizer(DPOptimizer):
 
         # v2: use global last grad
         # if self.last_grad!=[]:
-        norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
-        self.last_grad = [p/n for p,n in zip(self.last_grad, norm)] 
+        # norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
+        # self.last_grad = [p/n for p,n in zip(self.last_grad, norm)] 
 
 
         self.scale_grad()
@@ -223,6 +223,7 @@ class DrDPOptimizer(DPOptimizer):
             p.grad = (p.summed_grad + noise).view_as(p)
             # test without DP 
             # p.grad = (p.summed_grad).view_as(p)
+            # print('noise/grad perp norm norm:{}'.format(torch.norm(noise) , torch.norm(p.summed_grad)))
 
             _mark_as_processed(p.summed_grad)
 

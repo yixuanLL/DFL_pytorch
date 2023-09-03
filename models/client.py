@@ -13,7 +13,7 @@ from operator import mul
 
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, budget_accountant):
+    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, budget_accountant):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -29,6 +29,7 @@ class Client(nn.Module):
         self.rate_dr = rate_dr
         self.grad_norm = grad_norm
         self.grad_perp_norm = grad_perp_norm
+        self.lr = lr
 
         self.budget_accountant = budget_accountant
         self.model = None
@@ -58,7 +59,11 @@ class Client(nn.Module):
 
     def local_update(self):
         model = self.model.train()
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+        parameters = model.parameters()
+
+        optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9)
+        # if self.DR:
+        #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
         criterion = nn.CrossEntropyLoss()
 
         x_batch = self.x_train[self.dataset]
@@ -71,8 +76,8 @@ class Client(nn.Module):
         if self.dp:
             noise = self.budget_accountant.noise_multiplier
 
-        if self.dp or self.Topk or self.DR:
-            if self.dp and not self.DR and not self.Topk:
+        if self.dp or self.Topk or self.DR or self.cpl:
+            if self.dp and not self.DR and not self.Topk and not self.cpl:
                 grad_norm = self.grad_norm
                 clipping = 'flat'
             if not self.dp and self.DR:
@@ -84,10 +89,13 @@ class Client(nn.Module):
             if self.Topk:
                 grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
                 clipping = 'topk_flat'
-            if self.cpl:
+            if self.dp and self.cpl:
                 grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-                clipping = 'cpl_flat'               
-            print('clipping:', clipping)
+                clipping = 'cpl_dp_flat'    
+            if not self.dp and self.cpl:
+                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+                clipping = 'cpl_flat'                    
+            # print('clipping:', clipping)
             privacy_engine = PrivacyEngine(secure_mode=False)
             model, optimizer, train_loader = privacy_engine.make_private(module=model,
                                                                             optimizer=optimizer,
@@ -99,8 +107,10 @@ class Client(nn.Module):
 
         # global_last_grad
         if self.DR:
-            optimizer.last_grad = self.global_last_grad
-        optimizer.global_last_grad = self.global_last_grad
+            norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
+            optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
+            # optimizer.last_grad = self.global_last_grad
+        optimizer.global_last_grad = self.global_last_grad # not used temporarily
         # train
         for epoch in range(self.local_round):
             train_acc = 0
@@ -131,7 +141,7 @@ class Client(nn.Module):
         #     num_parameter1 += reduce(mul, u.shape)  # mul对u.shape进行相乘， reduce对这些相乘之后的每个u.shape进行相加
 
         Bytes1 = num_parameter1 * 4
-        print('num parameters: %d, Bytes: %d, M: %.8f' % (num_parameter1, Bytes1, Bytes1/(1024**2)))
+        # print('num parameters: %d, Bytes: %d, M: %.8f' % (num_parameter1, Bytes1, Bytes1/(1024**2)))
 
         Bytes2 = 0
 

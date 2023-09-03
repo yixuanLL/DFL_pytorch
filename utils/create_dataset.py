@@ -7,7 +7,7 @@ import numpy as np
 import math
 
 
-def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client):
+def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed):
     client_set = []
 
     rounds = math.ceil(num_clients * num_examples_per_client / num_examples)
@@ -25,7 +25,7 @@ def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_
     return client_set
 
 
-def create_noniid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client):
+def create_noniid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed):
     print('Number of classes per client {}'.format(num_classes_per_client))
 
     buckets = []
@@ -34,6 +34,7 @@ def create_noniid_clients(num_clients, num_examples, num_classes, num_examples_p
         buckets = np.hstack((buckets, temp))
 
     shards = num_classes_per_client * num_clients
+    np.random.seed(seed)
     perm = np.random.permutation(shards)
 
     # client_set will be of length num_examples/N and each element represents a client.
@@ -74,19 +75,22 @@ def check_labels(N, client_set, y_train):
     print()
 
 
-def prepare_local_dataset(noniid, num_clients, y_train):
+def prepare_local_dataset(noniid, num_clients, y_train, seed):
     if not noniid:
         dataset = create_iid_clients(num_clients=num_clients,
                                      num_examples=len(y_train),
                                      num_classes=10,
-                                     num_examples_per_client=len(y_train) // 10,
-                                     num_classes_per_client=10)
+                                    #  num_examples_per_client=len(y_train) // 10, original
+                                    num_examples_per_client=len(y_train)//num_clients,
+                                     num_classes_per_client=10,
+                                     seed=seed)
     else:
         dataset = create_noniid_clients(num_clients=num_clients,
                                         num_examples=len(y_train),
                                         num_classes=10,
                                         num_examples_per_client=len(y_train) // 10,
-                                        num_classes_per_client=10)
+                                        num_classes_per_client=10,
+                                        seed=seed)
 
     check_labels(10, dataset, y_train)
     return dataset

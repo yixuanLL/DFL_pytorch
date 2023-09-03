@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 class Model(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(Model, self).__init__()
-
+        self.name = 'CNN'
         self.layer1 = nn.Sequential(nn.Conv2d(1, 16, kernel_size=8, stride=2, padding=2),
                                     nn.Tanh(),
                                     nn.MaxPool2d(kernel_size=2, stride=1))

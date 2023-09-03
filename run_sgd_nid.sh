@@ -4,7 +4,7 @@ cur_path=`pwd`
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${cur_path}/logs/
-logfile=${cur_path}/logs/log_$cur_date
+logfile=${cur_path}/logs/log_sgd_nid_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -14,15 +14,16 @@ if [ ! -f "$logfile" ]; then
 fi
 
 
-# index=(0 1 2 3)
+eps=(2 1 0.5 0.3)
+g_norm=(10 5 2 1 0.5 0.1)
+
 # lr=(0.05 0.1 0.5)
-# g_p_norm=(1 0.5 0.1 0.01)
-# eps=(1.9 0.4)
+# g_norm=(1 0.5 0.1 0.01)
+# eps=(0.5)
+
 lr=(0.01)
-g_p_norm=(0.01)
-eps=(1.9 0.4)
-
-
+# g_norm=(0.01)
+# eps=(2 0.5)
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
@@ -30,9 +31,9 @@ echo "${time}">>$logfile
 echo "====NoDP====">>$logfile
 for l in ${lr[@]}
 do
-    for gpn in ${g_p_norm[@]}
+    for gn in ${g_norm[@]}
     do
-        py_req="python ${cur_path}/main_lenet5.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l}";
+        py_req="python ${cur_path}/main_lenet5.py --noniid=True --grad_norm=${gn} --dp=True --local_round=2 --global_round=200 --lr=${l}";
         echo "${py_req}"
         echo "${py_req}">>$logfile
         start_time=$(date +%s)
@@ -51,16 +52,15 @@ do
     done
 done
 
-
-
 echo "====DP====">>$logfile
 for e in ${eps[@]}
 do
     for l in ${lr[@]}
     do
-        for gpn in ${g_p_norm[@]}
+        for gn in ${g_norm[@]}
         do
-            py_req="python ${cur_path}/main_lenet5.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=200 --lr=${l}";
+            # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200";
+            py_req="python ${cur_path}/main_lenet5.py --noniid=True --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l}";
             echo "${py_req}"
             echo "${py_req}">>$logfile
             start_time=$(date +%s)
@@ -79,7 +79,6 @@ do
         done
     done
 done
-
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile

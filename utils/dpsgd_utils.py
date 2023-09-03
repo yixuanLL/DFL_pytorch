@@ -100,7 +100,7 @@ def set_epsilons(filename, N, is_distributions=True):
             epsilons = [float(v) for v in values]
             threshold = float(lines[1][1])
 
-    # print('epsilons:{}, total {} values.'.format(epsilons, len(epsilons)))
+    print('epsilons:{}, total {} values.'.format(epsilons, len(epsilons)))
     print()
     return epsilons
 
@@ -108,6 +108,7 @@ def set_epsilons(filename, N, is_distributions=True):
 def compute_noise_multiplier(local_dataset_size, local_batch_size, T, epsilon, delta):
     q = local_batch_size / local_dataset_size
     nm = 10 * q * math.sqrt(T * (-math.log10(delta))) / epsilon
+    # print(q, local_batch_size, local_dataset_size)
     return nm
 
 def exp_topk(idx_topk, topk_num, epsilon):

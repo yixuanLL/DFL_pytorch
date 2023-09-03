@@ -34,7 +34,8 @@ def main(args):
     setup_seed(args.seed)
     # prepare local dataset
     x_train, y_train, x_test, y_test = loader(args.dataset)
-    dataset = prepare_local_dataset(args.noniid, args.num_clients, y_train)
+    dataset = prepare_local_dataset(args.noniid, args.num_clients, y_train, args.seed)
+    print('sample dim:', x_train[0].shape)
 
     # set noise multiplier
     budget_accountant = None
@@ -137,15 +138,16 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='MNIST')
+    parser.add_argument('--dataset', type=str, default='CIFAR10')
+    # parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--global_round', type=int, default=20)
+    parser.add_argument('--global_round', type=int, default=200)
     parser.add_argument('--local_round', type=int, default=2)
-    parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
+    parser.add_argument('--noniid', type=bool, default=True, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
@@ -156,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('--grad_perp_norm', type=float, default=1)
     parser.add_argument('--sample_ratio', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model', type=str, default='cnn')
+    parser.add_argument('--model', type=str, default='lenet5')
     parser.add_argument('--lr', type=float, default=0.01)
     args = parser.parse_args() 
 

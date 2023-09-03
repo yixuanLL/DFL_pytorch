@@ -8,6 +8,7 @@ warnings.filterwarnings("ignore")
 class Model(nn.Module):
     def __init__(self, input_dim, output_dim):
         super(Model, self).__init__()
+        self.name = 'MCLR'
         self.linear = nn.Linear(input_dim, output_dim)
         self.sigmoid = nn.Sigmoid()
 

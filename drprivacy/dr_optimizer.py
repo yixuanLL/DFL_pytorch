@@ -85,8 +85,8 @@ class DrOptimizer(DPOptimizer):
 
     def dr_process(self):
         gi_perp, costheta, per_param_norms = self.decompose_grad()        
-        gi_perp_topk = self.top_mask(gi_perp, 'topk')
-        gi_perp_topk_clipped = self.clip_g_perp(gi_perp_topk)
+        # gi_perp_topk = self.top_mask(gi_perp, 'topk')
+        gi_perp_topk_clipped = self.clip_g_perp(gi_perp)
         # if self.last_grad!=[]:
         #     costheta = [c/len(self.grad_samples[0]) for c in costheta] # mean of cos
         sum_param_norms = [torch.sum(n) for n in per_param_norms]
@@ -212,14 +212,6 @@ class DrOptimizer(DPOptimizer):
         for p in self.params:
             _check_processed_flag(p.summed_grad)
 
-            noise = _generate_noise(
-                std=self.noise_multiplier * self.perp_grad_norm,
-                reference=p.summed_grad,
-                generator=self.generator,
-                secure_mode=self.secure_mode,
-            )
-            # p.grad = (p.summed_grad + noise).view_as(p)
-            # test without DP 
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
