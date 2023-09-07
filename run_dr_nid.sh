@@ -15,26 +15,26 @@ fi
 
 
 
-lr=(0.01)
-g_p_norm=(2 1 0.5 0.1)
-eps=(1.9 0.9 0.4 0.2)
-
+lr=(0.01 0.05 0.1 0.5)
+g_p_norm=(1 0.5 0.1 0.01)
+eps=(2 1 0.5 0.3)
 
 
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
+output
 echo "====NoDP====">>$logfile
 for l in ${lr[@]}
 do
     for gpn in ${g_p_norm[@]}
     do
-        py_req="python ${cur_path}/main_lenet5.py --noniid=True --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l}";
+        py_req="python ${cur_path}/main_lenet5.py --noniid=True --DR=True --grad_perp_norm=10  --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l}";
         echo "${py_req}"
         echo "${py_req}">>$logfile
         start_time=$(date +%s)
-        # output=`${py_req}`;
+        output=`${py_req}`;
         end_time=$(date +%s)
         if [ $? -ne 0 ]; then
             echo "[FAILED] ${py_req}"
@@ -50,7 +50,7 @@ do
 done
 
 
-
+output=0
 echo "====DP====">>$logfile
 for e in ${eps[@]}
 do
@@ -58,7 +58,7 @@ do
     do
         for gpn in ${g_p_norm[@]}
         do
-            py_req="python ${cur_path}/main_lenet5.py  --noniid=True --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=200 --lr=${l}";
+            py_req="python ${cur_path}/main_lenet5.py  --noniid=True --DR=True --grad_perp_norm=10 --eps=${e} --dp=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l}";
             echo "${py_req}"
             echo "${py_req}">>$logfile
             start_time=$(date +%s)

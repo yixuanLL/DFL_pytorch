@@ -4,7 +4,7 @@ cur_path=`pwd`
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${cur_path}/logs/
-logfile=${cur_path}/logs/log_topk_$cur_date
+logfile=${cur_path}/logs/log_dr_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -14,9 +14,11 @@ if [ ! -f "$logfile" ]; then
 fi
 
 
-rate=(1 0.1 0.01)
-g_norm=(10 1)
-g_p_norm=(10 1)
+# index=(0 1 2 3)
+g_norm=(10)
+# g_p_norm=(0.1 0.5 1 2 5 10)
+g_p_norm=(0.1 2 5 10)
+rate=(1)
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
@@ -27,7 +29,7 @@ do
     do
         for gpn in ${g_p_norm[@]}
         do
-            py_req="python ${cur_path}/main.py --Topk=True --rate_dr=${r} --grad_norm=${gn} --grad_perp_norm=${gpn}";
+            py_req="python ${cur_path}/main_lenet5.py --DR=True --global_round=200 --local_round=2 --lr=0.01 --grad_norm=${gn} --grad_perp_norm=${gpn}";
             echo "${py_req}"
             echo "${py_req}">>$logfile
             start_time=$(date +%s)

@@ -35,25 +35,31 @@ def main(args):
     # prepare local dataset
     x_train, y_train, x_test, y_test = loader(args.dataset)
     dataset = prepare_local_dataset(args.noniid, args.num_clients, y_train, args.seed)
-    print('sample dim:', x_train[0].shape)
 
     # set noise multiplier
     budget_accountant = None
     noise_multiplier = 0
-    if args.dp:
+    noise_multiplier_2 = 0
+    if args.dp and not args.DR:
         noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]),
                                                     local_batch_size=args.batch_size,
                                                     T=args.global_round * args.sample_ratio,
                                                     epsilon=args.eps,
                                                     delta=args.delta)
         print('client noise multiplier is %f' % (noise_multiplier))
+    if args.dp and args.DR:
+        noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                            epsilon=args.eps - 0.1, delta=args.delta)
+        noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                epsilon=0.05, delta=args.delta)
+        print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2))
 
            
     # set clients
     clients = []
     for i in range(args.num_clients):
         if args.dp:
-            budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier)
+            budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2)
         clients.append( Client(x_train=x_train,
                         y_train=y_train,
                         dataset=dataset[i],
@@ -141,7 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='CIFAR10')
     # parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
-    parser.add_argument('--DR', type=bool, default=False)
+    parser.add_argument('--DR', type=bool, default=True)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
@@ -150,11 +156,10 @@ if __name__ == '__main__':
     parser.add_argument('--noniid', type=bool, default=True, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=2)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=10)
-    # parser.add_argument('--grad_perp_norm', type=float, default=0.8)
+    parser.add_argument('--grad_norm', type=float, default=0.5)
     parser.add_argument('--grad_perp_norm', type=float, default=1)
     parser.add_argument('--sample_ratio', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=0)

@@ -60,7 +60,7 @@ do
         for gn in ${g_norm[@]}
         do
             # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200";
-            py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l}";
+            py_req="python ${cur_path}/main_lenet5.py --grad_perp_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l}";
             echo "${py_req}"
             echo "${py_req}">>$logfile
             start_time=$(date +%s)

@@ -73,8 +73,10 @@ class Client(nn.Module):
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
 
         noise = 0
+        noise_2 = 0
         if self.dp:
             noise = self.budget_accountant.noise_multiplier
+            noise_2 = self.budget_accountant.noise_multiplier_2
 
         if self.dp or self.Topk or self.DR or self.cpl:
             if self.dp and not self.DR and not self.Topk and not self.cpl:
@@ -84,7 +86,7 @@ class Client(nn.Module):
                 grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
                 clipping = 'dr_flat'
             if self.dp and self.DR:
-                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+                grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
                 clipping = 'dr_dp_flat'                
             if self.Topk:
                 grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]

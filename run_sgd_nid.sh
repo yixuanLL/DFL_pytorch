@@ -14,20 +14,21 @@ if [ ! -f "$logfile" ]; then
 fi
 
 
+# eps=(2 1 0.5 0.3)
+# g_norm=(10 5 2 1 0.5 0.1)
+
+lr=(0.01 0.05 0.1 0.5)
+g_norm=(1 0.5 0.1 0.01)
 eps=(2 1 0.5 0.3)
-g_norm=(10 5 2 1 0.5 0.1)
 
-# lr=(0.05 0.1 0.5)
-# g_norm=(1 0.5 0.1 0.01)
-# eps=(0.5)
-
-lr=(0.01)
+# lr=(0.01)
 # g_norm=(0.01)
 # eps=(2 0.5)
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
+output=0
 echo "====NoDP====">>$logfile
 for l in ${lr[@]}
 do
@@ -52,6 +53,7 @@ do
     done
 done
 
+output=0
 echo "====DP====">>$logfile
 for e in ${eps[@]}
 do
@@ -59,7 +61,6 @@ do
     do
         for gn in ${g_norm[@]}
         do
-            # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200";
             py_req="python ${cur_path}/main_lenet5.py --noniid=True --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l}";
             echo "${py_req}"
             echo "${py_req}">>$logfile

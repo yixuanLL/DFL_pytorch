@@ -9,7 +9,7 @@ import math
 
 
 class BudgetsAccountant:
-    def __init__(self, epsilon, delta, noise_multiplier,
+    def __init__(self, epsilon, delta, noise_multiplier, noise_multiplier_2, 
                  accumulation=0):
 
         # self._public = None if priv_threshold is None else list(np.where(np.array(self._init) >= priv_threshold)[0])
@@ -17,6 +17,7 @@ class BudgetsAccountant:
         self.epsilon = epsilon
         self.delta = delta
         self.noise_multiplier = noise_multiplier
+        self.noise_multiplier_2 = noise_multiplier_2
         self.accum_bgts = 0
         self.finished = False
 
