@@ -7,7 +7,7 @@ import numpy as np
 import math
 
 
-def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed):
+def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed, datasetname):
     client_set = []
 
     rounds = math.ceil(num_clients * num_examples_per_client / num_examples)
@@ -25,7 +25,13 @@ def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_
     return client_set
 
 
-def create_noniid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed):
+def create_noniid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed, datasetname):
+    if datasetname=='FLamby':
+        num_classes_per_client = 2
+        client_set=[0,1,2,3]
+        print('Number of classes per client {}'.format(num_classes_per_client))
+        return client_set
+
     print('Number of classes per client {}'.format(num_classes_per_client))
 
     buckets = []
@@ -75,7 +81,7 @@ def check_labels(N, client_set, y_train):
     print()
 
 
-def prepare_local_dataset(noniid, num_clients, y_train, seed):
+def prepare_local_dataset(noniid, num_clients, y_train, seed, datasetname):
     if not noniid:
         dataset = create_iid_clients(num_clients=num_clients,
                                      num_examples=len(y_train),
@@ -83,14 +89,18 @@ def prepare_local_dataset(noniid, num_clients, y_train, seed):
                                     #  num_examples_per_client=len(y_train) // 10, original
                                     num_examples_per_client=len(y_train)//num_clients,
                                      num_classes_per_client=10,
-                                     seed=seed)
+                                     seed=seed,
+                                     datasetname=datasetname)
     else:
         dataset = create_noniid_clients(num_clients=num_clients,
                                         num_examples=len(y_train),
                                         num_classes=10,
                                         num_examples_per_client=len(y_train) // 10,
                                         num_classes_per_client=10,
-                                        seed=seed)
-
-    check_labels(10, dataset, y_train)
-    return dataset
+                                        seed=seed,
+                                        datasetname=datasetname)
+    if datasetname == 'FLamby' and noniid:
+        num_clients = 4
+    else:
+        check_labels(10, dataset, y_train)
+    return dataset, num_clients

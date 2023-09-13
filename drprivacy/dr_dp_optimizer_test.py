@@ -8,7 +8,7 @@ import copy
 from utils.dpsgd_utils import exp_topk
 import math
 
-class DrDPOptimizer(DPOptimizer):
+class DrDPOptimizertest(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -20,7 +20,7 @@ class DrDPOptimizer(DPOptimizer):
         generator=None,
         secure_mode: bool = False):
         # super(DPOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
-        
+        # print('===Dr DP test===')
         self.original_optimizer = optimizer
         self.noise_multiplier = noise_multiplier
         self.loss_reduction = loss_reduction
@@ -86,23 +86,27 @@ class DrDPOptimizer(DPOptimizer):
         return True  
 
     def dr_process(self):
-        gi_perp, costheta, per_param_norms = self.decompose_grad()        
+        gi_perp, costheta, per_param_norms, n = self.decompose_grad()        
         # gi_perp_topk = self.top_mask(gi_perp, 'rank')
-        gi_perp_topk_clipped = self.clip_g_perp(gi_perp)
-
+        ############# TODO clip affect accuracy #################
+        gi_perp_clipped = self.clip_g_perp(gi_perp)
         # preserve costheta
-        costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
+        # costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
         costheta = self.add_noise_mean(costheta, self.noise_multiplier_2, 0.2) #noise=21.333 for eps=0.1; 42.66 for eps=0.05 | 100 rounds 114.48 for eps=0.05
-        costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
+        # costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
         # costheta = self.add_noise_mean(costheta, 0.1, 1e-6, 0.2) # mean of cos
         # preserve norm
         sum_param_norms = [torch.sum(n) for n in per_param_norms]
         mean_param_norms = self.add_noise_mean([p/len(self.grad_samples[0]) for p in sum_param_norms], self.noise_multiplier_2, self.max_grad_norm)  #noise=21.333 for eps=0.1; 42.66 for eps=0.05
-        mean_param_norms = self.clip_noisy_norm(mean_param_norms)
+        # mean_param_norms = self.clip_noisy_norm(mean_param_norms)
         # mean_param_norms = self.add_noise_mean([p/len(self.grad_samples[0]) for p in sum_param_norms], 0.1, 1e-6, 1) 
         # mean_param_norms = [p/len(self.grad_samples[0]) for p in sum_param_norms]
-        g_perp = self.recover_grad(gi_perp_topk_clipped, mean_param_norms, costheta) 
-
+        g_perp = self.recover_grad(gi_perp_clipped, mean_param_norms, costheta) 
+        a = g_perp[0]*0
+        # if self.last_grad != []:
+        #     for i in range(8):
+        #         a += gi_perp[0][i]*n[0][i]
+        #     b=a-g_perp[0]
         # if self.g_perp_sum == []:
         #     self.g_perp_sum = g_perp
         #     self.cos_sum = costheta
@@ -113,7 +117,7 @@ class DrDPOptimizer(DPOptimizer):
 
     def decompose_grad(self):
         if self.last_grad == []:      
-            return self.grad_samples, torch.tensor([1.]*len(self.grad_samples)).to('cuda'), torch.tensor([1.]*len(self.grad_samples)).to('cuda')
+            return self.grad_samples, torch.tensor([1.]*len(self.grad_samples)).to('cuda'), torch.tensor([1.]*len(self.grad_samples)).to('cuda'), [0]
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
@@ -123,7 +127,7 @@ class DrDPOptimizer(DPOptimizer):
         # ratio = [ngp/ng for ng, ngp in zip(per_param_norms, norm)]
         # print('ratio', ratio)
         gi_perp = [g/torch.reshape(n, [len(g)]+[1]*(len(g.shape)-1)) for g,n in zip(gi_perp,norm)]       
-        return gi_perp, costheta, per_param_norms
+        return gi_perp, costheta, per_param_norms, norm
 
     def recover_grad(self, gi_perp, g_norm, costheta):
         if self.last_grad == []:

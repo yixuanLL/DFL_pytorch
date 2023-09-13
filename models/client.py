@@ -13,16 +13,21 @@ from operator import mul
 
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, budget_accountant):
+    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
         self.dataset = dataset
-        self.dataset_size = len(self.dataset)
+        try:
+            self.dataset_size = len(self.dataset)
+        except:
+            self.dataset_size = len(y_train[self.dataset])
         self.batch_size = batch_size
         self.local_round = local_round
         self.dp = dp
         self.DR = DR
+        self.DRV2 = DRV2
+        self.DRtest = DRtest
         self.Topk = Topk
         self.cpl = cpl
         self.FLalg = FLalg
@@ -30,6 +35,7 @@ class Client(nn.Module):
         self.grad_norm = grad_norm
         self.grad_perp_norm = grad_perp_norm
         self.lr = lr
+        self.momentum = momentum
 
         self.budget_accountant = budget_accountant
         self.model = None
@@ -61,7 +67,8 @@ class Client(nn.Module):
         model = self.model.train()
         parameters = model.parameters()
 
-        optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9)
+        optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
+        # optimizer = torch.optim.SGD(parameters, lr=self.lr)
         # if self.DR:
         #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
         criterion = nn.CrossEntropyLoss()
@@ -77,38 +84,49 @@ class Client(nn.Module):
         if self.dp:
             noise = self.budget_accountant.noise_multiplier
             noise_2 = self.budget_accountant.noise_multiplier_2
-
-        if self.dp or self.Topk or self.DR or self.cpl:
-            if self.dp and not self.DR and not self.Topk and not self.cpl:
-                grad_norm = self.grad_norm
-                clipping = 'flat'
-            if not self.dp and self.DR:
-                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-                clipping = 'dr_flat'
-            if self.dp and self.DR:
-                grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
-                clipping = 'dr_dp_flat'                
-            if self.Topk:
-                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-                clipping = 'topk_flat'
-            if self.dp and self.cpl:
-                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-                clipping = 'cpl_dp_flat'    
-            if not self.dp and self.cpl:
-                grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-                clipping = 'cpl_flat'                    
-            # print('clipping:', clipping)
-            privacy_engine = PrivacyEngine(secure_mode=False)
-            model, optimizer, train_loader = privacy_engine.make_private(module=model,
-                                                                            optimizer=optimizer,
-                                                                            clipping=clipping,
-                                                                            data_loader=data_loader,
-                                                                            noise_multiplier=noise,
-                                                                            max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
+        if not self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl:
+            grad_norm = self.grad_norm
+            clipping = 'clip_flat'
+        # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
+        if self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl:
+            grad_norm = self.grad_norm
+            clipping = 'flat'
+        if not self.dp and self.DR:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            clipping = 'dr_flat'
+        if not self.dp and self.DRV2:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            clipping = 'dr_flat_test'
+        if self.dp and self.DRtest:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            clipping = 'dr_dp_flat_test'
+        if self.dp and self.DR:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            clipping = 'dr_dp_flat'  
+        if self.dp and self.DRV2:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            clipping = 'dr_dp_flat_v2'                
+        if self.Topk:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            clipping = 'topk_flat'
+        if self.dp and self.cpl:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            clipping = 'cpl_dp_flat'    
+        if not self.dp and self.cpl:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            clipping = 'cpl_flat'                    
+        # print('clipping:', clipping)
+        privacy_engine = PrivacyEngine(secure_mode=False)
+        model, optimizer, train_loader = privacy_engine.make_private(module=model,
+                                                                        optimizer=optimizer,
+                                                                        clipping=clipping,
+                                                                        data_loader=data_loader,
+                                                                        noise_multiplier=noise,
+                                                                        max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
 
 
         # global_last_grad
-        if self.DR:
+        if self.DR or self.DRV2 or self.DRtest:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             # optimizer.last_grad = self.global_last_grad

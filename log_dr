@@ -1,43 +1,55 @@
-nohup: ignoring input
-run_dr_nid.sh: line 27: output: command not found
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py --noniid=True --DR=True --grad_perp_norm=2 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 5min 48s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py --noniid=True --DR=True --grad_perp_norm=1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 5min 49s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py --noniid=True --DR=True --grad_perp_norm=0.5 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 5min 48s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py --noniid=True --DR=True --grad_perp_norm=0.1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 5min 42s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=2 --dp=True --grad_perp_norm=2 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 10s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=2 --dp=True --grad_perp_norm=1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 3min 42s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=2 --dp=True --grad_perp_norm=0.5 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 8min 33s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=2 --dp=True --grad_perp_norm=0.1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 7min 8s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=1 --dp=True --grad_perp_norm=2 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 9s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=1 --dp=True --grad_perp_norm=1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 10s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=1 --dp=True --grad_perp_norm=0.5 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 12s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=1 --dp=True --grad_perp_norm=0.1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 13s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.5 --dp=True --grad_perp_norm=2 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 13s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.5 --dp=True --grad_perp_norm=1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 19s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.5 --dp=True --grad_perp_norm=0.5 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 14s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.5 --dp=True --grad_perp_norm=0.1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 13s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.3 --dp=True --grad_perp_norm=2 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 15s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.3 --dp=True --grad_perp_norm=1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 9s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.3 --dp=True --grad_perp_norm=0.5 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 12s
-python /home/yixuan/workspace/DFL_pytorch/main_lenet5.py  --noniid=True --DR=True --eps=0.3 --dp=True --grad_perp_norm=0.1 --local_round=5 --global_round=100 --lr=0.01
-[time] build py time is 6min 9s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=0.01 --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=0.1 --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=1.0 --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=0.01 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=0.1 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=1.0 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=0.01 --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=0.1 --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --grad_perp_norm=1.0 --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 28min 56s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 21s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 38s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 30s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 15s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 33min 32s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 41min 28s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=0.3 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 41min 42s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 41min 35s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 41min 45s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 36min 17s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 33min 1s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 33min 1s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 39s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 32min 56s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 25min 29s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DR=True --eps=1 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=200 --lr=1.0 --dataset=CIFAR10 --model=lenet5 --momentum=0.9
+[time] build py time is 19min 0s
 [finished]!

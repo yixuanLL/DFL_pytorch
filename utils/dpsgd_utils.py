@@ -106,6 +106,8 @@ def set_epsilons(filename, N, is_distributions=True):
 
 
 def compute_noise_multiplier(local_dataset_size, local_batch_size, T, epsilon, delta):
+    if epsilon >= 10e3:
+        return 0
     q = local_batch_size / local_dataset_size
     nm = 10 * q * math.sqrt(T * (-math.log10(delta))) / epsilon
     # print(q, local_batch_size, local_dataset_size)

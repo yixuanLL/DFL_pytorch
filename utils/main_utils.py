@@ -22,13 +22,14 @@ def save_progress(args, Accuracy_accountant, Budgets_accountant=None, nbytes1=No
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    file_name = '{}{}{}{}{}{}{}{}'.format(args.lr,
-                              ('-'+str(args.num_clients)),
+    file_name = '{}{}{}{}{}{}{}{}{}'.format(args.lr,
+                              ('-'+str(args.momentum)),
                               ('-DR' if args.DR else ''),
-                              ('-Topk' if args.Topk else ''),
+                              ('-DRV2' if args.DRV2 else ''),
                               ('-cpl' if args.cpl else ''),
+                              ('-sgd' if not args.DR and not args.DRV2 and not args.cpl and not args.Topk else ''),
                               ('-'+str(args.grad_norm)),
-                              ('-'+str(args.grad_perp_norm) if args.DR or args.Topk or args.cpl else ''),
+                              ('-'+str(args.grad_perp_norm)),
                               ('-'+str(args.global_round)))
 
     with open(os.path.join(save_dir, file_name + '.csv'), 'w') as file:
