@@ -82,8 +82,8 @@ class CplOptimizer(DPOptimizer):
         else:
             delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]     
         gi_cpl_clipped = self.clip_g_perp(delta_g)
-        gi_reverse = self.reverse_process(gi_cpl_clipped)
-        g_reverse = [torch.sum(g, dim=0) for g in gi_reverse]
+        g_reverse = self.reverse_process(gi_cpl_clipped)
+        # g_reverse = [torch.sum(g, dim=0) for g in gi_reverse]
 
         for p,gi in zip(self.params, g_reverse):
             if p.summed_grad is not None:
@@ -95,7 +95,8 @@ class CplOptimizer(DPOptimizer):
     def reverse_process(self, gi_cpl):
         if self.last_grad == []:
             return gi_cpl
-        g_reverse = [gc+torch.tile(lg.unsqueeze(0),[len(gc)]+[1]*len(lg.shape)) for gc, lg in zip(gi_cpl, self.last_grad)]
+        # g_reverse = [gc+torch.tile(lg.unsqueeze(0),[len(gc)]+[1]*len(lg.shape)) for gc, lg in zip(gi_cpl, self.last_grad)]
+        g_reverse = [gc + lg*len(self.grad_samples[0]) for gc, lg in zip(gi_cpl, self.last_grad)]
         return g_reverse
 
 
@@ -154,8 +155,8 @@ class CplOptimizer(DPOptimizer):
         g_perp_clipped = []
         for p in g_perp:
             # grad_sample = self._get_flat_grad_sample(p) # change in to one tensor
-            # grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
-            grad = torch.reshape(per_sample_clip_factor, [len(p)]+[1]*(len(p.shape)-1)) * p
+            grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
+            # grad = torch.reshape(per_sample_clip_factor, [len(p)]+[1]*(len(p.shape)-1)) * p
             g_perp_clipped.append(grad)
         return g_perp_clipped
 
@@ -209,7 +210,6 @@ class CplDPOptimizer(CplOptimizer):
                 generator=self.generator,
                 secure_mode=self.secure_mode,
             )
-
             p.grad = (p.summed_grad + noise).view_as(p)
             # p.grad = (p.summed_grad).view_as(p)
             # print('noise/grad perp norm norm:{},{}'.format(torch.norm(noise), torch.norm(p.summed_grad)))

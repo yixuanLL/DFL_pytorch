@@ -84,7 +84,7 @@ class DrDPOptimizerV2(DPOptimizer):
         #     self.add_noise()
         #     return 0
         gi_perp, costheta = self.decompose_grad()        
-        gi_perp_clipped = self.clip_g_perp(gi_perp)
+        g_perp_clipped = self.clip_g_perp(gi_perp)
 
         # if self.last_grad != []:
         if 0:
@@ -102,7 +102,7 @@ class DrDPOptimizerV2(DPOptimizer):
         costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
 
         # perserve gi_perp
-        g_perp = [torch.mean(gp, dim=0) for gp in gi_perp_clipped]
+        g_perp = [gp/len(self.grad_samples[0]) for gp in g_perp_clipped]
         g_perp = self.add_noise_mean(g_perp, self.noise_multiplier, self.perp_grad_norm)
         # g_perp = [torch.sum(gp, dim=0) for gp in gi_perp_clipped]
         # g_perp = self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
@@ -148,8 +148,8 @@ class DrDPOptimizerV2(DPOptimizer):
         g_perp_clipped = []
         for p in g_perp:
             # grad_sample = self._get_flat_grad_sample(p) # change in to one tensor
-            # grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
-            grad = torch.reshape(per_sample_clip_factor, [len(p)]+[1]*(len(p.shape)-1)) * p
+            grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
+            # grad = torch.reshape(per_sample_clip_factor, [len(p)]+[1]*(len(p.shape)-1)) * p
             g_perp_clipped.append(grad)
         return g_perp_clipped
 

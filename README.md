@@ -45,3 +45,23 @@ v2: 采用8.4的ppt算法，即聚合后再加noise的方案
 - 对g_perp_norm的clip非常敏感
 
 - testing: why LOSS explode even when last_grad=0: global_model的参数没找对:没有deepcopy！解决
+
+## 9.18
+- test bak版本：聚合过程中添加noise；add noise mean方法中的std没写对：已修改--效果低于sgd
+- test新版本：把vector拉平再加noise
+  1. 方案1: 在decompose的时候采用平均的cos和norm计算gi perp；使得恢复的值更接近原始
+  2. 方案2: 在decompose的时候采用原始的cosi和normi计算gi perp，使得gi perp更加准确--似乎这个方案更好-- testing
+
+## 9.19
+- test 回归分层
+  1. 检查到底是哪个因素影响了acc
+    1）decompose的gi perp normalize后acc降低，why？--不需要分层norm了，分层归一化
+    2）norm能否用last grad的norm代替？--可以！
+    3）分解后恢复的公式写对了吗: |g| * cos * g_parallel + |g| * sin * g_perp--是对的
+- 分层的方案到底应该什么时候分层norm？
+  1. 确实应该在层内计算cos，所以垂直分量也在层内取范数
+  2. 为什么可以不要norm g_perp同时last_grad norm = [1,1,...]的acc比较高？能不能g_parallel也这么做？
+  3. 不要norm g perp 准确的cos和g norm，acc达到85（eps=0.05,perp norm=1）
+  4. 不要norm g perp 准确的cos, grad norm=[1]*8 acc=79（eps=0.05,perp norm=1）
+  5. 不要norm g perp noisy cos, grad norm=[1]*8 acc=76.85（eps=0.1,perp norm=1）
+  

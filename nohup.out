@@ -1,0 +1,85 @@
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRV2=True --grad_perp_norm=1.0 --local_round=2 --global_round=200 --lr=0.01 --dataset=CIFAR10 --model=lenet5 --momentum=0.0
+[time] build py time is 0min 0s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=0.5 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=0.05
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=0.05
+[time] build py time is 0min 2s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=1 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=0.05
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=0.05
+[time] build py time is 0min 2s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=10e6 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=0.05
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=0.05
+[time] build py time is 0min 2s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=0.5 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=0.1
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=0.1
+[time] build py time is 0min 2s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=1 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=0.1
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=0.1
+[time] build py time is 0min 1s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=10e6 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=0.1
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=0.1
+[time] build py time is 0min 2s
+python /home/yixuan/workspace/DFL_pytorch/main.py --DRtest=True --eps=0.5 --grad_perp_norm=1.0 --dp=True --local_round=2 --global_round=100 --lr=0.01 --dataset=MNIST --model=cnn  --eps_2=10e6
+usage: main.py [-h] [--save_dir SAVE_DIR] [--dataset DATASET] [--FLalg FLALG]
+               [--DR DR] [--DRV2 DRV2] [--DRtest DRTEST]
+               [--global_round GLOBAL_ROUND] [--local_round LOCAL_ROUND]
+               [--noniid NONIID] [--num_clients NUM_CLIENTS]
+               [--batch_size BATCH_SIZE] [--dp DP] [--eps EPS] [--delta DELTA]
+               [--grad_norm GRAD_NORM] [--grad_perp_norm GRAD_PERP_NORM]
+               [--sample_ratio SAMPLE_RATIO] [--seed SEED] [--model MODEL]
+               [--lr LR] [--momentum MOMENTUM] [--Topk TOPK] [--cpl CPL]
+               [--rate_dr RATE_DR]
+main.py: error: unrecognized arguments: --eps_2=10e6

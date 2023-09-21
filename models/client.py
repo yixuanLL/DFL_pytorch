@@ -126,10 +126,33 @@ class Client(nn.Module):
 
 
         # global_last_grad
-        if self.DR or self.DRV2 or self.DRtest:
+        # if self.DR or self.DRV2 or self.DRtest:
+        if self.DR or self.DRV2:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
-            # optimizer.last_grad = self.global_last_grad
+        if self.DRtest:
+        # flat
+            # g_list = []
+            # if self.global_last_grad == []:
+            #     optimizer.last_grad = []
+            # else:
+            #     for g in self.global_last_grad:
+            #         g_list.append(g.reshape(-1))
+            #     grad = torch.cat(g_list, dim=0)
+            #     norm = grad.norm(2, dim=-1)
+            #     optimizer.last_grad = grad / norm
+        # layerwise
+            if self.global_last_grad != []:
+                last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
+                norm = torch.stack(last_norm).norm(2)
+                optimizer.last_normratio = [g/norm for g in last_norm]
+                optimizer.last_grad = [p/norm for p in self.global_last_grad] 
+                optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
+            # if self.global_last_grad != []:
+                # optimizer.last_grad = self.global_last_grad
+                # norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
+                # optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
+
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         # train
         for epoch in range(self.local_round):

@@ -91,9 +91,10 @@ class DrDPOptimizer(DPOptimizer):
         gi_perp_topk_clipped = self.clip_g_perp(gi_perp)
 
         # preserve costheta
-        costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
-        costheta = self.add_noise_mean(costheta, self.noise_multiplier_2, 0.2) #noise=21.333 for eps=0.1; 42.66 for eps=0.05 | 100 rounds 114.48 for eps=0.05
-        costheta = [torch.clamp(c, -0.1, 0.1) for c in costheta]
+        clip_cos = 0.05
+        costheta = [torch.clamp(c, -clip_cos, clip_cos) for c in costheta]
+        costheta = self.add_noise_mean(costheta, self.noise_multiplier_2, clip_cos*2) #noise=21.333 for eps=0.1; 42.66 for eps=0.05 | 100 rounds 114.48 for eps=0.05
+        costheta = [torch.clamp(c, -clip_cos, clip_cos) for c in costheta]
         # costheta = self.add_noise_mean(costheta, 0.1, 1e-6, 0.2) # mean of cos
         # preserve norm
         sum_param_norms = [torch.sum(n) for n in per_param_norms]
@@ -242,9 +243,8 @@ class DrDPOptimizer(DPOptimizer):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-        # std = (sensitivity/eps) * math.sqrt(2 * math.log(1.25/delta))
         std = noise_multiplier * sensitivity
-        std /= (len(self.grad_samples[0]))#**2
+        std /= (len(self.grad_samples[0])) #**2
         for c in cos:
             noise = torch.normal(
             mean=0,

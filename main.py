@@ -48,10 +48,11 @@ def main(args):
                                                     delta=args.delta)
         print('client noise multiplier is %f' % (noise_multiplier))
     if args.dp and args.DR:
+        eps2 = 0.2
         noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                            epsilon=args.eps - 0.1, delta=args.delta)
+                                            epsilon=args.eps - 2 * eps2, delta=args.delta)
         noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                epsilon=0.2, delta=args.delta)
+                                epsilon=eps2, delta=args.delta)
         print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2))
     if args.dp and args.DRV2:
         noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
@@ -158,7 +159,7 @@ if __name__ == '__main__':
     parser.add_argument('--DR', type=bool, default=True)
     parser.add_argument('--DRV2', type=bool, default=False)
     parser.add_argument('--DRtest', type=bool, default=False)
-    parser.add_argument('--global_round', type=int, default=200)
+    parser.add_argument('--global_round', type=int, default=100)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
@@ -166,13 +167,13 @@ if __name__ == '__main__':
     parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=1)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=10)
+    parser.add_argument('--grad_norm', type=float, default=5)
     parser.add_argument('--grad_perp_norm', type=float, default=0.5)
     parser.add_argument('--sample_ratio', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--model', type=str, default='lenet5')
-    parser.add_argument('--lr', type=float, default=0.05)
-    parser.add_argument('--momentum', type=float, default=0.9)
+    parser.add_argument('--lr', type=float, default=0.1)
+    parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')

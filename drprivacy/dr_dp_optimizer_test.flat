@@ -8,7 +8,7 @@ import copy
 from utils.dpsgd_utils import exp_topk
 import math
 
-# add noise during decompose, and set norm as instant
+# flat vector first and then decompose 
 class DrDPOptimizertest(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
@@ -43,7 +43,6 @@ class DrDPOptimizertest(DPOptimizer):
         self.perp_grad_norm = max_grad_norm[1]
         self.noise_multiplier_2 = max_grad_norm[2]
         self.last_grad = []
-        self.last_normratio = []
         self.global_last_grad = []
         self.g_perp_sum = []
         self.cos_sum = []
@@ -79,84 +78,55 @@ class DrDPOptimizertest(DPOptimizer):
 
     def dr_process(self):
         gi_perp, costheta, per_param_norms = self.decompose_grad()   
-        g_perp = self.clip_g_perp(gi_perp)     
+        g_perp = self.clip_g_perp(gi_perp)    
+        # if self.last_grad != []:
+        #     r = torch.norm(gi_perp, dim=1)/per_param_norms
+        #     print(r)
 
         g_perp = self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
         # preserve costheta
         clip_cos = 0.05
-        costheta = [torch.clamp(c, -clip_cos, clip_cos) for c in costheta]
+        costheta = torch.mean(costheta)
+        costheta = torch.clamp(costheta, -clip_cos, clip_cos)
         costheta = self.add_noise_mean(costheta, self.noise_multiplier_2, clip_cos*2) 
-        costheta = [torch.clamp(c, -clip_cos, clip_cos) for c in costheta]
-
-        # preserve norm
-        # sum_param_norms = [torch.sum(n) for n in per_param_norms]
-        # mean_param_norms = self.add_noise_mean([p/len(self.grad_samples[0]) for p in sum_param_norms], self.noise_multiplier_2, self.max_grad_norm)  
-        # mean_param_norms = self.clip_noisy_norm(mean_param_norms)
-        mean_param_norms = [1.0]*8 
-        # mean_param_norms = [torch.mean(n) for n in per_param_norms]
-        # mean_param_norms =  [self.max_grad_norm*r for r in self.last_normratio]
-        # mean_param_norms = self.last_norm
-        g_perp = self.recover_grad(g_perp, mean_param_norms, costheta) 
-
- 
+        costheta = torch.clamp(costheta, -clip_cos, clip_cos) 
+        # costheta = torch.tensor(0.2)
+        # preserve norm #TODO直接采用max norm呢？
+        mean_param_norms = torch.mean(per_param_norms, dim=0)
+        mean_param_norms = self.add_noise_mean(mean_param_norms, self.noise_multiplier_2, self.max_grad_norm)  
+        mean_param_norms = torch.clamp(mean_param_norms, 10e-2, self.max_grad_norm)
+        # mean_param_norms = self.max_grad_norm
+        self.recover_grad(g_perp, mean_param_norms, costheta) 
 
     def decompose_grad(self):
+        gi = self.flatten(self.grad_samples)
         if self.last_grad == []:      
-            return self.grad_samples, torch.tensor([1.]*len(self.grad_samples)).to('cuda'), torch.tensor([1.]*len(self.grad_samples)).to('cuda')
-        per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
-        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
-        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
-        gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, self.last_grad)]
-        gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)]
-        # norm = [p.reshape(len(p), -1).norm(2, dim=-1) for p in gi_perp] # norm of per laryer of per gi_perp
-        # ratio = [ngp/ng for ng, ngp in zip(per_param_norms, norm)]
-        # print('ratio', ratio)
-        # gi_perp = [g/torch.reshape(n, [len(g)]+[1]*(len(g.shape)-1)) for g,n in zip(gi_perp,norm)]       
-        return gi_perp, costheta, per_param_norms
+            return gi, torch.tensor([1.]*len(self.grad_samples)).to('cuda'), torch.tensor([1.]*len(self.grad_samples)).to('cuda')
+        gi_norms = torch.norm(gi, dim=1) # norm of per sample gradient
+        costheta = torch.mm(gi, self.last_grad.unsqueeze(1)).reshape(-1) / gi_norms # [128, 26010] * [26010,1] / [128]
+        gi_perp = gi - (gi_norms * costheta).unsqueeze(1) * self.last_grad.unsqueeze(0) #[128, 26010] - [128]*[128]*[1,26010]
+        # gi_perp /= torch.norm(gi_perp, dim=0) 
+        # gi_perp /= torch.norm(gi_perp, dim=1).unsqueeze(1) #这步可能可以不要
+        return gi_perp, costheta, gi_norms
 
     def recover_grad(self, g_perp, g_norm, costheta):
         if self.last_grad == []:
             g = g_perp
         else:
-            g = [gn * torch.sqrt(1-cos**2) * gp  + gn * cos * lg * len(self.grad_samples[0]) for gp, gn, cos, lg in zip(g_perp, g_norm, costheta, self.last_grad)]
-            # g = [gn * torch.sqrt(1-cos**2) * gp  + lg * len(self.grad_samples[0]) for gp, gn, cos, lg in zip(g_perp, g_norm, costheta, self.last_grad)]
-        # num_sample = len(self.grad_samples[0])
-        # for i in range(len(g)):
-        #     if self.params[i].summed_grad is not None:
-        #         self.params[i].summed_grad += g[i]
-        #     else:
-        #         self.params[i].summed_grad = g[i]
-        #     self.last_norm[i] = (g[i]/num_sample).norm(2)
-        for p,gi in zip(self.params, g):
+            g = g_norm * (costheta * self.last_grad * len(self.grad_samples[0]) + torch.sqrt(1-costheta**2) * g_perp)
+        idx = 0
+        for p in self.params:
             if p.summed_grad is not None:
-                p.summed_grad += gi
+                p.summed_grad += g[idx : idx + torch.numel(p)].view_as(p)
             else:
-                p.summed_grad = gi
-        return g_perp
+                p.summed_grad = g[idx : idx + torch.numel(p)].view_as(p)
+            idx += torch.numel(p)
 
 
-    def clip_g_perp(self, g_perp):
-        per_param_norms = [
-            g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp
-        ] # norm of per laryer of per sample gradient
-        per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
-
-
-        # per_param_norms = [
-        #     g.norm(2, keepdim=False) for g in g_perp
-        # ] # norm of per laryer of per sample gradient
-        # per_sample_norms = torch.stack(per_param_norms, dim=0).norm(2) # norm of per sample gradient
+    def clip_g_perp(self, gi_perp):
         per_sample_clip_factor = (
-            self.perp_grad_norm / (per_sample_norms + 1e-6)
-        ).clamp(max=1.0) # clip [ max min ]
-
-        g_perp_clipped = []
-        for p in g_perp:
-            # grad_sample = self._get_flat_grad_sample(p) # change in to one tensor
-            grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
-
-            # grad = torch.reshape(per_sample_clip_factor, [len(p)]+[1]*(len(p.shape)-1)) * p
-            g_perp_clipped.append(grad)
+            self.perp_grad_norm / gi_perp.norm(2, dim=1) + 1e-6).clamp(max=1.0) # clip [ max min ]
+        g_perp_clipped = contract("i,i...", per_sample_clip_factor, gi_perp) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
         return g_perp_clipped
 
 
@@ -189,14 +159,6 @@ class DrDPOptimizertest(DPOptimizer):
 
             _mark_as_processed(p.grad_sample)
 
-    def clip_noisy_norm(self, mean_params_norm):
-        norm = torch.stack(mean_params_norm).norm(2, dim=0)
-        clip_factor = (
-            self.max_grad_norm / (norm + 1e-6)
-        ).clamp(max=1.0)
-        mean_params_norm = [clip_factor * n for n in mean_params_norm]
-        return mean_params_norm
-
     def add_noise(self):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
@@ -217,39 +179,51 @@ class DrDPOptimizertest(DPOptimizer):
 
             _mark_as_processed(p.summed_grad)
 
-    def add_noise_mean(self, cos, noise_multiplier, sensitivity): #eps, delta, sensitivity):
+    def add_noise_mean(self, vec, noise_multiplier, sensitivity): 
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-        # std = (sensitivity/eps) * math.sqrt(2 * math.log(1.25/delta))
-        std = noise_multiplier * sensitivity
-        std /= (len(self.grad_samples[0]))#**2
-        for c in cos:
-            noise = torch.normal(
+        std = noise_multiplier * sensitivity / (len(self.grad_samples[0]))
+        noise = torch.normal(
             mean=0,
             std=std,
-            size=c.shape,
+            size=vec.shape,
             device='cuda',
             generator=None,
         )
-            c += noise
-        return cos
-
-    def add_noise_sum(self, vec, noise_multiplier, sensitivity): #eps, delta, sensitivity):
-        """
-        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
-        """
-        std = noise_multiplier * sensitivity
-        for v in vec:
-            noise = torch.normal(
-            mean=0,
-            std=std,
-            size=v.shape,
-            device='cuda',
-            generator=None,
-        )
-            v += noise
+        vec += noise
         return vec
+
+    def add_noise_sum(self, vec, noise_multiplier, sensitivity): 
+        """
+        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
+        """
+        std = noise_multiplier * sensitivity
+        noise = torch.normal(
+            mean=0,
+            std=std,
+            size=vec.shape,
+            device='cuda',
+            generator=None,
+        )
+        vec += noise
+        return vec
+
+    def flatten(self, matrix):
+        num_samples = len(matrix[0])
+        flat_list = []
+        for m in matrix:
+            flat_list.append(m.reshape(num_samples, -1))
+        flat_tensor = torch.cat(flat_list, dim=1)
+        return flat_tensor
+
+    def unflatten(self, flat, grads):
+        res = []
+        idx = 0
+        for g in grads:
+            res.append(flat[idx : idx + torch.numel(g)].view_as(g))
+            idx += torch.numel(g)
+        return res
 
 
 
