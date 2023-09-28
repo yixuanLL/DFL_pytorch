@@ -22,9 +22,10 @@ fi
 # eps=(0.5)
 
 momentum=(0.0)
-lr=(0.01 0.1)
-g_norm=(0.1 1.0 2.0)
-eps=(0.5)
+lr=(0.1 0.5 1)
+g_norm=(0.1 0.5 1.0 2.0)
+eps=(0.3 0.5 1)
+
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile

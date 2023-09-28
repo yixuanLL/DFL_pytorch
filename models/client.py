@@ -145,8 +145,10 @@ class Client(nn.Module):
             if self.global_last_grad != []:
                 last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
                 norm = torch.stack(last_norm).norm(2)
+                optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
-                optimizer.last_grad = [p/norm for p in self.global_last_grad] 
+                # optimizer.last_grad = [p/norm for p in self.global_last_grad] 
+                # optimizer.last_normratio = self.global_last_grad
                 optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
             # if self.global_last_grad != []:
                 # optimizer.last_grad = self.global_last_grad

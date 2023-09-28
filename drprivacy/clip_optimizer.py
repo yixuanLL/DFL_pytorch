@@ -44,7 +44,6 @@ class ClipOptimizer(DPOptimizer):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-
         for p in self.params:
             _check_processed_flag(p.summed_grad)
 

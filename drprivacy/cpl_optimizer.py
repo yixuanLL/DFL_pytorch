@@ -67,6 +67,7 @@ class CplOptimizer(DPOptimizer):
 
         # local gradient
         self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
+        # print([torch.norm(g, keepdim=False) for g in self.last_grad])
 
         self.scale_grad()
 
@@ -80,8 +81,11 @@ class CplOptimizer(DPOptimizer):
         if self.last_grad == []:
             delta_g = [p.grad_sample for p in self.params]
         else:
-            delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]     
-        gi_cpl_clipped = self.clip_g_perp(delta_g)
+            delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]    
+        gi_cpl_clipped = [torch.sum(g, dim=0) for g in delta_g]
+        # gi_cpl_clipped = self.clip_g_perp(delta_g)
+        # print([torch.norm(g, keepdim=False) for g in gi_cpl_clipped])
+
         g_reverse = self.reverse_process(gi_cpl_clipped)
         # g_reverse = [torch.sum(g, dim=0) for g in gi_reverse]
 

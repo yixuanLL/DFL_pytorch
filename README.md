@@ -64,4 +64,14 @@ v2: 采用8.4的ppt算法，即聚合后再加noise的方案
   3. 不要norm g perp 准确的cos和g norm，acc达到85（eps=0.05,perp norm=1）
   4. 不要norm g perp 准确的cos, grad norm=[1]*8 acc=79（eps=0.05,perp norm=1）
   5. 不要norm g perp noisy cos, grad norm=[1]*8 acc=76.85（eps=0.1,perp norm=1）
-  
+  6. last grad用上轮norm，g perp不需要norm
+- 不再采用cos*norm的方式，g_perp保留原来的值，clip+noise；平行分量的norm clip+noise，用于恢复平行分量
+  1. 本方案不加噪声时acc 达到98 (和sgd是一样的)
+  2. g perp 为什么用norm和cos恢复效果不好？因为平均了好几遍；为什么平行分量直接用norm不好？因为有时候是钝角，norm无法体现它是不是钝角
+  3. python main_test.py  --lr=0.2 --grad_perp_norm=0.2 --DRtest=True --grad_norm=5 --eps_2=0.02 可行！86.70
+  python main_test.py  --lr=0.2 --grad_norm=0.2 85.66
+  python main_test.py  --lr=0.5 --grad_norm=0.1 84.68
+  python main_test.py  --lr=0.3 --grad_norm=0.5 59.44
+  4. 总体上有1%的提高
+- cpl为什么不好？和momentum一样吗
+  1. 调研
