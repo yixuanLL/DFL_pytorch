@@ -83,7 +83,7 @@ class CplOptimizer(DPOptimizer):
         else:
             delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]    
         gi_cpl_clipped = [torch.sum(g, dim=0) for g in delta_g]
-        # gi_cpl_clipped = self.clip_g_perp(delta_g)
+        gi_cpl_clipped = self.clip_g_perp(delta_g)
         # print([torch.norm(g, keepdim=False) for g in gi_cpl_clipped])
 
         g_reverse = self.reverse_process(gi_cpl_clipped)
@@ -204,7 +204,7 @@ class CplDPOptimizer(CplOptimizer):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-
+        # self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] 
         for p in self.params:
             _check_processed_flag(p.summed_grad)
             # print(torch.norm(p.summed_grad))

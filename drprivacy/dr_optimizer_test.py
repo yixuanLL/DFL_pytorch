@@ -9,7 +9,7 @@ from utils.dpsgd_utils import exp_topk
 import math
 
 # add noise during decompose, and set norm as instant
-class DrDPOptimizer(DPOptimizer):
+class DrOptimizertest(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -79,19 +79,11 @@ class DrDPOptimizer(DPOptimizer):
         return True  
 
     def dr_process(self):
-        gi_perp, costheta, per_param_norms, paral_alpha = self.decompose_grad()   
+        gi_perp, costheta, per_param_norms, paral_alpha = self.decompose_grad()  
         g_perp = self.clip_g_perp(gi_perp)  
-        g_perp = self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
-
-
-        # preserve paral factor
-        if self.last_grad != []:
-            clip_p = 0.01
-            paral_alpha = self.clip(paral_alpha, clip_p)
-            paral_alpha = self.add_noise_mean(paral_alpha, self.noise_multiplier_2, clip_p) 
-        else:
-            paral_alpha = 0
         g_perp = self.recover_grad(g_perp, paral_alpha, costheta) 
+
+ 
 
     def decompose_grad(self):
         if self.last_grad == []:      
@@ -101,6 +93,14 @@ class DrDPOptimizer(DPOptimizer):
         costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
         gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, self.last_grad)]
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
+        perp_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in gi_perp]
+        # print('all:',per_param_norms)
+        # print('perp',perp_norms)
+        # print('cos:', costheta)
+        # print('gi: ',self.grad_samples[0][0])
+        # print('gpa:',gi_paral[0][0])
+        # print('gp: ',gi_perp[0][0])
+        # print('----')
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
         return gi_perp, costheta, per_param_norms, paral_alpha 
 
@@ -109,12 +109,13 @@ class DrDPOptimizer(DPOptimizer):
             g = g_perp
         else:
             g = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, cos, lg in zip(g_perp, g_norm, costheta, self.last_grad)]
+
         for p,gi in zip(self.params, g):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        # self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g]
+        self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g]
         return g_perp
 
 
@@ -126,7 +127,6 @@ class DrDPOptimizer(DPOptimizer):
         per_sample_clip_factor = (
             self.perp_grad_norm / (per_sample_norms + 1e-6)
         ).clamp(max=1.0) # clip [ max min ]
-
         g_perp_clipped = []
         for p in g_perp:
             grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
@@ -177,42 +177,3 @@ class DrDPOptimizer(DPOptimizer):
             # print('noise/grad perp norm norm:{}'.format(torch.norm(noise) , torch.norm(p.summed_grad)))
 
             _mark_as_processed(p.summed_grad)
-
-    def add_noise_mean(self, cos, noise_multiplier, sensitivity): 
-        """
-        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
-        """
-        std = noise_multiplier * sensitivity
-        std /= (len(self.grad_samples[0]))
-        for c in cos:
-            noise = torch.normal(
-            mean=0,
-            std=std,
-            size=c.shape,
-            device='cuda',
-            generator=None,
-        )
-            c += noise
-        return cos
-
-    def add_noise_sum(self, vec, noise_multiplier, sensitivity):
-        """
-        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
-        """
-        std = noise_multiplier * sensitivity
-        for v in vec:
-            noise = torch.normal(
-            mean=0,
-            std=std,
-            size=v.shape,
-            device='cuda',
-            generator=None,
-        )
-            v += noise
-        return vec
-
-
-
-
-        
-            

@@ -94,7 +94,7 @@ class Client(nn.Module):
         if not self.dp and self.DR:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'dr_flat'
-        if not self.dp and self.DRV2:
+        if not self.dp and self.DRtest:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
             clipping = 'dr_flat_test'
         if self.dp and self.DRtest:

@@ -75,3 +75,19 @@ v2: 采用8.4的ppt算法，即聚合后再加noise的方案
   4. 总体上有1%的提高
 - cpl为什么不好？和momentum一样吗
   1. 调研
+
+## 9.28
+- SAMLL DATASET
+  1. DP在eps=0.5时可达到71% python main_flamby.py --dp=True --lr=0.3 --grad_norm=0.1
+  noniid drtest反而比较好64% python main_flamby.py --dp=True --lr=0.03 --grad_norm=3 --DRtest=True --eps_2=0.05 --grad_perp_norm=0.3 --eps=0.5 --noniid=True
+  2. debug:noniid下drtest accuracy为什么不随gprep的norm变化？
+    1)grad norm在0.1～0.2左右，设置0.2以上的norm几乎不影响acc
+    2)cos为负数时，perp的norm会超过原本的norm: global last grad 太离谱了。**用local的比较好**
+    3) acc=67 clip_p=0.02 python main_flamby.py --grad_perp_norm=0.2 --grad_norm=1 --DRtest=True --dp=True --global_round=40 --seed=0 --lr=0.05 --eps_2=0.03
+    acc=75 clip_p=0.02 python main_flamby.py --grad_perp_norm=0.2 --grad_norm=1 --DRtest=True --dp=True --global_round=40 --seed=2 --lr=0.05 --eps_2=0.05 
+    --batch_size=2
+    但dp已经达到78了！python main_flamby.py --grad_perp_norm=0.1 --grad_norm=0.1 --global_round=40 --seed=2 --lr=0.2 --eps_2=0.05 --batch_size=2 --dp=True
+    seed=5时clip_p调到0.001 eps2=0.01效果最好
+  3. 为什么cpl/momentum不好，但是分解的方法好？
+- 稀疏化的方案设计
+  
