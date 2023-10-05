@@ -15,15 +15,14 @@ from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] ='0,1,2'
+os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 MODEL_PARAMS={
     'MNIST': (784,10),
     'CIFAR10': (3*32*32,10),
     'FLamby': (13,2)
 }
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# print(device)
-device = 'cuda'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def main(args):
     accuracy_accountant = []
     privacy_accountant = []
@@ -166,16 +165,16 @@ if __name__ == '__main__':
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=4)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=0.5)
     parser.add_argument('--eps_2', type=float, default=0.05)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=3)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.2)
+    parser.add_argument('--grad_norm', type=float, default=0.3)
+    parser.add_argument('--grad_perp_norm', type=float, default=0.05)
     parser.add_argument('--sample_ratio', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--model', type=str, default='mclr')
-    parser.add_argument('--lr', type=float, default=0.2)
+    parser.add_argument('--lr', type=float, default=0.1)
     parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)

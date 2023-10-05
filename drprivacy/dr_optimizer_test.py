@@ -7,7 +7,7 @@ from opt_einsum.contract import contract
 import copy
 from utils.dpsgd_utils import exp_topk
 import math
-
+device='cuda'
 # add noise during decompose, and set norm as instant
 class DrOptimizertest(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
@@ -87,7 +87,7 @@ class DrOptimizertest(DPOptimizer):
 
     def decompose_grad(self):
         if self.last_grad == []:      
-            return self.grad_samples, [torch.tensor(1.).to('cuda')]*8, [torch.tensor(1.).to('cuda')]*8, self.grad_samples
+            return self.grad_samples, [torch.tensor(1.).to(device)]*8, [torch.tensor(1.).to(device)]*8, self.grad_samples
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]

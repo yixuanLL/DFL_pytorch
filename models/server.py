@@ -61,7 +61,7 @@ class FedDrAvg():
         #recover: g_perp+g_paral
         mean_g_perp = [torch.mean(self.__model_state[i], 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)]
         mean_g_paral = [torch.mean(self.__costheta[i]) * global_last_grad[i] for i in range(self.num_vars)]
-        global_model = [p.data.to('cuda') for p in global_model.parameters()]
+        global_model = [p.data.to(self.device) for p in global_model.parameters()]
         mean_updates = [-(mean_g_perp[i] + mean_g_paral[i])*0.01 + global_model[i] for i in range(self.num_vars)]
         # temprory *  learning rate!
         # SGD by hand
@@ -70,7 +70,7 @@ class FedDrAvg():
 
 
 class Server:
-    def __init__(self, num_clients, model, sample_ratio, x_test, y_test, model_param):
+    def __init__(self, num_clients, model, sample_ratio, x_test, y_test, model_param, device):
         super(Server, self).__init__()
         self.num_clients = num_clients
         self.sample_ratio = sample_ratio
@@ -84,6 +84,7 @@ class Server:
         self.x_test = x_test
         self.y_test = y_test
         self.global_last_grad = []
+        self.device = device
 
     def init_global_model(self):
         return self.model
@@ -118,7 +119,7 @@ class Server:
         return self.model
 
     def test(self, model):
-        model.eval().to('cuda')
+        model.eval().to(self.device)
         data_loader = TensorDataset(self.x_test, self.y_test)
         data_loader = DataLoader(data_loader, batch_size=128, shuffle=True)
         criterion = nn.CrossEntropyLoss()
@@ -127,7 +128,7 @@ class Server:
 
         with torch.no_grad():
             for x_test, y_test in data_loader:
-                x_test, y_test = x_test.to('cuda'), y_test.to('cuda')
+                x_test, y_test = x_test.to(self.device), y_test.to(self.device)
 
                 output = model(x_test)
                 loss = criterion(output, y_test)

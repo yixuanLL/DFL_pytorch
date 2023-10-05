@@ -7,9 +7,9 @@ from opt_einsum.contract import contract
 import copy
 from utils.dpsgd_utils import exp_topk
 import math
-device = 'cuda'
+
 # add noise during decompose, and set norm as instant
-class DrDPOptimizertest(DPOptimizer):
+class TopkDPOptimizer(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -21,7 +21,7 @@ class DrDPOptimizertest(DPOptimizer):
         generator=None,
         secure_mode: bool = False):
         # super(DPOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
-        # print('===Dr DP test===')
+        # print('===Topk Dr DP test===')
         self.original_optimizer = optimizer
         self.noise_multiplier = noise_multiplier
         self.loss_reduction = loss_reduction
@@ -46,8 +46,7 @@ class DrDPOptimizertest(DPOptimizer):
         self.last_normratio = []
         self.norm = 1
         self.global_last_grad = []
-        self.g_perp_sum = []
-        self.cos_sum = []
+        self.rate = 0.1
 
         
     def pre_step(
@@ -79,47 +78,57 @@ class DrDPOptimizertest(DPOptimizer):
         return True  
 
     def dr_process(self):
-        gi_perp, paral_alpha = self.decompose_grad()   
-        g_perp = self.clip_g_perp(gi_perp)  
-        g_perp_noisy = self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
+        if self.last_grad == []:
+            self.cold_start()
+            return
+        gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+        gi_perp_topk, paral_alpha_topk = self.decompose_grad(last_grad_topk, gi_topk)   
+        g_perp_topk = self.clip_g_perp(gi_perp_topk)  
+        g_perp_topk_noisy = self.add_noise_sum(g_perp_topk, self.noise_multiplier, self.perp_grad_norm)
 
 
         # preserve paral factor
         if self.last_grad != []:
             # clip_p = 0.05 # mnist
-            clip_p = 0.001
+            clip_p = 0.05
             # print(paral_alpha)
-            paral_alpha = self.clip(paral_alpha, clip_p)
-            paral_alpha = self.add_noise_mean(paral_alpha, self.noise_multiplier_2, clip_p) 
+            paral_alpha_topk = self.clip(paral_alpha_topk, clip_p)
+            paral_alpha_topk = self.add_noise_mean(paral_alpha_topk, self.noise_multiplier_2, clip_p) 
         else:
-            paral_alpha = 0
-        g_perp = self.recover_grad(g_perp, g_perp_noisy, paral_alpha) 
+            paral_alpha_topk = 0
+        self.recover_grad(g_perp_topk_noisy, paral_alpha_topk, mask) 
 
-    def decompose_grad(self):
-        if self.last_grad == []:      
-            return self.grad_samples, [torch.tensor(1.).to('cuda')]*8
-        per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
-        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
-        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
-        gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, self.last_grad)]
-        gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
+    def decompose_grad(self, last_grad_topk, gi_topk):
+        # if last_grad_topk == []:      
+        #     return gi_topk, [torch.tensor(1.).to('cuda')]*8
+        per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in gi_topk] # norm of per laryer of per sample gradient
+        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in last_grad_topk] # norm of per laryer of last gradient
+        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(gi_topk, last_grad_topk, per_param_norms, last_grad_norms)]
+        gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, last_grad_topk)]
+        gi_perp = [(g-gl) for g, gl in zip(gi_topk, gi_paral)] 
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
         return gi_perp, paral_alpha 
 
-    def recover_grad(self, g_perp, g_perp_noisy, g_norm):
-        if self.last_grad == []:
-            g_noisy = g_perp
-            g = g_perp
-        else:
-            g_noisy = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp_noisy, g_norm, self.last_grad)]
-            # g = [gp + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp, g_norm, self.last_grad)]
+    def recover_grad(self, g_perp_topk, paral_alpha_topk, mask):
+        # if self.last_grad == []:
+        #     g_noisy = g_perp_topk
+            # g = g_perp
+        # else:
+            # g_noisy = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp_noisy, g_norm, self.last_grad)]
+            # g = [gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp, g_norm, self.last_grad)]
+        last_grad_topk = []
+        last_grad_resi = []
+        for i in range(len(self.last_grad)):
+            last_grad_topk.append(self.last_grad[i] * mask[i])
+            last_grad_resi.append(self.last_grad[i] - last_grad_topk[i])
+        g_noisy = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
         for p,gi in zip(self.params, g_noisy):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
-        return g_perp
+        # self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
+        return
 
 
     def clip_g_perp(self, g_perp):
@@ -171,6 +180,29 @@ class DrDPOptimizertest(DPOptimizer):
         vec = [clip_factor * v for v in vec]
         return vec
 
+    def top_mask(self, last_grad, mod='topk'):
+        gi = copy.deepcopy([p.grad_sample for p in self.params])
+        lg = copy.deepcopy([l.reshape(-1) for l in last_grad])
+        mask = [0,0]
+        for i in range(len(lg)): #each layer
+            l = lg[i]
+            length = len(l.reshape(-1))
+            topk_num = int(length*self.rate)
+            if length<20:
+                topk_num = length
+            if mod == 'topk':
+                idx_topk = (torch.topk(torch.abs(l), topk_num)[1])
+            else:
+                idx_topk = torch.randint(0, len(l), (topk_num,))
+            maski = torch.zeros_like(l)
+            maski[idx_topk] = 1
+            mask[i] = torch.reshape(maski, gi[i].shape[1:])
+            for j in range(len(gi[i])):
+                gi[i][j] *= mask[i] #torch.reshape(maski, gi[i].shape[1:])
+
+            last_grad[i] *= mask[i]
+        return gi, last_grad, mask
+
     def add_noise(self):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
@@ -193,7 +225,7 @@ class DrDPOptimizertest(DPOptimizer):
             mean=0,
             std=std,
             size=c.shape,
-            device=device,
+            # device='cuda',
             generator=None,
         )
             c += noise
@@ -209,11 +241,26 @@ class DrDPOptimizertest(DPOptimizer):
             mean=0,
             std=std,
             size=v.shape,
-            device=device,
+            # device='cuda',
             generator=None,
         )
             v += noise
         return vec
+    
+    def cold_start(self):
+        # sum all gi and add noises
+        for p in self.params:
+            grad_sample = self._get_flat_grad_sample(p)
+            p.summed_grad = torch.sum(grad_sample, dim=0)
+            noise = torch.normal(
+            mean=0,
+            std=self.max_grad_norm * self.noise_multiplier,
+            size=p.summed_grad.shape,
+            # device='cuda',
+            generator=None,
+            )
+            p.summed_grad = (p.summed_grad + noise).view_as(p)
+        return
 
 
 

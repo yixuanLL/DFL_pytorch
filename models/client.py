@@ -13,7 +13,7 @@ from operator import mul
 
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant):
+    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -44,10 +44,11 @@ class Client(nn.Module):
         self.means = None
         self.is_private = None
         self.global_last_grad = []
+        self.device = device
 
     def download(self, model, global_last_grad):
-        self.model = model.to('cuda')
-        self.global_last_grad = [g.to('cuda') for g in global_last_grad]
+        self.model = model.to(self.device)
+        self.global_last_grad = [g.to(self.device) for g in global_last_grad]
 
     def set_projection(self, Vks=None, means=None, is_private=None):
         self.Vks = Vks
@@ -127,7 +128,7 @@ class Client(nn.Module):
 
         # global_last_grad
         # if self.DR or self.DRV2 or self.DRtest:
-        if self.DR or self.DRV2:
+        if self.DR or self.DRV2 or self.Topk:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
         if self.DRtest:
@@ -161,7 +162,7 @@ class Client(nn.Module):
             train_acc = 0
             train_loss = 0
             for x_train, y_train in data_loader:
-                x_train, y_train = x_train.to('cuda'), y_train.to('cuda')
+                x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
                 y_pred = model(x_train)
                 loss = criterion(y_pred, y_train)
