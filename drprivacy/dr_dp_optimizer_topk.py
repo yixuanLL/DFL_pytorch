@@ -7,6 +7,8 @@ from opt_einsum.contract import contract
 import copy
 from utils.dpsgd_utils import exp_topk
 import math
+import numpy as np
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # add noise during decompose, and set norm as instant
 class TopkDPOptimizer(DPOptimizer):
@@ -38,15 +40,14 @@ class TopkDPOptimizer(DPOptimizer):
 
         for p in self.params:
             p.summed_grad = None
-        
         self.max_grad_norm = max_grad_norm[0]
         self.perp_grad_norm = max_grad_norm[1]
         self.noise_multiplier_2 = max_grad_norm[2]
+        self.rate = max_grad_norm[3]
         self.last_grad = []
         self.last_normratio = []
         self.norm = 1
         self.global_last_grad = []
-        self.rate = 0.1
 
         
     def pre_step(
@@ -91,9 +92,9 @@ class TopkDPOptimizer(DPOptimizer):
         if self.last_grad != []:
             # clip_p = 0.05 # mnist
             clip_p = 0.05
-            # print(paral_alpha)
+            # print(paral_alpha_topk)
             paral_alpha_topk = self.clip(paral_alpha_topk, clip_p)
-            paral_alpha_topk = self.add_noise_mean(paral_alpha_topk, self.noise_multiplier_2, clip_p) 
+            # paral_alpha_topk = self.add_noise_mean(paral_alpha_topk, self.noise_multiplier_2, clip_p) 
         else:
             paral_alpha_topk = 0
         self.recover_grad(g_perp_topk_noisy, paral_alpha_topk, mask) 
@@ -103,7 +104,8 @@ class TopkDPOptimizer(DPOptimizer):
         #     return gi_topk, [torch.tensor(1.).to('cuda')]*8
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in gi_topk] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in last_grad_topk] # norm of per laryer of last gradient
-        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(gi_topk, last_grad_topk, per_param_norms, last_grad_norms)]
+        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm+10e-6)) for (g, lg, g_norm, lg_norm) in zip(gi_topk, last_grad_topk, per_param_norms, last_grad_norms)]
+        costheta = [torch.clamp(c, -1, 1) for c in costheta]
         gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, last_grad_topk)]
         gi_perp = [(g-gl) for g, gl in zip(gi_topk, gi_paral)] 
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
@@ -127,7 +129,7 @@ class TopkDPOptimizer(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        # self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
+        self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
         return
 
 
@@ -136,6 +138,7 @@ class TopkDPOptimizer(DPOptimizer):
             g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp
         ] # norm of per laryer of per sample gradient
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
+        # print(per_sample_norms)
         per_sample_clip_factor = (
             self.perp_grad_norm / (per_sample_norms + 1e-6)
         ).clamp(max=1.0) # clip [ max min ]
@@ -183,13 +186,13 @@ class TopkDPOptimizer(DPOptimizer):
     def top_mask(self, last_grad, mod='topk'):
         gi = copy.deepcopy([p.grad_sample for p in self.params])
         lg = copy.deepcopy([l.reshape(-1) for l in last_grad])
-        mask = [0,0]
+        mask = [0]*len(lg)
         for i in range(len(lg)): #each layer
             l = lg[i]
             length = len(l.reshape(-1))
             topk_num = int(length*self.rate)
-            if length<20:
-                topk_num = length
+            # if length<20:
+            #     topk_num = length
             if mod == 'topk':
                 idx_topk = (torch.topk(torch.abs(l), topk_num)[1])
             else:
@@ -200,8 +203,8 @@ class TopkDPOptimizer(DPOptimizer):
             for j in range(len(gi[i])):
                 gi[i][j] *= mask[i] #torch.reshape(maski, gi[i].shape[1:])
 
-            last_grad[i] *= mask[i]
-        return gi, last_grad, mask
+            lg[i] = self.last_grad[i] * mask[i]
+        return gi, lg, mask
 
     def add_noise(self):
         """
@@ -214,22 +217,27 @@ class TopkDPOptimizer(DPOptimizer):
 
             _mark_as_processed(p.summed_grad)
 
-    def add_noise_mean(self, cos, noise_multiplier, sensitivity): 
+    def add_noise_mean(self, vec, noise_multiplier, sensitivity): 
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
         std = noise_multiplier * sensitivity
         std /= (len(self.grad_samples[0]))
-        for c in cos:
+        # std = 10e-3
+        # for i in range(len(tmp)):
+            # a=0
+            # noise = np.random.normal(loc=0, scale=std, size=(1,))
+            # vec[i] += noise
+        for v in vec:
             noise = torch.normal(
             mean=0,
             std=std,
-            size=c.shape,
-            # device='cuda',
+            size=v.shape,
+            device=device,
             generator=None,
         )
-            c += noise
-        return cos
+            v += noise
+        return vec
 
     def add_noise_sum(self, vec, noise_multiplier, sensitivity):
         """
@@ -241,7 +249,7 @@ class TopkDPOptimizer(DPOptimizer):
             mean=0,
             std=std,
             size=v.shape,
-            # device='cuda',
+            device=device,
             generator=None,
         )
             v += noise
@@ -256,7 +264,7 @@ class TopkDPOptimizer(DPOptimizer):
             mean=0,
             std=self.max_grad_norm * self.noise_multiplier,
             size=p.summed_grad.shape,
-            # device='cuda',
+            device=device,
             generator=None,
             )
             p.summed_grad = (p.summed_grad + noise).view_as(p)

@@ -15,7 +15,8 @@ from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+# os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_PARAMS={
     'MNIST': (784,10),
     'CIFAR10': (3*32*32,10),
@@ -83,13 +84,14 @@ def main(args):
                         grad_perp_norm=args.grad_perp_norm,
                         lr=args.lr,
                         momentum=args.momentum,
-                        budget_accountant=budget_accountant))
+                        budget_accountant=budget_accountant,
+                        device=device))
 
     # set server
     model_path = '%s.%s' % ('models', args.model)
     mod = importlib.import_module(model_path)
     model = getattr(mod, 'Model')
-    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset])
+    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device)
     server.init_alg(dp=args.dp, FLalg=args.FLalg) # init server algo: fedavg + dp
     # server_model = server.init_global_model() # global model why use server_model?
     global_model = server.init_global_model() # global model
@@ -97,7 +99,7 @@ def main(args):
         # server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
         server.global_last_grad = []
     if args.cpl:
-        server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
+        server.global_last_grad = [p.data.to(device) for p in global_model.parameters()]
 
 
     # communication round
@@ -131,7 +133,7 @@ def main(args):
         global_model = server.update()
         # if args.FLalg == 'FedDrAvg':
         # for global_last_grad
-        server.global_last_grad = [(p1.data-p2.data).to('cuda') for p1,p2 in zip(global_model.parameters(), last_parameters)]
+        server.global_last_grad = [(p1.data-p2.data).to(device) for p1,p2 in zip(global_model.parameters(), last_parameters)]
 
         # test
         test_accuracy, test_loss = server.test(global_model)

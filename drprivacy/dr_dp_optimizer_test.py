@@ -7,7 +7,7 @@ from opt_einsum.contract import contract
 import copy
 from utils.dpsgd_utils import exp_topk
 import math
-device = 'cuda'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # add noise during decompose, and set norm as instant
 class DrDPOptimizertest(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
@@ -83,11 +83,11 @@ class DrDPOptimizertest(DPOptimizer):
         g_perp = self.clip_g_perp(gi_perp)  
         g_perp_noisy = self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
 
-
         # preserve paral factor
         if self.last_grad != []:
             # clip_p = 0.05 # mnist
-            clip_p = 0.001
+            # clip_p = 0.001 #flamby
+            clip_p = 0.08 # lenet5
             # print(paral_alpha)
             paral_alpha = self.clip(paral_alpha, clip_p)
             paral_alpha = self.add_noise_mean(paral_alpha, self.noise_multiplier_2, clip_p) 
@@ -97,7 +97,7 @@ class DrDPOptimizertest(DPOptimizer):
 
     def decompose_grad(self):
         if self.last_grad == []:      
-            return self.grad_samples, [torch.tensor(1.).to('cuda')]*8
+            return self.grad_samples, [torch.tensor(1.).to(device)]*8
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]

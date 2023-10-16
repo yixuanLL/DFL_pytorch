@@ -1,0 +1,163 @@
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 47s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 48s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 48s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 53s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 44s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 44s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_topk.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 192, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_topk.py", line 120, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 175, in local_update
+    optimizer.step() # adding noises & update model parameters
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/optimizers/optimizer.py", line 513, in step
+    if self.pre_step():
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 70, in pre_step
+    self.dr_process()
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 85, in dr_process
+    gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+  File "/home/yliu270/workspace/DFL_pytorch/drprivacy/dr_dp_optimizer_topk.py", line 202, in top_mask
+    mask[i] = torch.reshape(maski, gi[i].shape[1:])
+IndexError: list assignment index out of range
+[time] build py time is 12min 48s
+[finished]!

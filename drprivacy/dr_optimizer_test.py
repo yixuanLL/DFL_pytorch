@@ -7,7 +7,7 @@ from opt_einsum.contract import contract
 import copy
 from utils.dpsgd_utils import exp_topk
 import math
-device='cuda'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # add noise during decompose, and set norm as instant
 class DrOptimizertest(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr

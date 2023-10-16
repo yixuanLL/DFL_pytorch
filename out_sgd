@@ -1,0 +1,49 @@
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 21min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 23min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 25min 37s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 26min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 26min 36s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 26min 21s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --dp=True --eps=0.3  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 27min 28s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --dp=True --eps=0.3  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 24s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --dp=True --eps=0.3  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 12s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --dp=True --eps=0.3  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 34s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --dp=True --eps=0.3  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --dp=True --eps=0.3  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 26s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --dp=True --eps=0.5  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 14s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --dp=True --eps=0.5  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 29s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 42s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --dp=True --eps=0.5  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 57s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --dp=True --eps=0.5  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 27min 21s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 46s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --dp=True --eps=1  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 29s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --dp=True --eps=1  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 48s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --dp=True --eps=1  --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 14s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --dp=True --eps=1  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 48s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --dp=True --eps=1  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --dp=True --eps=1  --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 28min 25s
+[finished]!

@@ -50,7 +50,7 @@ def main(args):
         if args.dp:
             eps = args.eps
             eps_2 = 10e6
-            if args.DR or args.DRtest:
+            if args.DR or args.DRtest or args.Topk:
                 eps_2 = args.eps_2
                 eps = args.eps - eps_2
             if args.DRV2:
@@ -155,7 +155,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='FLamby')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
@@ -164,16 +164,16 @@ if __name__ == '__main__':
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--batch_size', type=int, default=2)
     parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=0.5)
     parser.add_argument('--eps_2', type=float, default=0.05)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=0.3)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.05)
+    parser.add_argument('--grad_norm', type=float, default=1)
+    parser.add_argument('--grad_perp_norm', type=float, default=0.1)
     parser.add_argument('--sample_ratio', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model', type=str, default='mclr')
+    parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--lr', type=float, default=0.1)
     parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)

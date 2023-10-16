@@ -2,7 +2,7 @@ import sys
 import numpy as np
 
 f = sys.stdin.readline().strip()
-file = open('/home/yixuan/workspace/DFL_pytorch/logs/'+f, 'r')
+file = open('/home/yliu270/workspace/DFL_pytorch/logs/'+f, 'r')
 acc = []
 lr = []
 eps=[]
@@ -21,7 +21,7 @@ for line in file:
         lr.append(l)
         eps.append(e)
         iid_list.append(iid)
-    if 'round 24' in line:
+    if 'round 99' in line:
         acc.append(str(round(float(line.split(' ')[7])*100, 2)))
 
 

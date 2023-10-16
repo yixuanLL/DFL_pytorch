@@ -21,9 +21,9 @@ MODEL_PARAMS={
     'CIFAR10': (3*32*32,10),
     'FLamby': (13,2)
 }
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# print(device)
-device = 'cuda'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print('====',device, '====')
+# device = 'cuda'
 def main(args):
     accuracy_accountant = []
     privacy_accountant = []

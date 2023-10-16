@@ -65,8 +65,8 @@ class CplOptimizer(DPOptimizer):
         
         self.add_noise()
 
-        # local gradient
-        self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
+        # noisy local gradient
+        # self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
         # print([torch.norm(g, keepdim=False) for g in self.last_grad])
 
         self.scale_grad()
@@ -82,7 +82,6 @@ class CplOptimizer(DPOptimizer):
             delta_g = [p.grad_sample for p in self.params]
         else:
             delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]    
-        gi_cpl_clipped = [torch.sum(g, dim=0) for g in delta_g]
         gi_cpl_clipped = self.clip_g_perp(delta_g)
         # print([torch.norm(g, keepdim=False) for g in gi_cpl_clipped])
 
@@ -204,7 +203,8 @@ class CplDPOptimizer(CplOptimizer):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-        # self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] 
+        self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] # self.last_grad采用clean gradients
+        # self.last_grad = [for p in self.grad_samples]# self.last_grad采用robust gradients
         for p in self.params:
             _check_processed_flag(p.summed_grad)
             # print(torch.norm(p.summed_grad))

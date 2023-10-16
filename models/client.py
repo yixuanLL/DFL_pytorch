@@ -108,7 +108,7 @@ class Client(nn.Module):
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
             clipping = 'dr_dp_flat_v2'                
         if self.Topk:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.rate_dr]
             clipping = 'topk_flat'
         if self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
