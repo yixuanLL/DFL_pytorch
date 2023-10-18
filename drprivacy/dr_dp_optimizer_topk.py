@@ -82,22 +82,26 @@ class TopkDPOptimizer(DPOptimizer):
         if self.last_grad == []:
             self.cold_start()
             return
-        gi_topk, last_grad_topk, mask= self.top_mask(self.last_grad, 'topk')
+        gi_topk, last_grad_topk, mask = self.top_mask(self.last_grad, 'topk')
+        # last_grad_topk = self.last_grad
+        # gi_topk = self.grad_samples
         gi_perp_topk, paral_alpha_topk = self.decompose_grad(last_grad_topk, gi_topk)   
         g_perp_topk = self.clip_g_perp(gi_perp_topk)  
-        g_perp_topk_noisy = self.add_noise_sum(g_perp_topk, self.noise_multiplier, self.perp_grad_norm)
+        g_perp_topk_clean = copy.deepcopy(g_perp_topk)
+        self.add_noise_sum(g_perp_topk, self.noise_multiplier, self.perp_grad_norm)
 
 
         # preserve paral factor
         if self.last_grad != []:
             # clip_p = 0.05 # mnist
-            clip_p = 0.05
+            clip_p = 0.001
             # print(paral_alpha_topk)
             paral_alpha_topk = self.clip(paral_alpha_topk, clip_p)
-            # paral_alpha_topk = self.add_noise_mean(paral_alpha_topk, self.noise_multiplier_2, clip_p) 
+            paral_alpha_topk_clean = copy.deepcopy(paral_alpha_topk)
+            paral_alpha_topk = self.add_noise_mean(paral_alpha_topk, self.noise_multiplier_2, clip_p) 
         else:
             paral_alpha_topk = 0
-        self.recover_grad(g_perp_topk_noisy, paral_alpha_topk, mask) 
+        self.recover_grad(g_perp_topk, paral_alpha_topk, mask, g_perp_topk_clean, paral_alpha_topk_clean) 
 
     def decompose_grad(self, last_grad_topk, gi_topk):
         # if last_grad_topk == []:      
@@ -111,25 +115,24 @@ class TopkDPOptimizer(DPOptimizer):
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
         return gi_perp, paral_alpha 
 
-    def recover_grad(self, g_perp_topk, paral_alpha_topk, mask):
-        # if self.last_grad == []:
-        #     g_noisy = g_perp_topk
-            # g = g_perp
-        # else:
-            # g_noisy = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp_noisy, g_norm, self.last_grad)]
-            # g = [gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp, g_norm, self.last_grad)]
+    def recover_grad(self, g_perp_topk, paral_alpha_topk, mask, g_perp_topk_clean, paral_alpha_topk_clean):
+        # g_noisy = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp_topk, paral_alpha_topk, self.last_grad)]
+        # g = [gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp_topk, paral_alpha_topk, self.last_grad)]
         last_grad_topk = []
         last_grad_resi = []
         for i in range(len(self.last_grad)):
             last_grad_topk.append(self.last_grad[i] * mask[i])
             last_grad_resi.append(self.last_grad[i] - last_grad_topk[i])
-        g_noisy = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
+        # g_noisy = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
+        g_noisy = [gp + (gn * lgk) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
+        g_clean = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk_clean, paral_alpha_topk_clean, last_grad_topk, last_grad_resi)]
         for p,gi in zip(self.params, g_noisy):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
+        self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy] # noisy last grad
+        # self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_clean] # clean last grad
         return
 
 
@@ -164,6 +167,7 @@ class TopkDPOptimizer(DPOptimizer):
                 g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
             ]
             per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
+            # print(per_sample_norms)
             per_sample_clip_factor = (self.max_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0)
 
         for p in self.params:

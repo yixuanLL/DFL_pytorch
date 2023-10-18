@@ -13,7 +13,7 @@ folder_list = os.listdir(root_path)
 for folder_eps in folder_list:
     # print(folder_list[10], folder_eps)
     
-    if  folder_eps in ['no-dp','1.0','0.9']:
+    if  folder_eps in ['0.5']:
         eps_path = root_path + folder_eps
         file_list = os.listdir(eps_path)
         for file in file_list:
@@ -29,8 +29,6 @@ for folder_eps in folder_list:
                 C=name_list[3]
 
 
-            if folder_eps=='0.9':
-                folder_eps = '1.0'
             # if alg in ['SGD', 'DR'] and (C in ['0.5', 'inf']):
             if alg in ['SGD', 'DR'] and (C in ['1.0', 'inf']):
                 exp_name = alg + ', eps='+folder_eps+', C='+C

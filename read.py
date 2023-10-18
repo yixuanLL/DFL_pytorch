@@ -13,6 +13,8 @@ iid=''
 for line in file:
     line = line.strip()
     if 'csv' in line:
+        if 'MNIST' not in line:
+            continue
         print(line)
         line = line.split('/')
         l = line[-1].split('-')[0]
@@ -21,7 +23,7 @@ for line in file:
         lr.append(l)
         eps.append(e)
         iid_list.append(iid)
-    if 'round 99' in line:
+    if 'round 49' in line:
         acc.append(str(round(float(line.split(' ')[7])*100, 2)))
 
 

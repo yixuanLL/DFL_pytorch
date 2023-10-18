@@ -1,4 +1,8 @@
 #!/bin/bash
+#SBATCH --job-name=topk
+#SBATCH --output=out_topk
+#SBATCH --gres=gpu:2
+#SBATCH --mem=1GB
 cur_path=`pwd`
 
 cur_date="`date +%Y%m%d`" 
@@ -15,17 +19,19 @@ fi
 
 
 # MNIST
-# momentum=(0.0)
-# lr=(0.05 0.1 0.2)
-# g_p_norm=(0.1 0.2 0.4 1.0)
-# eps=(0.3 0.5 1)
+momentum=(0.0)
+lr=(0.1)
+g_p_norm=(0.05 0.3)
+eps=(0.5)
+rate_dr=(0.5 0.9)
+iidflag=("--save_dir=result")
 
 #FLamby
-momentum=(0.0)
-lr=(0.001 0.01 0.1 0.5)
-g_p_norm=(0.01 0.05 0.1)
-eps=(0.3 0.5 1)
-iidflag=("--save_dir=result" "--noniid=True")
+# momentum=(0.0)
+# lr=(0.001 0.01 0.1 0.5)
+# g_p_norm=(0.01 0.05 0.1)
+# eps=(0.3 0.5 1)
+# iidflag=("--save_dir=result" "--noniid=True")
 
 #CIFAR10
 # momentum=(0.0)
@@ -40,7 +46,7 @@ echo "${time}">>$logfile
 echo "====NoDP====">>$logfile
 for iid in ${iidflag[@]}
 do
-    for m in ${momentum[@]}
+    for r in ${rate_dr[@]}
     do
         for l in ${lr[@]}
         do
@@ -48,7 +54,7 @@ do
             do
                 # py_req="python ${cur_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --momentum=${m} ${iid}";
                 # py_req="python ${cur_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
-                py_req="python ${cur_path}/main_topk.py --seed=5 --Topk=True --dp=True --eps=999 --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${iid}";
+                py_req="python ${cur_path}/main_topk.py --seed=0 --Topk=True --dp=True --eps=999 --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --rate_dr=${r}";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
@@ -72,7 +78,7 @@ done
 
 output=0
 echo "====DP====">>$logfile
-for iid in ${iidflag[@]}
+for r in ${rate_dr[@]}
 do
     for e in ${eps[@]}
     do
@@ -81,7 +87,7 @@ do
             for gpn in ${g_p_norm[@]}
             do
                 # py_req="python ${cur_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=0.02";
-                py_req="python ${cur_path}/main_flamby.py --seed=5 --Topk=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --momentum=${m} --eps_2=0.01 --dataset=FLamby --model=mclr ${iid}";
+                py_req="python ${cur_path}/main_topk.py --seed=0 --Topk=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --eps_2=0.02 --dataset=MNIST --model=cnn --rate_dr=${r}";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)

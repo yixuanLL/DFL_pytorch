@@ -18,7 +18,7 @@ fi
 
 
 # MNIST
-rate=(0.1 0.5)
+rate=(0.8 1)
 lr=(0.1)
 g_p_norm=(0.1) # 0.5 1.0)
 eps=(0.5) # 0.5 1)
@@ -54,7 +54,7 @@ do
                 do
                     # py_req="python ${cur_path}/main_lenet5.py --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
                     # py_req="python ${cur_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=0.02";
-                    py_req="python ${cur_path}/main_topk.py --rate_dr=${r} --Topk=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} ${iid}";
+                    py_req="python ${cur_path}/main_topk.py --rate_dr=${r} --Topk=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} ${iid} --dataset=FLamby --model=mclr ";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)

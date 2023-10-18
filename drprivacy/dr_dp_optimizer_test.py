@@ -85,9 +85,9 @@ class DrDPOptimizertest(DPOptimizer):
 
         # preserve paral factor
         if self.last_grad != []:
-            # clip_p = 0.05 # mnist
+            clip_p = 0.02 # mnist
             # clip_p = 0.001 #flamby
-            clip_p = 0.08 # lenet5
+            # clip_p = 0.05 # lenet5
             # print(paral_alpha)
             paral_alpha = self.clip(paral_alpha, clip_p)
             paral_alpha = self.add_noise_mean(paral_alpha, self.noise_multiplier_2, clip_p) 
