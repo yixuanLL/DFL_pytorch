@@ -28,7 +28,7 @@ for line in file:
     if 'round' in line:
         acc.append(float(line.split(' ')[7])*100)
         round.append(int(line.split(' ')[1]))
-        if 'round 24' in line:
+        if 'round 49' in line:
             acc_list.append(acc)
             exp_list.append(m)
             round_list.append(round)
@@ -59,7 +59,7 @@ plt.ylabel('Accuracy$')
 plt.xlabel('Rounds')
 plt.legend(loc='lower right', fontsize=8)
 
-plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+plt.title('MNIST $\epsilon$=0.5', fontsize=9)
 plt.show()
 plt.savefig(root_path+'tmp.png', dpi=600)
 plt.close()

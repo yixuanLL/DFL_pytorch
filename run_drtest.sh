@@ -18,20 +18,20 @@ if [ ! -f "$logfile" ]; then
 fi
 
 
-# MNIST
+# # MNIST
 seed=(0)
 momentum=(0.0)
-lr=(0.1 0.2)
-g_p_norm=(0.2 0.5 1.0)
-eps=(0.3 0.5 1)
+lr=(0.1 0.3)
+g_p_norm=(0.1) # 0.2) # 0.5)
+eps=(0.3)
 iidflag=("--save_dir=result")
 
 #FLamby
-# seed=(5 9 15)
+# seed=(0) # 5 9 15)
 # lr=(0.01 0.1 0.5)
 # g_p_norm=(0.01 0.05 0.1 0.2)
 # eps=(0.3 0.5 1)
-# iidflag=("--save_dir=result" "--noniid=True")
+# iidflag=("--save_dir=result") # "--noniid=True")
 
 #CIFAR10
 # seed=(0)
@@ -54,12 +54,12 @@ do
             for gpn in ${g_p_norm[@]}
             do
                 # py_req="python ${cur_path}/main_lenet5.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
-                py_req="python ${cur_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
+                # py_req="python ${cur_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${iid}";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                output=`${py_req}`;
+                # output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -90,7 +90,7 @@ do
                 for gpn in ${g_p_norm[@]}
                 do
                     # py_req="python ${cur_path}/main_lenet5.py --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
-                    py_req="python ${cur_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=0.03";
+                    py_req="python ${cur_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.02";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr ${iid}";
                     # py_req="python ${cur_path}/main_test.py --cpl=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
                     echo "${py_req}"

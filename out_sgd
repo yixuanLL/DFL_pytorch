@@ -1,1 +1,49 @@
 python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn
+[time] build py time is 13min 56s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn
+[time] build py time is 13min 57s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn
+[time] build py time is 14min 4s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn
+[time] build py time is 14min 16s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn
+[time] build py time is 15min 46s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn
+[time] build py time is 14min 23s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 57s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 32s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 41s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 35s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 23s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 46s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 39s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 36s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 45s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 27s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 16s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 17s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 33s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn 
+[time] build py time is 14min 8s
+[finished]!

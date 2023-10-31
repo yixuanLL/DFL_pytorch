@@ -86,7 +86,8 @@ def main(args):
                         lr=args.lr,
                         momentum=args.momentum,
                         budget_accountant=budget_accountant,
-                        device=device))
+                        device=device,
+                        clip_paral=args.clip_paral))
 
     # set server
     model_path = '%s.%s' % ('models', args.model)
@@ -180,6 +181,7 @@ if __name__ == '__main__':
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
+    parser.add_argument('--clip_paral', type=float, default=0.01, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

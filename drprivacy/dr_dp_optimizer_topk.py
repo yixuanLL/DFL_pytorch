@@ -48,6 +48,7 @@ class TopkDPOptimizer(DPOptimizer):
         self.last_normratio = []
         self.norm = 1
         self.global_last_grad = []
+        self.last_grad_origin = []
 
         
     def pre_step(
@@ -123,15 +124,17 @@ class TopkDPOptimizer(DPOptimizer):
         for i in range(len(self.last_grad)):
             last_grad_topk.append(self.last_grad[i] * mask[i])
             last_grad_resi.append(self.last_grad[i] - last_grad_topk[i])
-        # g_noisy = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
-        g_noisy = [gp + (gn * lgk) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
-        g_clean = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk_clean, paral_alpha_topk_clean, last_grad_topk, last_grad_resi)]
+            # last_grad_resi.append(self.last_grad_origin[i] - self.last_grad_origin[i] * mask[i])
+        g_noisy = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
+        # g_noisy = [gp + (gn * lgk) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk, paral_alpha_topk, last_grad_topk, last_grad_resi)]
+        # g_clean = [gp + (gn * lgk + lgr) * len(self.grad_samples[0]) for gp, gn, lgk, lgr in zip(g_perp_topk_clean, paral_alpha_topk_clean, last_grad_topk, last_grad_resi)]
         for p,gi in zip(self.params, g_noisy):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
         self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy] # noisy last grad
+        self.last_grad_origin = [gi/len(self.grad_samples[0]) for gi in g_noisy] #noisy last grad no normalize
         # self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g_clean] # clean last grad
         return
 
@@ -227,11 +230,6 @@ class TopkDPOptimizer(DPOptimizer):
         """
         std = noise_multiplier * sensitivity
         std /= (len(self.grad_samples[0]))
-        # std = 10e-3
-        # for i in range(len(tmp)):
-            # a=0
-            # noise = np.random.normal(loc=0, scale=std, size=(1,))
-            # vec[i] += noise
         for v in vec:
             noise = torch.normal(
             mean=0,
@@ -271,7 +269,8 @@ class TopkDPOptimizer(DPOptimizer):
             device=device,
             generator=None,
             )
-            p.summed_grad = (p.summed_grad + noise).view_as(p)
+            # p.summed_grad = (p.summed_grad + noise).view_as(p)
+            p.summed_grad = (p.summed_grad).view_as(p)
         return
 
 

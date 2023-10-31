@@ -81,6 +81,13 @@ class DrOptimizertest(DPOptimizer):
     def dr_process(self):
         gi_perp, costheta, per_param_norms, paral_alpha = self.decompose_grad()  
         g_perp = self.clip_g_perp(gi_perp)  
+        if self.last_grad != []:
+            clip_p = 0.05 # mnist
+            # clip_p = 0.001 #flamby
+            # clip_p = 0.05 # lenet5
+            paral_alpha = self.clip(paral_alpha, clip_p)
+        else:
+            paral_alpha = 0
         g_perp = self.recover_grad(g_perp, paral_alpha, costheta) 
 
  
@@ -94,13 +101,6 @@ class DrOptimizertest(DPOptimizer):
         gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, self.last_grad)]
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
         perp_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in gi_perp]
-        # print('all:',per_param_norms)
-        # print('perp',perp_norms)
-        # print('cos:', costheta)
-        # print('gi: ',self.grad_samples[0][0])
-        # print('gpa:',gi_paral[0][0])
-        # print('gp: ',gi_perp[0][0])
-        # print('----')
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
         return gi_perp, costheta, per_param_norms, paral_alpha 
 

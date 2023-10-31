@@ -41,6 +41,7 @@ class CplOptimizer(DPOptimizer):
         self.perp_grad_norm = max_grad_norm[1]
         self.rate_dr = max_grad_norm[2]
         self.last_grad = []
+        self.last_grad_noisy = []
         self.global_last_grad = []
 
         
@@ -66,7 +67,7 @@ class CplOptimizer(DPOptimizer):
         self.add_noise()
 
         # noisy local gradient
-        self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
+        # self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
         # print([torch.norm(g, keepdim=False) for g in self.last_grad])
 
         self.scale_grad()
@@ -126,10 +127,7 @@ class CplOptimizer(DPOptimizer):
             grad_sample = self._get_flat_grad_sample(p)
             # grad = contract("i,i...", per_sample_clip_factor, grad_sample)
             p.grad_sample = torch.reshape(per_sample_clip_factor, [len(grad_sample)]+[1]*(len(grad_sample.shape)-1)) * grad_sample
-            # if p.summed_grad is not None:
-            #     p.summed_grad += grad
-            # else:
-            #     p.summed_grad = grad    
+ 
             _mark_as_processed(p.grad_sample)
 
 
@@ -144,6 +142,7 @@ class CplOptimizer(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
+        self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
 
 
     def clip_g_perp(self, g_perp):
@@ -163,8 +162,8 @@ class CplOptimizer(DPOptimizer):
             g_perp_clipped.append(grad)
         return g_perp_clipped
 
-
-class CplDPOptimizer(CplOptimizer):
+# class CplDPOptimizer(CplOptimizer):
+class CplDPOptimizer_bak(CplOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -223,6 +222,70 @@ class CplDPOptimizer(CplOptimizer):
 
 
 
+class CplDPOptimizer(CplOptimizer): #similar with DIFF2; use clean gradient for complementary calculation
+# class diff2(CplOptimizer):
+    ## use max_grad_norm as grad norm, perp norm and rate_dr
+    def __init__(self,
+        optimizer: DPOptimizer,
+        *,
+        noise_multiplier: float,
+        max_grad_norm: Optional[float],
+        expected_batch_size: Optional[int],
+        loss_reduction: str = "mean",
+        generator=None,
+        secure_mode: bool = False):
+        # super(CplOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
+        self.original_optimizer = optimizer
+        self.noise_multiplier = noise_multiplier
+        self.loss_reduction = loss_reduction
+        self.expected_batch_size = expected_batch_size
+        self.step_hook = None
+        self.generator = generator
+        self.secure_mode = secure_mode
+
+        self.param_groups = self.original_optimizer.param_groups
+        self.defaults = self.original_optimizer.defaults
+        self.state = self.original_optimizer.state
+        self._step_skip_queue = []
+        self._is_last_step_skipped = False
+
+        for p in self.params:
+            p.summed_grad = None
+        
+        self.max_grad_norm = max_grad_norm[0]
+        self.perp_grad_norm = max_grad_norm[1]
+        self.rate_dr = max_grad_norm[2]
+        self.last_grad = []
+        self.last_grad_noisy = []
+        self.global_last_grad = []
+    
+    def reverse_process(self, gi_cpl):
+        if self.last_grad == []:
+            return gi_cpl
+        g_reverse = [gc + lg*len(self.grad_samples[0]) for gc, lg in zip(gi_cpl, self.last_grad_noisy)]
+        # g_reverse = [gc + lg*len(self.grad_samples[0]) for gc, lg in zip(gi_cpl, self.last_grad)] #看denoise的空间还有多大
+        return g_reverse 
+
+    def add_noise(self):
+        """
+        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
+        """
+        self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] # clean gradients based on reversed gradient
+        # self.last_grad = [torch.mean(g, dim=0) for g in self.grad_samples] # clean gradients based on current gradient
+        for p in self.params:
+            _check_processed_flag(p.summed_grad)
+            # print(torch.norm(p.summed_grad))
+            noise = _generate_noise(
+                std=self.noise_multiplier * self.perp_grad_norm,
+                reference=p.summed_grad,
+                generator=self.generator,
+                secure_mode=self.secure_mode,
+            )
+            p.grad = (p.summed_grad + noise).view_as(p)
+
+            _mark_as_processed(p.summed_grad)
+
+        self.last_grad_noisy = [p.grad/len(p.grad_sample) for p in self.params] # noisy gradients
 
 
 

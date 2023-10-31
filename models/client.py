@@ -13,7 +13,7 @@ from operator import mul
 
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device):
+    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, clip_paral):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -45,6 +45,7 @@ class Client(nn.Module):
         self.is_private = None
         self.global_last_grad = []
         self.device = device
+        self.clip_paral = clip_paral
 
     def download(self, model, global_last_grad):
         self.model = model.to(self.device)
@@ -99,7 +100,7 @@ class Client(nn.Module):
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
             clipping = 'dr_flat_test'
         if self.dp and self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
             clipping = 'dr_dp_flat_test'
         if self.dp and self.DR:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
@@ -128,10 +129,15 @@ class Client(nn.Module):
 
         # global_last_grad
         # if self.DR or self.DRV2 or self.DRtest:
-        if self.DR or self.DRV2 or self.Topk:
+        if self.DR or self.DRV2:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
+        if self.Topk:
+            norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
+            optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
+            optimizer.last_grad_origin = [p/self.batch_size for p in self.global_last_grad] 
         if self.DRtest:
+        # if 0: #暂时不使用全局梯度，而使用局部梯度
         # flat
             # g_list = []
             # if self.global_last_grad == []:
@@ -151,6 +157,7 @@ class Client(nn.Module):
                 # optimizer.last_grad = [p/norm for p in self.global_last_grad] 
                 # optimizer.last_normratio = self.global_last_grad
                 optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
+                optimizer.last_grad_noisy = optimizer.last_grad
             # if self.global_last_grad != []:
                 # optimizer.last_grad = self.global_last_grad
                 # norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
