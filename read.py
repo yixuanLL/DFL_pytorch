@@ -9,6 +9,7 @@ lr = []
 eps=[]
 iid_list = []
 norm = []
+p_norm= []
 rounds = 0
 l=''
 e=''
@@ -24,12 +25,14 @@ for line in file:
         line = line.split('/')
         l = line[-1].split('-')[0]
         n = line[-1].split('-')[-2]
+        p = line[-1].split('-')[-3]
         e = line[-2]
         iid = line[-4]
         lr.append(l)
         eps.append(e)
         iid_list.append(iid)
         norm.append(n)
+        p_norm.append(p)
     rounds_str = 'round '+str(int(rounds))
     if rounds_str in line:
         acc.append(str(round(float(line.split(' ')[7])*100, 2)))
@@ -41,7 +44,7 @@ for line in file:
 # print(acc_r)
 
 i=0
-num_col = len(set(norm))
+num_col = max(len(set(p_norm)), len(set(norm)))
 while i < len(acc):
     res = '\t'.join(acc[i:i+num_col])
     # print(iid_list[i] + '\t' + eps[i]+'\t'+lr[i]+'\t'+res)

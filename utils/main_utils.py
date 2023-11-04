@@ -26,8 +26,8 @@ def save_progress(args, Accuracy_accountant, Budgets_accountant=None, nbytes1=No
                               ('-'+str(args.momentum)),
                               ('-DR' if args.DR else ''),
                               ('-DRtest' if args.DRtest else ''),
-                              ('-Topk' if args.Topk else ''),
-                              ('-sgd' if not args.DR and not args.DRtest and not args.cpl and not args.Topk else ''),
+                              ('-kf' if args.kf else ''),
+                              ('-sgd' if not args.DR and not args.DRtest and not args.cpl and not args.kf else ''),
                               ('-'+str(args.grad_norm)),
                               ('-'+str(args.grad_perp_norm)),
                               ('-'+str(args.global_round)))

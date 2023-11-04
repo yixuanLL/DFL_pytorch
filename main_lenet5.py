@@ -163,6 +163,7 @@ if __name__ == '__main__':
     parser.add_argument('--DRtest', type=bool, default=False)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
+    parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--global_round', type=int, default=200)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')

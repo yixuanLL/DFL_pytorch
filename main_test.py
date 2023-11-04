@@ -78,6 +78,7 @@ def main(args):
                         DRtest=args.DRtest,
                         Topk=args.Topk,
                         cpl=args.cpl,
+                        kfilter=args.kf,
                         rate_dr=args.rate_dr,
                         local_round=args.local_round,
                         grad_norm=args.grad_norm,
@@ -106,7 +107,7 @@ def main(args):
     # communication round
     communication_round = args.global_round // args.local_round
     print('the communication_round is %d' % communication_round)
-
+    log = []
     # start communication
     for r in range(communication_round):   
         # precheck and pick up candidates
@@ -121,11 +122,15 @@ def main(args):
             model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
             # communication cost
             accum_nbytes1 += bytes1 / (1024 * 1024)
-            accum_nbytes2 += bytes2 / (1024 * 1024)
+            accum_nbytes2 = 0
+            # accum_nbytes2 += bytes2 / (1024 * 1024)
             if accum_budget_accountant:
                 max_accum_budget_accountant = max(max_accum_budget_accountant, accum_budget_accountant)
             # aggregate
             server.aggregate(model_state)
+            # log
+            if p_id == 0:
+                log.append(bytes2)
             
             # if args.dp:
             #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
@@ -152,6 +157,7 @@ def main(args):
         else:
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
+    # grad_plot(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -179,6 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
+    parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--clip_paral', type=float, default=0.1, help='parallel alpha bound')
     args = parser.parse_args() 

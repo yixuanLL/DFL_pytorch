@@ -34,7 +34,7 @@ class ClipOptimizer(DPOptimizer):
         self.state = self.original_optimizer.state
         self._step_skip_queue = []
         self._is_last_step_skipped = False
-
+        self.log = []
         for p in self.params:
             p.summed_grad = None
         

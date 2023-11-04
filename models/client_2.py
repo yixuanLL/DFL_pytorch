@@ -48,6 +48,61 @@ class Client(nn.Module):
         self.global_last_grad = []
         self.device = device
         self.clip_paral = clip_paral
+        self.grad_norm_param = self.grad_norm
+        self.clipping = ''
+        self.k_filter = None
+
+        self.noise = 0
+        noise_2 = 0
+        if self.dp:
+            self.noise = self.budget_accountant.noise_multiplier
+            noise_2 = self.budget_accountant.noise_multiplier_2
+        if not self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl and not self.kfilter:
+            self.grad_norm_param = self.grad_norm
+            self.clipping = 'clip_flat'
+        # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
+        if self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl:
+            self.grad_norm_param = self.grad_norm
+            self.clipping = 'flat'
+        if not self.dp and self.DR:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            self.clipping = 'dr_flat'
+        if not self.dp and self.DRtest:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
+            if not self.kfilter:
+                self.clipping = 'dr_flat_test'
+            else:
+                self.clipping = 'drkf_flat_test'
+        if self.dp and self.DRtest:
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
+            if not self.kfilter:
+                self.clipping = 'dr_dp_flat_test'
+            else:
+                self.clipping = 'drkf_dp_flat_test'
+        if self.dp and self.DR:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, noise_2]
+            self.clipping = 'dr_dp_flat'  
+        if self.dp and self.DRV2:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, noise_2]
+            self.clipping = 'dr_dp_flat_v2'                
+        if self.Topk:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, noise_2, self.rate_dr]
+            self.clipping = 'topk_flat'
+        if self.dp and self.cpl:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            self.clipping = 'cpl_dp_flat'    
+        if not self.dp and self.cpl:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            self.clipping = 'cpl_flat'  
+        if not self.dp and self.kfilter:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            self.clipping = 'kfilter_flat' 
+            self.k_filter = KalmanFilter([], (self.grad_norm*0.1)**2, (self.grad_perp_norm*self.noise/self.batch_size)**2)
+        if self.dp and self.kfilter:
+            self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            self.clipping = 'kfilter_dp_flat'   
+            self.k_filter = KalmanFilter([], (self.grad_norm*0.1)**2, (0.1*self.grad_norm*self.noise/self.batch_size)**2)
+
 
     def download(self, model, global_last_grad):
         self.model = model.to(self.device)
@@ -83,62 +138,15 @@ class Client(nn.Module):
         data_batch = TensorDataset(x_batch, y_batch)
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
 
-        noise = 0
-        noise_2 = 0
-        if self.dp:
-            noise = self.budget_accountant.noise_multiplier
-            noise_2 = self.budget_accountant.noise_multiplier_2
-        if not self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl and not self.kfilter:
-            grad_norm = self.grad_norm
-            clipping = 'clip_flat'
-        # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
-        if self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl:
-            grad_norm = self.grad_norm
-            clipping = 'flat'
-        if not self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'dr_flat'
-        if not self.dp and self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
-            if not self.kfilter:
-                clipping = 'dr_flat_test'
-            else:
-                clipping = 'drkf_flat_test'
-        if self.dp and self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
-            if not self.kfilter:
-                clipping = 'dr_dp_flat_test'
-            else:
-                clipping = 'drkf_dp_flat_test'
-        if self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
-            clipping = 'dr_dp_flat'  
-        if self.dp and self.DRV2:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
-            clipping = 'dr_dp_flat_v2'                
-        if self.Topk:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.rate_dr]
-            clipping = 'topk_flat'
-        if self.dp and self.cpl:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'cpl_dp_flat'    
-        if not self.dp and self.cpl:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'cpl_flat'  
-        if not self.dp and self.kfilter:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'kfilter_flat' 
-        if self.dp and self.kfilter:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'kfilter_dp_flat'                               
+                            
         # print('clipping:', clipping)
         privacy_engine = PrivacyEngine(secure_mode=False)
         model, optimizer, train_loader = privacy_engine.make_private(module=model,
                                                                         optimizer=optimizer,
-                                                                        clipping=clipping,
+                                                                        clipping=self.clipping,
                                                                         data_loader=data_loader,
-                                                                        noise_multiplier=noise,
-                                                                        max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
+                                                                        noise_multiplier=self.noise,
+                                                                        max_grad_norm=self.grad_norm_param) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
 
 
         # global_last_grad
@@ -151,23 +159,27 @@ class Client(nn.Module):
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             optimizer.last_grad_origin = [p/self.batch_size for p in self.global_last_grad] 
         if self.DRtest:
+        # layerwise
             if self.global_last_grad != []:
                 last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
                 norm = torch.stack(last_norm).norm(2)
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
+                # optimizer.last_grad = [p/norm for p in self.global_last_grad] 
+                # optimizer.last_normratio = self.global_last_grad
                 optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
                 optimizer.last_grad_noisy = optimizer.last_grad
+            # if self.global_last_grad != []:
+                # optimizer.last_grad = self.global_last_grad
+                # norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
+                # optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             # for KF filter
-            if self.kfilter:
-                if self.dp:
-                    optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_perp_norm*noise/self.batch_size)**2)
-                else:
-                    optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_perp_norm*0.1)**2)
+            self.k_filter.x = optimizer.last_grad
+            optimizer.kfilter = self.k_filter
         if self.kfilter:
             optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
-            # optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_norm*noise/self.batch_size)**2)
-            optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
+            self.k_filter.x = optimizer.last_grad
+            optimizer.kfilter = self.k_filter
  
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
