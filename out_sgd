@@ -1,50 +1,65 @@
-/var/spool/slurmd/job02122/slurm_script: line 30: FLamby: command not found
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --kf=True
-[time] build py time is 15min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --kf=True
-[time] build py time is 14min 47s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --kf=True
-[time] build py time is 14min 53s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --kf=True
-[time] build py time is 14min 52s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --kf=True
-[time] build py time is 14min 50s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --kf=True
-[time] build py time is 15min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 14min 36s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 14min 21s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 14min 19s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 14min 51s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 49s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 30s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 49s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 50s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 44s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 29s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 58s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 46s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 53s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 45s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 38s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 45s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 47s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 15min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.1 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --save_dir=result
+[time] build py time is 0min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.5 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --save_dir=result
+[time] build py time is 0min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.1 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --kf=True
+[time] build py time is 0min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.5 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --kf=True
+[time] build py time is 0min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --dp=True --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.1 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 200, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 138, in main
+    global_model = server.update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 114, in update
+    mean_state = self.__alg.average(self.model, self.global_last_grad)
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in average
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in <listcomp>
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+IndexError: list index out of range
+[time] build py time is 49min 31s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --dp=True --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.5 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --save_dir=result
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 200, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 138, in main
+    global_model = server.update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 114, in update
+    mean_state = self.__alg.average(self.model, self.global_last_grad)
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in average
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in <listcomp>
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+IndexError: list index out of range
+[time] build py time is 49min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --dp=True --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.1 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 200, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 138, in main
+    global_model = server.update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 114, in update
+    mean_state = self.__alg.average(self.model, self.global_last_grad)
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in average
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in <listcomp>
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+IndexError: list index out of range
+[time] build py time is 62min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --dp=True --grad_norm=0.1 --local_round=5 --global_round=500 --lr=0.5 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 200, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 138, in main
+    global_model = server.update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 114, in update
+    mean_state = self.__alg.average(self.model, self.global_last_grad)
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in average
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in <listcomp>
+    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
+IndexError: list index out of range
+[time] build py time is 62min 22s
 [finished]!

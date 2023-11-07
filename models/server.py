@@ -140,5 +140,5 @@ class Server:
                 test_acc += correct.item()
                 test_loss += loss.item()
 
-        print()
+        # print()
         return test_acc / len(self.x_test), test_loss / len(self.y_test)

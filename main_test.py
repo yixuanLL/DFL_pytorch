@@ -9,7 +9,10 @@ import argparse
 import importlib
 from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
+# from models.client_kdp import Client
+# print('__client_kdp__')
 from models.client import Client
+print('__client__')
 from models.server import Server
 from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
@@ -64,7 +67,6 @@ def main(args):
                                                 epsilon=eps, delta=args.delta)
             noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
                                     epsilon=eps_2, delta=args.delta)
-            print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2)) 
             budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2)
                     
         clients.append(Client(x_train=x_train,
@@ -88,7 +90,7 @@ def main(args):
                         budget_accountant=budget_accountant,
                         device=device,
                         clip_paral=args.clip_paral))
-
+    print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2)) 
     # set server
     model_path = '%s.%s' % ('models', args.model)
     mod = importlib.import_module(model_path)
@@ -153,7 +155,7 @@ def main(args):
                 accum_nbytes_list2.append(accum_nbytes2)
                 save_address = save_progress(args, accuracy_accountant, privacy_accountant, accum_nbytes_list1, accum_nbytes_list2)
             else:
-                save_address = save_progress(args, accuracy_accountant, privacy_accountant)
+               save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
         else:
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
@@ -170,7 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('--global_round', type=int, default=100)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=10) 
+    parser.add_argument('--num_clients', type=int, default=100) 
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=0.5)
@@ -178,7 +180,7 @@ if __name__ == '__main__':
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=10)
     parser.add_argument('--grad_perp_norm', type=float, default=0.2)
-    parser.add_argument('--sample_ratio', type=float, default=1.0)
+    parser.add_argument('--sample_ratio', type=float, default=0.2)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--lr', type=float, default=0.2)

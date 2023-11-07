@@ -1,13 +1,481 @@
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --grad_perp_norm=0.2 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --clip_paral=0.05
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --grad_perp_norm=0.2 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --clip_paral=0.05
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --eps=0.3 --grad_perp_norm=0.2 --dp=True --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.05
-[time] build py time is 18min 2s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --eps=0.3 --grad_perp_norm=0.2 --dp=True --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.05
-[time] build py time is 17min 45s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --eps=0.5 --grad_perp_norm=0.2 --dp=True --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.05
-[time] build py time is 17min 25s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --eps=0.5 --grad_perp_norm=0.2 --dp=True --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.05
-[time] build py time is 17min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 32s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 33s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 35s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 30s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 34s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 34s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 32s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 34s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 31s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 33s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 35s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 124, in main
+    model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+  File "/home/yliu270/workspace/DFL_pytorch/models/client.py", line 194, in local_update
+    logs.append(copy.deepcopy(optimizer.log))
+AttributeError: 'DrOptimizertest' object has no attribute 'log'
+[time] build py time is 0min 30s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 52s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 52s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 52s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 54s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 2min 2s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 57s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 54s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 49s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 57s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=5 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 45s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 47s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 52s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 2min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 52s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 49s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=9 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 52s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 51s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 2min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 59s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 57s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 2min 2s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 53s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 2min 2s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 1min 53s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=15 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --save_dir=result --clip_p=0.001
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 203, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 162, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 13, in grad_plot
+    c, n, e = log[i][j]
+ValueError: not enough values to unpack (expected 3, got 0)
+[time] build py time is 2min 6s
 [finished]!

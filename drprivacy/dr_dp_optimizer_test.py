@@ -278,7 +278,7 @@ class DrDPOptimizertest_clean(DrDPOptimizertest_bak): #decompose based on clean 
         self.last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
         return g_perp        
 '''         
-class DrDPOptimizertest_kf(DrDPOptimizertest): # add KF filter
+class DrKFDPOptimizertest(DrDPOptimizertest): # add KF filter
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -292,6 +292,7 @@ class DrDPOptimizertest_kf(DrDPOptimizertest): # add KF filter
         # super(DPOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
         # print('===Dr DP test===')
         self.original_optimizer = optimizer
+        
         self.noise_multiplier = noise_multiplier
         self.loss_reduction = loss_reduction
         self.expected_batch_size = expected_batch_size
@@ -405,4 +406,3 @@ class DrDPOptimizertest_kf(DrDPOptimizertest): # add KF filter
         self.last_grad = [torch.mean(g, dim=0) for g in self.grad_samples]
         self.last_grad_noisy = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
         return g_perp             
-'''

@@ -5,5 +5,5 @@
 #SBATCH --mem=1GB
 
 
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.3 --grad_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --dp=True --grad_norm=1 --local_round=5 --global_round=500 --lr=0.05 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --kf=True
 

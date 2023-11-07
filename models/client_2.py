@@ -61,7 +61,7 @@ class Client(nn.Module):
             self.grad_norm_param = self.grad_norm
             self.clipping = 'clip_flat'
         # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
-        if self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl:
+        if self.dp and not self.DR and not self.DRV2 and not self.kfilter and not self.cpl:
             self.grad_norm_param = self.grad_norm
             self.clipping = 'flat'
         if not self.dp and self.DR:
@@ -97,13 +97,13 @@ class Client(nn.Module):
         if not self.dp and self.kfilter:
             self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             self.clipping = 'kfilter_flat' 
-            self.k_filter = KalmanFilter([], (self.grad_norm*0.1)**2, (self.grad_perp_norm*self.noise/self.batch_size)**2)
+            self.k_filter = KalmanFilter([], (self.grad_norm*0.1)**2, (self.grad_perp_norm/self.batch_size)**2)
         if self.dp and self.kfilter:
             self.grad_norm_param = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             self.clipping = 'kfilter_dp_flat'   
-            self.k_filter = KalmanFilter([], (self.grad_norm*0.1)**2, (0.1*self.grad_norm*self.noise/self.batch_size)**2)
-
-
+            # self.k_filter = KalmanFilter([], (self.grad_norm*0.1)**2, (0.1*self.grad_norm*self.noise/self.batch_size)**2)
+            self.k_filter = KalmanFilter([], (self.grad_norm*self.noise)**2, (self.grad_norm*self.noise*0.1)**2) #kf-ref
+            
     def download(self, model, global_last_grad):
         self.model = model.to(self.device)
         self.global_last_grad = [g.to(self.device) for g in global_last_grad]

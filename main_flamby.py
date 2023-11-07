@@ -9,7 +9,11 @@ import argparse
 import importlib
 from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
+# from models.client_kdp import Client
+# print('__client_kdp__')
 from models.client import Client
+print('__client__')
+
 from models.server import Server
 from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
@@ -159,7 +163,7 @@ def main(args):
         else:
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
-    grad_plot(log)
+    # grad_plot(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

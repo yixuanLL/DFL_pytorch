@@ -25,8 +25,8 @@ class KalmanFilter():
     def predict(self):
         self.x_ = self.x
         self.P_ = self.P + self.Q
-        self.Q *= 0.6 # adaptive var
-        self.R *= 0.6 # adaptive var
+        # self.Q *= 0.6 # adaptive var
+        # self.R *= 0.6 # adaptive var
         return
 
     def correct(self, z):

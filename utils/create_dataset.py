@@ -76,8 +76,8 @@ def check_labels(N, client_set, y_train):
         labels_count = [0]*10
         for label in np.array(y_train)[idx]:
             labels_count[int(label)] += 1
-        print('cid: {}, number of labels: {}/10.'.format(cid, len(labels_set[cid])))
-        print(labels_count)
+        # print('cid: {}, number of labels: {}/10.'.format(cid, len(labels_set[cid])))
+        # print(labels_count)
     print()
 
 
