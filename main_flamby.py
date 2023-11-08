@@ -18,7 +18,7 @@ from models.server import Server
 from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
-from utils.grad_plot import grad_plot
+from utils.grad_plot import grad_plot, grad_var, grad_var_t
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] ='0,1,2'
 MODEL_PARAMS={
@@ -137,6 +137,9 @@ def main(args):
             # log
             if p_id == 0:
                 log.append(bytes2)
+            # if p_id not in clog:
+            #     clog[p_id] = []
+            # clog[p_id].append(bytes2)
             
             # if args.dp:
             #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
@@ -164,6 +167,8 @@ def main(args):
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
     # grad_plot(log)
+    # grad_var(log)
+    grad_var_t(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

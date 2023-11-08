@@ -18,6 +18,7 @@ from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
+from utils.grad_plot import grad_plot, grad_var, grad_var_t
 # os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_PARAMS={
@@ -160,6 +161,8 @@ def main(args):
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
     # grad_plot(log)
+    # grad_var(log)
+    grad_var_t(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -172,7 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--global_round', type=int, default=100)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=100) 
+    parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=0.5)

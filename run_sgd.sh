@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=sgd_kdp
-#SBATCH --output=out_sgd_kdp
+#SBATCH --job-name=sgd
+#SBATCH --output=out_sgd
 #SBATCH --gres=gpu:2
 #SBATCH --mem=1GB
 cur_path=`pwd`
@@ -16,7 +16,7 @@ fi
 if [ ! -f "$logfile" ]; then
  touch "$logfile"
 fi
-
+source /home/yliu270/anaconda3/bin/activate flamby
 
 #MNIST
 # seed=(0)
@@ -30,8 +30,8 @@ fi
 # tmp
 seed=(0)
 momentum=(0.0)
-lr=(0.05)
-g_norm=(0.1)
+lr=(0.1)
+g_norm=(0.2)
 eps=(1)
 iidflag=("--save_dir=result")
 kf=("--save_dir=result") 
@@ -65,16 +65,13 @@ do
             for gn in ${g_norm[@]}
             do
                 # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
-                # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
-                # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";
-                
-                py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=5 --global_round=500 --lr=${l} --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 ${k}";
-                
+                py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
+                # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
-                echo "FedSVG without DP, but with clip"
+                echo "FedSVG without DP, but with clip">>$logfile
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                output=`${py_req}`;
+                # output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -105,13 +102,10 @@ do
                 do
                     # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
                     # py_req="python ${cur_path}/main.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --momentum=${m}  --dataset=CIFAR10 --model=lenet5 ";
-                    # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
+                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
-                    
-                    py_req="python ${cur_path}/main_test.py --dp=True --grad_norm=${gn} --local_round=5 --global_round=500 --lr=${l} --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 ${k}";
-
                     echo "${py_req}"
-                    echo "KDP: filter after each local update"
+                    echo "KDP: filter after each local update">>$logfile
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)
                     output=`${py_req}`;

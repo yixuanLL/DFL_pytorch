@@ -166,8 +166,8 @@ class Client(nn.Module):
                     optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_perp_norm*0.1)**2)
         if self.kfilter:
             optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
-            # optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
-            optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*noise)**2, (self.grad_norm*noise*0.1)**2)
+            optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
+            # optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*noise)**2, (self.grad_norm*noise*0.1)**2)
  
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
