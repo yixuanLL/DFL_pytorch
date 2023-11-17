@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 import torch
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def grad_plot(log):
     global_round = len(log)
     clean = []
@@ -76,38 +76,49 @@ def grad_var_t(log): #variance of certain dimension along time step (var of T gr
     plt.close()
 
 def grad_flat(param):
-    vec = torch.tensor([])
+    vec = torch.tensor([]).to(device)
     for p in param:
         vec = torch.cat((vec, p.reshape(-1)))
     return vec
 
 def grad_var(log): #variance of certain dimension along time step (var of t-1 gradients)
+    plt.switch_backend('agg')
     global_round = len(log)
     clean = []
     noisy = []
     estimate = []
     rounds = 0
+    clean_l = [[] for i in range(len(log[0][0][0]))]
+    color= ['r', 'g', 'b', 'y', 'tomato', 'yellowgreen', 'silver', 'violet']
     for i in range(global_round):
         local_round = len(log[i])
         for j in range(local_round):
             c, n, e = log[i][j] # parameters of a whole model
-            clean.append(grad_flat(c))
-            noisy.append(grad_flat(n))
-            estimate.append(grad_flat(e))
+            # clean.append(grad_flat(c))
+            # noisy.append(grad_flat(n))
+            # estimate.append(grad_flat(e))
             rounds += 1 
+            for l in range(len(c)):
+                # print(c[l].reshape(-1))
+                clean_l[l].append(c[l].reshape(-1))
+    print(clean_l)
+    for k in range(len(clean_l)):
+        cl = torch.var(torch.stack(clean_l[k], dim=0), dim=0)
+        dim_num = len(cl)
+        plt.plot(range(dim_num), cl, color=color[k], label=str(k))
 
-    clean = torch.var(torch.stack(clean, dim=0), dim=0)
-    noisy =  torch.var(torch.stack(noisy, dim=0), dim=0)
-    estimate = torch.var(torch.stack(estimate, dim=0), dim=0)
-    dim_num = len(clean)
+    # clean = torch.var(torch.stack(clean, dim=0), dim=0)
+    # noisy =  torch.var(torch.stack(noisy, dim=0), dim=0)
+    # estimate = torch.var(torch.stack(estimate, dim=0), dim=0)
+    # dim_num = len(clean)
 
-    plt.switch_backend('agg')
-    r = range(rounds)
-    d = range(dim_num)
+    # plt.switch_backend('agg')
+    # r = range(rounds)
+    # d = range(dim_num)
 
-    plt.bar(d, noisy, color='yellowgreen', label='noisy grad', alpha=0.46)
-    plt.bar(d, estimate, color='gold', label='estimate grad', alpha=0.6)
-    plt.bar(d, clean, color='skyblue', label='clean grad', alpha=0.6)
+    # plt.bar(d, noisy, color='yellowgreen', label='noisy grad', alpha=0.46)
+    # plt.bar(d, estimate, color='gold', label='estimate grad', alpha=0.6)
+    # plt.bar(d, clean, color='skyblue', label='clean grad')
     # plt.hist(clean, bins=10, color='skyblue', alpha=0.6, label='clean grad')
 
 
@@ -127,8 +138,8 @@ def grad_var_t(log): #variance of certain dimension along time step
     noisy = []
     estimate = []
     rounds = 0
-    # noise_var = (26.352314 * 0.1 / 4.0)**2
-    noise_var =(11.785113* 0.1 / 4.0)**2
+    noise_var = (26.352314 * 0.1 / 4.0)**2
+    # noise_var =(11.785113* 0.1 / 4.0)**2
     for i in range(global_round):
         local_round = len(log[i])
         for j in range(local_round):
@@ -162,7 +173,7 @@ def grad_var_t(log): #variance of certain dimension along time step
     plt.plot(r, noisy[:,27], color='yellowgreen', label='noisy grad dim27', marker='s')
     plt.plot(r, clean[:,27], color='skyblue', label='clean grad dim27')
     plt.plot(r, (noisy-noise_var)[:,27], color='gold', label='noisy-noise var dim27')
-    plt.plot(r, (clean+noise_var)[:,27], color='silver', label='noise+noise var dim27')
+    plt.plot(r, (clean+noise_var)[:,27], color='silver', label='clean+noise var dim27')
     plt.plot(r, estimate[:,27], color='lightsalmon', label='estimate grad dim27')
     plt.plot(r, noise[:,27], color='violet', label='noise dim27')
     plt.ylabel('Gradients Var along Time')
@@ -175,11 +186,12 @@ def grad_var_t(log): #variance of certain dimension along time step
     plt.savefig(root_path+'grad_var_t_dim27.png', dpi=600)
     plt.close()
 
-    plt.plot(r, noisy[:,0], color='darkolivegreen', label='noisy grad dim0', alpha=0.6)
-    plt.plot(r, clean[:,0], color='dodgerblue', label='clean grad dim0', alpha=0.6)
-    plt.plot(r, clean_estimate[:,0], color='orange', label='noisy-clean var dim0', alpha=0.6)
-    plt.plot(r, estimate[:,0], color='tomato', label='estimate grad dim0', alpha=0.6)
-
+    plt.plot(r, noisy[:,0], color='yellowgreen', label='noisy grad dim0', marker='s')
+    plt.plot(r, clean[:,0], color='skyblue', label='clean grad dim0')
+    plt.plot(r, (noisy-noise_var)[:,0], color='gold', label='noisy-noise var dim0')
+    plt.plot(r, (clean+noise_var)[:,0], color='silver', label='clean+noise var dim0')
+    plt.plot(r, estimate[:,0], color='lightsalmon', label='estimate grad dim0')
+    plt.plot(r, noise[:, 0], color='violet', label='real noise dim0')
 
 
     # plt.hist(clean, bins=10, color='skyblue', alpha=0.6, label='clean grad')

@@ -140,15 +140,14 @@ def main(args):
             #           % ((participant+1), args.delta, clients[participant].budget_accountant.epsilon, clients[participant].budget_accountant.accum_bgts))
         # load average weight
         global_model = server.update()
-        # if args.FLalg == 'FedDrAvg':
         # for global_last_grad
         server.global_last_grad = [(p1.data-p2.data).to(device) for p1,p2 in zip(global_model.parameters(), last_parameters)]
-
+  
         # test
         test_accuracy, test_loss = server.test(global_model)
         accuracy_accountant.append(test_accuracy)
         print_accuracy_and_loss(r, test_accuracy, test_loss)
-
+        '''
         if args.dp:
             privacy_accountant.append(max_accum_budget_accountant)
             if args.DR:
@@ -159,10 +158,13 @@ def main(args):
                save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
         else:
             save_address = save_progress(args, accuracy_accountant)
-    print(save_address)
-    # grad_plot(log)
+        '''
+        if r > 3:
+            break
+    # print(save_address)
+    grad_plot(log)
     # grad_var(log)
-    grad_var_t(log)
+    # grad_var_t(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -183,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=10)
     parser.add_argument('--grad_perp_norm', type=float, default=0.2)
-    parser.add_argument('--sample_ratio', type=float, default=0.2)
+    parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--lr', type=float, default=0.2)

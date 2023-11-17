@@ -37,6 +37,36 @@ class KalmanFilter():
         # print(self.P)
         return self.x
 
+
+
+class KalmanFilterLayer():
+    def __init__(self, x0, Q, R):
+        self.x = x0
+        self.x_ = x0
+        self.Q = Q
+        self.R = R
+        self.K = 0
+        self.layer_num = len(self.Q)
+        self.P = [0] * self.layer_num
+        self.P_ = [0] * self.layer_num
+        self.K = [0] * self.layer_num
+
+    def predict(self):
+        self.x_ = self.x
+        for i in range(self.layer_num):
+            self.P_[i] = self.P[i] + self.Q[i]
+        # self.Q *= 0.6 # adaptive var
+        # self.R *= 0.6 # adaptive var
+        return
+
+    def correct(self, z):
+        for i in range(self.layer_num):
+            self.K[i] = self.P_[i] / (self.P_[i] + self.R[i])
+            self.x[i] = self.x_[i] + self.K[i] * (z[i] - self.x_[i])
+            self.P[i] = (1-self.K[i]) * self.P_[i] #what if P is more smoothing?
+            # print(self.P)
+        return self.x
+    
 # sigma = 3
 # Q = 2
 # R = sigma ** 2

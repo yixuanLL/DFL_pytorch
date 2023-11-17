@@ -166,9 +166,9 @@ def main(args):
         else:
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
-    # grad_plot(log)
+    grad_plot(log)
     # grad_var(log)
-    grad_var_t(log)
+    # grad_var_t(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

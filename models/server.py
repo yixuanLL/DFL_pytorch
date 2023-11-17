@@ -35,6 +35,7 @@ class FedAvg:
 
     def average(self, global_model=None, global_last_grad=None):
         a = self.__model_state
+        # print('a:',a)
         mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
         self.__model_state = []
         return mean_updates

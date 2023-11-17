@@ -28,21 +28,22 @@ source /home/yliu270/anaconda3/bin/activate flamby
 # kf=("--kf=True")
 
 # tmp
-seed=(0)
-momentum=(0.0)
-lr=(0.1)
-g_norm=(0.2)
-eps=(1)
-iidflag=("--save_dir=result")
-kf=("--save_dir=result") 
+# seed=(0)
+# momentum=(0.0)
+# lr=(0.1)
+# g_norm=(0.2)
+# eps=(1)
+# iidflag=("--save_dir=result")
+# kf=("--save_dir=result") 
 
 # FLamby
-# seed=(0 5 9 15)
-# lr=(0.1 0.5)
-# g_norm=(0.05 0.1 0.2)
+seed=(0) # 5 9 15)
+lr=(0.1 0.5)
+g_norm=(0.05 0.1 0.2)
 # eps=(0.3 0.5 1)
-# kf=("--kf=True")
-# iidflag=("--save_dir=result" "--noniid=True")
+eps=(0.5)
+kf=("--kf=True") # "--save_dir=result")
+iidflag=("--save_dir=result" "--noniid=True")
 
 #CIFAR10
 # seed=(0)
@@ -65,7 +66,7 @@ do
             for gn in ${g_norm[@]}
             do
                 # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
-                py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
+                # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
                 echo "FedSVG without DP, but with clip">>$logfile
@@ -102,10 +103,10 @@ do
                 do
                     # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
                     # py_req="python ${cur_path}/main.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --momentum=${m}  --dataset=CIFAR10 --model=lenet5 ";
-                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
-                    # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
+                    # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
+                    py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
-                    echo "KDP: filter after each local update">>$logfile
+                    echo "KDP: layerwise filter after each local update">>$logfile
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)
                     output=`${py_req}`;

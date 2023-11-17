@@ -1,17 +1,73 @@
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --save_dir=result
+
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
+
+[time] build py time is 0min 0s
+
+[time] build py time is 0min 0s
+
+[time] build py time is 0min 0s
+
+[time] build py time is 0min 0s
+
+[time] build py time is 0min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.5 --grad_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
 Traceback (most recent call last):
-  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 206, in <module>
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 212, in <module>
     main(args)
-  File "/home/yliu270/workspace/DFL_pytorch/main_test.py", line 142, in main
-    global_model = server.update()
-  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 114, in update
-    mean_state = self.__alg.average(self.model, self.global_last_grad)
-  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in average
-    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
-  File "/home/yliu270/workspace/DFL_pytorch/models/server.py", line 38, in <listcomp>
-    mean_updates = [torch.mean(self.__model_state[i].type(torch.float), 0).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
-IndexError: list index out of range
-[time] build py time is 4min 19s
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    grad_var_t(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 170, in grad_var_t
+    plt.plot(r, noisy[:,27], color='yellowgreen', label='noisy grad dim27', marker='s')
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/pyplot.py", line 2812, in plot
+    return gca().plot(
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/axes/_axes.py", line 1690, in plot
+    self.add_line(line)
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/axes/_base.py", line 2304, in add_line
+    self._update_line_limits(line)
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/axes/_base.py", line 2327, in _update_line_limits
+    path = line.get_path()
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/lines.py", line 1028, in get_path
+    self.recache()
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/lines.py", line 664, in recache
+    y = _to_unmasked_float_array(yconv).ravel()
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/cbook/__init__.py", line 1345, in _to_unmasked_float_array
+    return np.asarray(x, float)
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/torch/_tensor.py", line 1032, in __array__
+    return self.numpy().astype(dtype, copy=False)
+TypeError: can't convert cuda:0 device type tensor to numpy. Use Tensor.cpu() to copy the tensor to host memory first.
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.5 --grad_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 212, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    # grad_var_t(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 170, in grad_var_t
+    
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/pyplot.py", line 2812, in plot
+    return gca().plot(
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/axes/_axes.py", line 1690, in plot
+    self.add_line(line)
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/axes/_base.py", line 2304, in add_line
+    self._update_line_limits(line)
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/axes/_base.py", line 2327, in _update_line_limits
+    path = line.get_path()
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/lines.py", line 1028, in get_path
+    self.recache()
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/lines.py", line 664, in recache
+    y = _to_unmasked_float_array(yconv).ravel()
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/matplotlib/cbook/__init__.py", line 1345, in _to_unmasked_float_array
+    return np.asarray(x, float)
+  File "/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/torch/_tensor.py", line 1032, in __array__
+    return self.numpy().astype(dtype, copy=False)
+TypeError: can't convert cuda:0 device type tensor to numpy. Use Tensor.cpu() to copy the tensor to host memory first.
+[time] build py time is 2min 5s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.5 --grad_norm=0.2 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
+[time] build py time is 1min 47s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.5 --grad_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
+[time] build py time is 1min 50s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.5 --grad_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
+[time] build py time is 1min 38s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --dp=True --eps=0.5 --grad_norm=0.2 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2  --dataset=FLamby --model=mclr --kf=True
+[time] build py time is 1min 36s
 [finished]!
