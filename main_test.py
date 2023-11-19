@@ -18,7 +18,7 @@ from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
-from utils.grad_plot import grad_plot, grad_var, grad_var_t
+from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t
 # os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_PARAMS={
@@ -111,6 +111,7 @@ def main(args):
     communication_round = args.global_round // args.local_round
     print('the communication_round is %d' % communication_round)
     log = []
+    loss = []
     # start communication
     for r in range(communication_round):   
         # precheck and pick up candidates
@@ -133,7 +134,8 @@ def main(args):
             server.aggregate(model_state)
             # log
             if p_id == 0:
-                log.append(bytes2)
+                log.append(bytes2[0])
+                loss.append(bytes2[1])
             
             # if args.dp:
             #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
@@ -159,10 +161,12 @@ def main(args):
         else:
             save_address = save_progress(args, accuracy_accountant)
         '''
-        if r > 3:
-            break
+        # if r > 3:
+        #     break
     # print(save_address)
-    grad_plot(log)
+    # grad_plot(log)
+    # grad_plot_t(log)
+    # loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
 
@@ -177,10 +181,10 @@ if __name__ == '__main__':
     parser.add_argument('--global_round', type=int, default=100)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=10) 
+    parser.add_argument('--num_clients', type=int, default=2) 
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=0.5)
+    parser.add_argument('--eps', type=float, default=1)
     parser.add_argument('--eps_2', type=float, default=0.02)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=10)
@@ -194,7 +198,7 @@ if __name__ == '__main__':
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=0.1, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=0.01, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

@@ -350,11 +350,11 @@ class DrKFDPOptimizertest(DrDPOptimizertest): # add KF filter
         else:        
             if self.log == []:
                 self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad_noisy, self.last_grad_noisy] # clean, noisy, estimate
-            self.KFpredict()
+            # self.KFpredict()
             self.dr_process()
             self.add_noise()
             self.log[0:2] = [self.last_grad, self.last_grad_noisy]
-            self.KFcorrect()
+            # self.KFcorrect()
 
         self.scale_grad()
 

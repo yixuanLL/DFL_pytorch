@@ -10,34 +10,34 @@ import numpy as np
 from flamby.datasets.fed_heart_disease import HeartDiseaseRaw, FedHeartDisease
 
 
-def loader(name, noniid):
 
+def loader(name, noniid):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if name == 'MNIST':
         train_dataloader = datasets.MNIST(root='~/data', train=True, download=False, transform=transforms.ToTensor())
-        x_train = train_dataloader.data.float().unsqueeze(1)
-        y_train = train_dataloader.targets
-
+        x_train = train_dataloader.data.float().unsqueeze(1).to(device)
+        y_train = train_dataloader.targets.to(device)
+        # normalize manually, as "transform.totensor" does not work well
+        me = 0.1307
+        std = 0.3081
         indices_train = torch.argsort(y_train)
-        sorted_x_train = x_train[indices_train]
-        sorted_y_train = y_train[indices_train]
+        sorted_x_train = (x_train[indices_train] / 255. - me) / std
 
+        sorted_y_train = y_train[indices_train]
         test_dataloader = datasets.MNIST(root='~/data', train=False, download=False, transform=transforms.ToTensor())
-        x_test = test_dataloader.data.float().unsqueeze(1)
-        y_test = test_dataloader.targets
+        x_test = (test_dataloader.data.float().unsqueeze(1).to(device) / 255. - me) / std
+        y_test = test_dataloader.targets.to(device)
+        return None, None, None, None
 
     if name == 'CIFAR10':
-    # if name == 'FLamby':
         transform = transforms.Compose(
             [transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         train_dataloader = datasets.CIFAR10(root='~/data', train=True, download=False, transform=transform)
         train_data = torch.utils.data.DataLoader(train_dataloader, batch_size=50000, shuffle=False, num_workers=0)
         x_train, y_train  = next(iter(train_data))
-        # x_train = torch.tensor(train_dataloader.data)
-        # y_train = torch.tensor(train_dataloader.targets)
         
         indices_train = torch.argsort(y_train)
-        # indices_train = [i for (v, i) in sorted((v, i) for (i, v) in enumerate(y_train))]
         sorted_x_train = x_train[indices_train]
         sorted_y_train = y_train[indices_train]
 
@@ -50,6 +50,14 @@ def loader(name, noniid):
             traindata_pooled = FedHeartDisease(train=True, pooled=True)
             train_data = torch.utils.data.DataLoader(traindata_pooled, batch_size=486, shuffle=False, num_workers=0)
             x_train, y_train  = next(iter(train_data))
+            # normalize & standarlize
+            # mi = torch.min(x_train)
+            # ma = torch.max(x_train)
+            # x_train = (x_train - mi) / (ma-mi)
+            # mu = torch.mean(x_train)
+            # std = torch.std(x_train)
+            # x_train = (x_train - mu) / std
+
             y_train = y_train.reshape(486,).to(torch.int64)
             indices_train = torch.argsort(y_train)
             sorted_x_train = x_train[indices_train]
@@ -103,3 +111,4 @@ def loader(name, noniid):
 
 
     return sorted_x_train, sorted_y_train, x_test, y_test
+'''

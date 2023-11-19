@@ -85,7 +85,8 @@ class Client(nn.Module):
 
         data_batch = TensorDataset(x_batch, y_batch)
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
-
+        seed = 0
+        torch.manual_seed(seed)
         noise = 0
         noise_2 = 0
         if self.dp:
@@ -207,13 +208,14 @@ class Client(nn.Module):
  
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
+        losses = []
         
         # train
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
             for x_train, y_train in data_loader:
-                x_train, y_train = x_train.to(self.device), y_train.to(self.device)
+                # x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
                 y_pred = model(x_train)
                 loss = criterion(y_pred, y_train)
@@ -228,9 +230,9 @@ class Client(nn.Module):
                 train_acc += correct.item()
                 train_loss += loss.item()
 
-                logs.append(copy.deepcopy(optimizer.log))
-                self.longlogs.append(copy.deepcopy(optimizer.log))
-
+                # logs.append(copy.deepcopy(optimizer.log))
+                # self.longlogs.append(copy.deepcopy(optimizer.log))
+            losses.append(copy.deepcopy(train_loss)/self.dataset_size)
             # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
         if self.kfilter:
             # var of noisy gradients
@@ -256,7 +258,7 @@ class Client(nn.Module):
         Bytes1 = num_parameter1 * 4
         # print('num parameters: %d, Bytes: %d, M: %.8f' % (num_parameter1, Bytes1, Bytes1/(1024**2)))
 
-        Bytes2 = logs
+        Bytes2 = (logs, losses)
 
         # update the budget accountant
         accum_budget_accountant = self.budget_accountant.update(self.local_round) if self.budget_accountant else None

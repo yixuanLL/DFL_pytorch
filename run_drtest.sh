@@ -19,22 +19,22 @@ fi
 
 
 # # MNIST
-# seed=(0)
-# momentum=(0.0)
-# lr=(0.1 0.2)
-# g_p_norm=(0.2 0.5 1)
-# eps=(0.3 0.5 1)
-# kf=("--kf=True")
-# iidflag=("--save_dir=result")
+seed=(0)
+momentum=(0.0)
+lr=(0.1 0.2)
+g_p_norm=(0.2 0.5 1)
+eps=(0.5 3)
+kf=("--kf=True")
+iidflag=("--save_dir=result")
 
 
 #FLamby
-seed=(0) #5 9 15)
-lr=(0.1 0.5)
-g_p_norm=(0.05 0.1)
-eps=(0.3 0.5 1)
-kf=("--kf=True")
-iidflag=("--save_dir=result") # "--noniid=True")
+# seed=(0) #5 9 15)
+# lr=(0.1 0.5)
+# g_p_norm=(0.05 0.1)
+# eps=(0.3 0.5 1)
+# kf=("--kf=True")
+# iidflag=("--save_dir=result") # "--noniid=True")
 
 #CIFAR10
 # seed=(0)

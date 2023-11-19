@@ -2,27 +2,55 @@
 import matplotlib.pyplot as plt
 import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def loss_plot(losses):
+    global_round = len(losses)
+    loss = []
+    rounds = 0
+    for i in range(global_round):
+        local_round = len(losses[i])
+        for j in range(local_round):
+            loss.append(losses[i][j])
+            rounds += 1
+    plt.switch_backend('agg')
+    r = range(rounds)
+    plt.plot(r, loss, 'skyblue', label='loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Rounds')
+    plt.legend(loc='lower right', fontsize=8)
+
+    plt.show()
+    root_path = '/home/yliu270/workspace/DFL_pytorch/'
+    plt.savefig(root_path+'loss.png', dpi=600)
+    plt.close()
+
 def grad_plot(log):
     global_round = len(log)
+    norm = []
     clean = []
-    clean27 = []
+    clean1 = []
     noisy = []
     estimate = []
     rounds = 0
     for i in range(global_round):
         local_round = len(log[i])
         for j in range(local_round):
+            # only print the certain batch of each local round
+            if j%(local_round/2) != 0:
+                continue
             c, n, e = log[i][j]
             clean.append(c[0].reshape(-1)[0])
-            clean27.append(c[1].reshape(-1)[0])
+            clean1.append(c[1].reshape(-1)[0])
+            norm.append(torch.norm(grad_flat(c), dim=0))
             # noisy.append(n[0].reshape(-1)[0])
             # estimate.append(e[0].reshape(-1)[0])
             rounds += 1 
 
+
     plt.switch_backend('agg')
     r = range(rounds)
-    plt.plot(r, clean27, 'skyblue', label='clean grad, dim27')
-    plt.plot(r, clean, 'yellowgreen', label='clean grad, dim0')
+    plt.plot(r, clean, 'skyblue', label='clean grad, layer1')
+    plt.plot(r, clean1, 'yellowgreen', label='clean grad, layer2')
 
     # plt.plot(r, noisy, 'g', label='noisy grad')
     # plt.plot(r, estimate, 'c', label='estimate grad')
@@ -36,6 +64,70 @@ def grad_plot(log):
     root_path = '/home/yliu270/workspace/DFL_pytorch/'
     plt.savefig(root_path+'grad.png', dpi=600)
     plt.close()
+
+    plt.plot(r, norm, 'skyblue', label='grad norm')
+    plt.ylabel('Gradients Norm')
+    plt.xlabel('Rounds')
+    plt.legend(loc='lower right', fontsize=8)
+
+    plt.show()
+    root_path = '/home/yliu270/workspace/DFL_pytorch/'
+    plt.savefig(root_path+'norm.png', dpi=600)
+    plt.close()
+
+def grad_plot_t(log):
+    global_round = len(log)
+    clean = []
+    clean1 = []
+    clean_all = []
+    clean1_all = []
+    clean_window  = [0]
+    clean1_window = [0]
+    noisy = []
+    estimate = []
+    rounds = 0
+    local_round = 0
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            c, n, e = log[i][j]
+            # only print the certain batch of each local round
+            if j%(local_round/2) == 0:
+                clean.append(c[0].reshape(-1)[0])
+                clean1.append(c[1].reshape(-1)[0])
+                rounds += 1 
+                clean_all.append(c[0].reshape(-1)[0])
+                clean1_all.append(c[1].reshape(-1)[0])
+            # noisy.append(n[0].reshape(-1)[0])
+            # estimate.append(e[0].reshape(-1)[0])
+    T = 10
+
+    for i in range(1, len(clean_all)):
+        start = max(0, i-T)
+        clean_window.append(torch.mean(torch.stack(clean_all[start:i], dim=0), dim=0))
+        clean1_window.append(torch.mean(torch.stack(clean1_all[start:i], dim=0), dim=0))
+
+    plt.switch_backend('agg')
+    r = range(int(len(clean_all)/rounds)-1,len(clean_all), int(len(clean_all)/rounds))
+    rs = range(len(clean_all))
+    plt.plot(r, clean, 'skyblue', label='clean grad, layer1')
+    plt.plot(r, clean1, 'yellowgreen', label='clean grad, layer2')
+    plt.plot(rs, clean_window, 'blue', label='clean grad accumulative, layer1')
+    plt.plot(rs, clean1_window, 'olive', label='clean grad accumulative, layer2')
+
+    # plt.plot(r, noisy, 'g', label='noisy grad')
+    # plt.plot(r, estimate, 'c', label='estimate grad')
+
+    plt.ylabel('Gradients')
+    plt.xlabel('Rounds')
+    plt.legend(loc='lower right', fontsize=8)
+
+    # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+    plt.show()
+    root_path = '/home/yliu270/workspace/DFL_pytorch/'
+    plt.savefig(root_path+'grad_accum.png', dpi=600)
+    plt.close()
+
 
 def grad_var_t(log): #variance of certain dimension along time step (var of T gradients)
     global_round = len(log)

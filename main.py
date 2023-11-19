@@ -9,183 +9,85 @@ import argparse
 import importlib
 from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
-from models.client import Client
-from models.server import Server
-from utils.dpsgd_utils import compute_noise_multiplier
-from utils.budgets_accountant import BudgetsAccountant
-from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
-import os
-os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+# from models.client_kdp import Client
+# print('__client_kdp__')
+# from models.client import Client
+# print('__client__')
+# from models.server import Server
+# from utils.dpsgd_utils import compute_noise_multiplier
+# from utils.budgets_accountant import BudgetsAccountant
+# from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
+# import os
+# from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t
+
+
+from torchvision import datasets, transforms
+# os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MODEL_PARAMS={
     'MNIST': (784,10),
     'CIFAR10': (3*32*32,10),
     'FLamby': (13,2)
 }
 
-def main(args):
+def main():
     accuracy_accountant = []
-    privacy_accountant = []
-    accum_nbytes_list1 = []
-    accum_nbytes_list2 = []
-    accum_nbytes1 = 0
-    accum_nbytes2 = 0
-    max_accum_budget_accountant = 0
-    save_address = ''
+    # privacy_accountant = []
+    # accum_nbytes_list1 = []
+    # accum_nbytes_list2 = []
+    # accum_nbytes1 = 0
+    # accum_nbytes2 = 0
+    # max_accum_budget_accountant = 0
+    # save_address = ''
     # set seed
-    setup_seed(args.seed)
+    # setup_seed(args.seed)
     # prepare local dataset
-    x_train, y_train, x_test, y_test = loader(args.dataset, args.noniid)
-    dataset, args.num_clients = prepare_local_dataset(args.noniid, args.num_clients, y_train, args.seed, args.dataset)
-
-    # set noise multiplier
-    budget_accountant = None
-    noise_multiplier_2 = 0
-    if args.dp and not args.DR:
-        noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]),
-                                                    local_batch_size=args.batch_size,
-                                                    T=args.global_round * args.sample_ratio,
-                                                    epsilon=args.eps,
-                                                    delta=args.delta)
-        print('client noise multiplier is %f' % (noise_multiplier))
-    if args.dp and args.DR:
-        eps2 = 0.2
-        noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                            epsilon=args.eps - 2 * eps2, delta=args.delta)
-        noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                epsilon=eps2, delta=args.delta)
-        print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2))
-    if args.dp and args.DRV2:
-        noise_multiplier = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                            epsilon=args.eps - 0.05, delta=args.delta)
-        noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=len(dataset[0]), local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                epsilon=0.05, delta=args.delta)
-        print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2))
-
-           
-    # set clients
-    clients = []
-    for i in range(args.num_clients):
-        if args.dp:
-            budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2)
-        clients.append(Client(x_train=x_train,
-                        y_train=y_train,
-                        dataset=dataset[i],
-                        batch_size=args.batch_size,
-                        FLalg=args.FLalg, 
-                        dp=args.dp,
-                        DR=args.DR,
-                        DRV2=args.DRV2,
-                        DRtest=args.DRtest,
-                        Topk=args.Topk,
-                        cpl=args.cpl,
-                        rate_dr=args.rate_dr,
-                        local_round=args.local_round,
-                        grad_norm=args.grad_norm,
-                        grad_perp_norm=args.grad_perp_norm,
-                        lr=args.lr,
-                        momentum=args.momentum,
-                        budget_accountant=budget_accountant))
-
-    # set server
-    model_path = '%s.%s' % ('models', args.model)
-    mod = importlib.import_module(model_path)
-    model = getattr(mod, 'Model')
-    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset])
-    server.init_alg(dp=args.dp, FLalg=args.FLalg) # init server algo: fedavg + dp
-    # server_model = server.init_global_model() # global model why use server_model?
-    global_model = server.init_global_model() # global model
-    if args.FLalg == 'FedDrAvg':
-        # server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
-        server.global_last_grad = []
-    if args.cpl:
-        server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
-
-
-    # communication round
-    communication_round = args.global_round // args.local_round
-    print('the communication_round is %d' % communication_round)
-
-    # start communication
-    for r in range(communication_round):   
-        # precheck and pick up candidates
-        candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
-        last_parameters = copy.deepcopy(global_model).parameters()
-        # local update
-        for p_id, participant in enumerate(candidates):
-            # download global model
-            # clients[participant].download(copy.deepcopy(server_model)) # why use server_model?
-            clients[participant].download(copy.deepcopy(global_model), server.global_last_grad)
-            # update
-            model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
-            # communication cost
-            accum_nbytes1 += bytes1 / (1024 * 1024)
-            accum_nbytes2 += bytes2 / (1024 * 1024)
-            if accum_budget_accountant:
-                max_accum_budget_accountant = max(max_accum_budget_accountant, accum_budget_accountant)
-            # aggregate
-            server.aggregate(model_state)
-            
-            # if args.dp:
-            #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
-            #           % ((participant+1), args.delta, clients[participant].budget_accountant.epsilon, clients[participant].budget_accountant.accum_bgts))
-        # load average weight
-        global_model = server.update()
-        # if args.FLalg == 'FedDrAvg':
-        # for global_last_grad
-        server.global_last_grad = [(p1.data-p2.data).to('cuda') for p1,p2 in zip(global_model.parameters(), last_parameters)]
-
-        # test
-        test_accuracy, test_loss = server.test(global_model)
-        accuracy_accountant.append(test_accuracy)
-        print_accuracy_and_loss(r, test_accuracy, test_loss)
-
-        if args.dp:
-            privacy_accountant.append(max_accum_budget_accountant)
-            if args.DR:
-                accum_nbytes_list1.append(accum_nbytes1)
-                accum_nbytes_list2.append(accum_nbytes2)
-                save_address = save_progress(args, accuracy_accountant, privacy_accountant, accum_nbytes_list1, accum_nbytes_list2)
-            else:
-                save_address = save_progress(args, accuracy_accountant, privacy_accountant)
-        else:
-            save_address = save_progress(args, accuracy_accountant)
-    print(save_address)
-
+    # train_dataloader = datasets.MNIST(root='~/data', train=True, download=False, transform=transforms.ToTensor())
+    # x_train = train_dataloader.data.float().unsqueeze(1)#.to(device)
+    # x_train, y_train, x_test, y_test = loader(args.dataset, args.noniid)
+ 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='CIFAR10')
-    parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
-    parser.add_argument('--DR', type=bool, default=True)
-    parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=False)
-    parser.add_argument('--global_round', type=int, default=100)
-    parser.add_argument('--local_round', type=int, default=2)
-    parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=10) 
-    parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=1)
-    parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=5)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.5)
-    parser.add_argument('--sample_ratio', type=float, default=1.0)
-    parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model', type=str, default='lenet5')
-    parser.add_argument('--lr', type=float, default=0.1)
-    parser.add_argument('--momentum', type=float, default=0.)
-    parser.add_argument('--Topk', type=bool, default=False)
-    parser.add_argument('--cpl', type=bool, default=False)
-    parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    args = parser.parse_args() 
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--save_dir', type=str, default='result')
+    # parser.add_argument('--dataset', type=str, default='MNIST')
+    # parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
+    # parser.add_argument('--DR', type=bool, default=False)
+    # parser.add_argument('--DRV2', type=bool, default=False)
+    # parser.add_argument('--DRtest', type=bool, default=False)
+    # parser.add_argument('--global_round', type=int, default=100)
+    # parser.add_argument('--local_round', type=int, default=2)
+    # parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
+    # parser.add_argument('--num_clients', type=int, default=2) 
+    # parser.add_argument('--batch_size', type=int, default=128)
+    # parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    # parser.add_argument('--eps', type=float, default=1)
+    # parser.add_argument('--eps_2', type=float, default=0.02)
+    # parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
+    # parser.add_argument('--grad_norm', type=float, default=10)
+    # parser.add_argument('--grad_perp_norm', type=float, default=0.2)
+    # parser.add_argument('--sample_ratio', type=float, default=1)
+    # parser.add_argument('--seed', type=int, default=0)
+    # parser.add_argument('--model', type=str, default='cnn')
+    # parser.add_argument('--lr', type=float, default=0.2)
+    # parser.add_argument('--momentum', type=float, default=0.)
+    # parser.add_argument('--Topk', type=bool, default=False)
+    # parser.add_argument('--cpl', type=bool, default=False)
+    # parser.add_argument('--kf', type=bool, default=False)
+    # parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
+    # parser.add_argument('--clip_paral', type=float, default=0.01, help='parallel alpha bound')
+    # args = parser.parse_args() 
 
-    # print arguments
-    try: parsed = vars(parser.parse_args())
-    except IOError as msg: parser.error(str(msg))
-    maxLen = max([len(ii) for ii in parsed.keys()]);
-    fmtString = '\t%' + str(maxLen) + 's : %s';
-    print('Arguments:')
-    for keyPair in parsed.items(): print(fmtString % keyPair)
+    # # print arguments
+    # try: parsed = vars(parser.parse_args())
+    # except IOError as msg: parser.error(str(msg))
+    # maxLen = max([len(ii) for ii in parsed.keys()]);
+    # fmtString = '\t%' + str(maxLen) + 's : %s';
+    # print('Arguments:')
+    # for keyPair in parsed.items(): print(fmtString % keyPair)
     
-    main(args)
+
+    train_dataloader = datasets.MNIST(root='~/data', train=True, download=False, transform=transforms.ToTensor())
+    x_train = train_dataloader.data.float().unsqueeze(1)#.to(device)
+    # main(args)
+    # main()
     print('[FINISHED]')

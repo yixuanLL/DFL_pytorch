@@ -18,7 +18,7 @@ from models.server import Server
 from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
-from utils.grad_plot import grad_plot, grad_var, grad_var_t
+from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] ='0,1,2'
 MODEL_PARAMS={
@@ -114,6 +114,7 @@ def main(args):
     communication_round = args.global_round // args.local_round
     print('the communication_round is %d' % communication_round)
     log = []
+    loss = []
     # start communication
     for r in range(communication_round):   
         # precheck and pick up candidates
@@ -136,7 +137,8 @@ def main(args):
             server.aggregate(model_state)
             # log
             if p_id == 0:
-                log.append(bytes2)
+                log.append(bytes2[0])
+                loss.append(bytes2[1])
             # if p_id not in clog:
             #     clog[p_id] = []
             # clog[p_id].append(bytes2)
@@ -167,6 +169,7 @@ def main(args):
             save_address = save_progress(args, accuracy_accountant)
     print(save_address)
     grad_plot(log)
+    loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
 

@@ -6,28 +6,33 @@
 [time] build py time is 0min 0s
 
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 52s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 51s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 48s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 46s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 48s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 51s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 2min 9s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 47s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 50s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 2min 6s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 43s
-python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=1 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
-[time] build py time is 1min 52s
+
+[time] build py time is 0min 0s
+
+[time] build py time is 0min 0s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.2 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.5 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 7s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.2 --local_round=2 --global_round=50 --lr=0.2 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.5 --local_round=2 --global_round=50 --lr=0.2 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=1 --local_round=2 --global_round=50 --lr=0.2 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 7s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=3 --grad_perp_norm=0.2 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=3 --grad_perp_norm=0.5 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 7s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=3 --grad_perp_norm=1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=3 --grad_perp_norm=0.2 --local_round=2 --global_round=50 --lr=0.2 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=3 --grad_perp_norm=0.5 --local_round=2 --global_round=50 --lr=0.2 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 8s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=3 --grad_perp_norm=1 --local_round=2 --global_round=50 --lr=0.2 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+[time] build py time is 0min 7s
 [finished]!
+slurmstepd-h100server: error: Detected 12 oom-kill event(s) in StepId=2917.batch. Some of your processes may have been killed by the cgroup out-of-memory handler.

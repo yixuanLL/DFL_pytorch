@@ -4,6 +4,7 @@
 #SBATCH --gres=gpu:2
 #SBATCH --mem=1GB
 
+source /home/yliu270/anaconda3/bin/activate flamby
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
 
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --dp=True --grad_norm=1 --local_round=5 --global_round=500 --lr=0.05 --dataset=MNIST --model=cnn --num_clients=100 --sample_ratio=0.2 --eps=1 --batch_size=32 --kf=True
 
