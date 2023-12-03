@@ -10,7 +10,7 @@ import importlib
 from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
 # from models.client_kdp import Client
-# print('__client_kdp__')
+# # print('__client_kdp__')
 from models.client import Client
 print('__client__')
 from models.server import Server
@@ -19,14 +19,14 @@ from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
 from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t
-# os.environ['CUDA_VISIBLE_DEVICES'] ='0'
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+
 MODEL_PARAMS={
     'MNIST': (784,10),
     'CIFAR10': (3*32*32,10),
     'FLamby': (13,2)
 }
-
+from torchvision import datasets, transforms
 def main(args):
     accuracy_accountant = []
     privacy_accountant = []
@@ -36,6 +36,7 @@ def main(args):
     accum_nbytes2 = 0
     max_accum_budget_accountant = 0
     save_address = ''
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # set seed
     setup_seed(args.seed)
     # prepare local dataset
@@ -47,7 +48,7 @@ def main(args):
     noise_multiplier = 0
     noise_multiplier_2 = 0
 
-           
+    
     # set clients
     clients = []
     for i in range(args.num_clients):
@@ -92,6 +93,7 @@ def main(args):
                         device=device,
                         clip_paral=args.clip_paral))
     print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2)) 
+    
     # set server
     model_path = '%s.%s' % ('models', args.model)
     mod = importlib.import_module(model_path)
@@ -106,7 +108,7 @@ def main(args):
     if args.cpl:
         server.global_last_grad = [p.data.to(device) for p in global_model.parameters()]
 
-
+    
     # communication round
     communication_round = args.global_round // args.local_round
     print('the communication_round is %d' % communication_round)
@@ -117,13 +119,16 @@ def main(args):
         # precheck and pick up candidates
         candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
         last_parameters = copy.deepcopy(global_model).parameters()
+        
         # local update
         for p_id, participant in enumerate(candidates):
             # download global model
             # clients[participant].download(copy.deepcopy(server_model)) # why use server_model?
             clients[participant].download(copy.deepcopy(global_model), server.global_last_grad)
+            
             # update
             model_state, accum_budget_accountant, bytes1, bytes2 = clients[participant].local_update()
+            
             # communication cost
             accum_nbytes1 += bytes1 / (1024 * 1024)
             accum_nbytes2 = 0
@@ -132,6 +137,7 @@ def main(args):
                 max_accum_budget_accountant = max(max_accum_budget_accountant, accum_budget_accountant)
             # aggregate
             server.aggregate(model_state)
+            
             # log
             if p_id == 0:
                 log.append(bytes2[0])
@@ -142,14 +148,16 @@ def main(args):
             #           % ((participant+1), args.delta, clients[participant].budget_accountant.epsilon, clients[participant].budget_accountant.accum_bgts))
         # load average weight
         global_model = server.update()
+        
         # for global_last_grad
         server.global_last_grad = [(p1.data-p2.data).to(device) for p1,p2 in zip(global_model.parameters(), last_parameters)]
-  
+        # server.global_last_grad = [(p1.data-p2.data) for p1,p2 in zip(global_model.parameters(), last_parameters)]
+        
         # test
         test_accuracy, test_loss = server.test(global_model)
         accuracy_accountant.append(test_accuracy)
         print_accuracy_and_loss(r, test_accuracy, test_loss)
-        '''
+        
         if args.dp:
             privacy_accountant.append(max_accum_budget_accountant)
             if args.DR:
@@ -160,16 +168,16 @@ def main(args):
                save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
         else:
             save_address = save_progress(args, accuracy_accountant)
-        '''
+        
         # if r > 3:
         #     break
-    # print(save_address)
+    print(save_address)
     # grad_plot(log)
     # grad_plot_t(log)
     # loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
-
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
@@ -181,7 +189,7 @@ if __name__ == '__main__':
     parser.add_argument('--global_round', type=int, default=100)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=2) 
+    parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=1)

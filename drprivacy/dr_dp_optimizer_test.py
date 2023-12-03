@@ -8,9 +8,9 @@ import copy
 from utils.dpsgd_utils import exp_topk
 import math
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # add noise during decompose, and set norm as instant
-class DrDPOptimizertest(DPOptimizer):
+class DrDPOptimizertest2(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -51,6 +51,7 @@ class DrDPOptimizertest(DPOptimizer):
         self.g_perp_sum = []
         self.cos_sum = []
         self.log = []
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
     def pre_step(
         self, closure: Optional[Callable[[], float]] = None
@@ -72,7 +73,7 @@ class DrDPOptimizertest(DPOptimizer):
         self.dr_process()
         self.add_noise()
         self.scale_grad()
-
+        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
 
         if self.step_hook:
             self.step_hook(self)
@@ -104,7 +105,7 @@ class DrDPOptimizertest(DPOptimizer):
 
     def decompose_grad(self):
         if self.last_grad == []:      
-            return self.grad_samples, [torch.tensor(1.).to(device)]*8
+            return self.grad_samples, [torch.tensor(1.).to(self.device)]*8
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
@@ -195,7 +196,7 @@ class DrDPOptimizertest(DPOptimizer):
             mean=0,
             std=std,
             size=c.shape,
-            device=device,
+            device=self.device,
             generator=None,
         )
             c += noise
@@ -211,7 +212,7 @@ class DrDPOptimizertest(DPOptimizer):
             mean=0,
             std=std,
             size=v.shape,
-            device=device,
+            device=self.device,
             generator=None,
         )
             v += noise
@@ -278,7 +279,7 @@ class DrDPOptimizertest_clean(DrDPOptimizertest_bak): #decompose based on clean 
         self.last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in g_noisy]
         return g_perp        
 '''         
-class DrKFDPOptimizertest(DrDPOptimizertest): # add KF filter
+class DrKFDPOptimizertest2(DrDPOptimizertest2): # add KF filter
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -321,6 +322,8 @@ class DrKFDPOptimizertest(DrDPOptimizertest): # add KF filter
         self.g_perp_sum = []
         self.cos_sum = []
         self.log = []
+        self.steps = 1
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
     def pre_step(
@@ -353,7 +356,7 @@ class DrKFDPOptimizertest(DrDPOptimizertest): # add KF filter
             # self.KFpredict()
             self.dr_process()
             self.add_noise()
-            self.log[0:2] = [self.last_grad, self.last_grad_noisy]
+            # self.log[0:2] = [self.last_grad, self.last_grad_noisy]
             # self.KFcorrect()
 
         self.scale_grad()
@@ -381,11 +384,15 @@ class DrKFDPOptimizertest(DrDPOptimizertest): # add KF filter
     # use this function: without diff2; no this function: use diff2
     def decompose_grad(self):
         if self.last_grad == []:      
-            return self.grad_samples, [torch.tensor(1.).to(device)]*8
+            return self.grad_samples, [torch.tensor(1.).to(self.device)]*8
+        last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in self.last_grad_noisy]
+        # to test my proof by using clean last_grad
+        # last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in self.last_grad]
+        ## end test
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
-        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad_noisy] # norm of per laryer of last gradient
-        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad_noisy, per_param_norms, last_grad_norms)]
-        gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, self.last_grad_noisy)]
+        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in last_grad_noisy] # norm of per laryer of last gradient
+        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, last_grad_noisy, per_param_norms, last_grad_norms)]
+        gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, last_grad_noisy)]
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
         return gi_perp, paral_alpha 

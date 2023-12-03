@@ -1,10 +1,33 @@
 #!/bin/bash
-#SBATCH --job-name=slurmtest
-#SBATCH --output=out_slurmtest
-#SBATCH --gres=gpu:2
-#SBATCH --mem=1GB
+#SBATCH --job-name=test
+#SBATCH --output=out_test
+#SBATCH --gres=gpu:1
+#SBATCH --mem=8GB
 
 source /home/yliu270/anaconda3/bin/activate flamby
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+start_time=$(date +%s)
 
+py_req="python /home/yliu270/workspace/DFL_pytorch/main_test.py \
+--eps=0.5 \
+--eps_2=0.02 \
+--grad_perp_norm=0.2 \
+--clip_paral=0.05 \
+--lr=0.2 \
+--DRtest=True \
+--dp=True \
+--kf=True "
 
+# py_req="python /home/yliu270/workspace/DFL_pytorch/main.py \
+# --eps=0.5 \
+# --eps_2=0.05 \
+# --grad_norm=0.1 \
+# --grad_perp_norm=0.1 \
+# --clip_paral=0.05 \
+# --lr=0.2 \
+# --dp=True"
+
+output=`${py_req}`;
+echo "${output}"
+end_time=$(date +%s)
+cost_time=$[ $end_time-$start_time ]
+echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"

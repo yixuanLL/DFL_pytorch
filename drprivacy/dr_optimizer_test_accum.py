@@ -43,12 +43,15 @@ class DrOptimizertest(DPOptimizer):
         self.max_grad_norm = max_grad_norm[0]
         self.perp_grad_norm = max_grad_norm[1]
         self.noise_multiplier_2 = max_grad_norm[2]
+        self.clip_paral =  max_grad_norm[3]
         self.last_grad = []
         self.last_normratio = []
         self.norm = 1
         self.global_last_grad = []
         self.g_perp_sum = []
         self.cos_sum = []
+        self.log = []
+        self.steps = 1
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
     def pre_step(
@@ -83,19 +86,18 @@ class DrOptimizertest(DPOptimizer):
         gi_perp, costheta, per_param_norms, paral_alpha = self.decompose_grad()  
         g_perp = self.clip_g_perp(gi_perp)  
         if self.last_grad != []:
-            clip_p = 0.05 # mnist
-            # clip_p = 0.001 #flamby
-            # clip_p = 0.05 # lenet5
+            clip_p = self.clip_paral
             paral_alpha = self.clip(paral_alpha, clip_p)
         else:
             paral_alpha = 0
-        g_perp = self.recover_grad(g_perp, paral_alpha, costheta) 
+        g_perp = self.recover_grad(g_perp, paral_alpha) 
 
  
 
     def decompose_grad(self):
         if self.last_grad == []:      
             return self.grad_samples, [torch.tensor(1.).to(self.device)]*8, [torch.tensor(1.).to(self.device)]*8, self.grad_samples
+        self.last_grad = [g/torch.norm(g, keepdim=False) for g in self.last_grad]
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, self.last_grad, per_param_norms, last_grad_norms)]
@@ -105,18 +107,23 @@ class DrOptimizertest(DPOptimizer):
         paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
         return gi_perp, costheta, per_param_norms, paral_alpha 
 
-    def recover_grad(self, g_perp, g_norm, costheta):
+    def recover_grad(self, g_perp, g_norm):
         if self.last_grad == []:
             g = g_perp
         else:
-            g = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, cos, lg in zip(g_perp, g_norm, costheta, self.last_grad)]
+            g = [ gp   + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp, g_norm, self.last_grad)]
 
         for p,gi in zip(self.params, g):
             if p.summed_grad is not None:
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g]
+        # self.last_grad = [gi/torch.norm(gi, keepdim=False) for gi in g]
+        if self.steps == 1:
+            self.last_grad = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
+        else:
+            self.last_grad = [(p.summed_grad/len(self.grad_samples[0])+lg*self.steps)/(self.steps+1) for p, lg in zip(self.params, self.last_grad)]
+
         return g_perp
 
 

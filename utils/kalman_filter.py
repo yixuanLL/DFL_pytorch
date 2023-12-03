@@ -34,7 +34,7 @@ class KalmanFilter():
         for i in range(len(z)):
              self.x[i] = self.x_[i] + self.K * (z[i] - self.x_[i])
         self.P = (1-self.K) * self.P_ #what if P is more smoothing?
-        # print(self.P)
+        # print(self.P, self.R, self.K)
         return self.x
 
 

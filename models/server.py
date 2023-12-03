@@ -120,7 +120,7 @@ class Server:
         return self.model
 
     def test(self, model):
-        model.eval().to(self.device)
+        model.eval() #.to(self.device)
         data_loader = TensorDataset(self.x_test, self.y_test)
         data_loader = DataLoader(data_loader, batch_size=128, shuffle=True)
         criterion = nn.CrossEntropyLoss()
@@ -129,7 +129,7 @@ class Server:
 
         with torch.no_grad():
             for x_test, y_test in data_loader:
-                x_test, y_test = x_test.to(self.device), y_test.to(self.device)
+                # x_test, y_test = x_test.to(self.device), y_test.to(self.device)
 
                 output = model(x_test)
                 loss = criterion(output, y_test)

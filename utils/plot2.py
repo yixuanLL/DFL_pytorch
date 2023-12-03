@@ -28,7 +28,7 @@ for line in file:
     if 'round' in line:
         acc.append(float(line.split(' ')[7])*100)
         round.append(int(line.split(' ')[1]))
-        if 'round 49' in line:
+        if 'round 24' in line:
             acc_list.append(acc)
             exp_list.append(m)
             round_list.append(round)
@@ -37,7 +37,7 @@ for line in file:
 
 
 
-color = ['-.','b-.', 'g-.', 'c-',  'r', 'gold', 'orange', 'y-', 'b']
+color = ['-','b-', 'g-', 'c-',  'r', 'gold', 'orange', 'y-', 'b']
 plt.switch_backend('agg')
 
 for i in range(len(acc_list)):
@@ -55,7 +55,7 @@ c = ['slategrey', 'dodgerblue', 'blueviolet', 'darkcyan', 'yellowgreen', 'r', 'o
 # plt.xlim((.5,.8))
  
 #xy描述
-plt.ylabel('Accuracy$')
+plt.ylabel('Accuracy')
 plt.xlabel('Rounds')
 plt.legend(loc='lower right', fontsize=8)
 

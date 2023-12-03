@@ -20,6 +20,7 @@ class Client(nn.Module):
         self.x_train = x_train
         self.y_train = y_train
         self.dataset = dataset
+
         try:
             self.dataset_size = len(self.dataset)
         except:
@@ -52,9 +53,12 @@ class Client(nn.Module):
         self.noisy_layervar = [0.3, 0.3]
         self.longlogs = []
         self.ratio = 1
+
     def download(self, model, global_last_grad):
+        # self.model = model
+        # self.global_last_grad = global_last_grad
         self.model = model.to(self.device)
-        self.global_last_grad = [g.to(self.device) for g in global_last_grad]
+        self.global_last_grad = [g.to(self.device) for g in global_last_grad] #OOM
 
     def set_projection(self, Vks=None, means=None, is_private=None):
         self.Vks = Vks
@@ -86,7 +90,7 @@ class Client(nn.Module):
         data_batch = TensorDataset(x_batch, y_batch)
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
         seed = 0
-        torch.manual_seed(seed)
+        # torch.manual_seed(seed)
         noise = 0
         noise_2 = 0
         if self.dp:
@@ -115,7 +119,8 @@ class Client(nn.Module):
             else:
                 clipping = 'drkf_dp_flat_test'
         if self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            # grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
             clipping = 'dr_dp_flat'  
         if self.dp and self.DRV2:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
@@ -129,10 +134,10 @@ class Client(nn.Module):
         if not self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'cpl_flat'  
-        if not self.dp and self.kfilter:
+        if not self.dp and self.kfilter and not self.DRtest:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'kfilter_flat' 
-        if self.dp and self.kfilter:
+        if self.dp and self.kfilter and not self.DRtest:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'kfilter_dp_flat'                               
         # print('clipping:', clipping)
@@ -165,10 +170,10 @@ class Client(nn.Module):
             # for KF filter
             if self.kfilter:
                 if self.dp:
-                    optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_perp_norm*noise/self.batch_size)**2)
+                    optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_perp_norm*noise/self.batch_size)**2)
                 else:
                     optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_perp_norm*0.1)**2)
-        if self.kfilter:
+        if self.kfilter and not self.DRtest:
             optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
             # entire gradient filter
             optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
@@ -215,7 +220,7 @@ class Client(nn.Module):
             train_acc = 0
             train_loss = 0
             for x_train, y_train in data_loader:
-                # x_train, y_train = x_train.to(self.device), y_train.to(self.device)
+                x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
                 y_pred = model(x_train)
                 loss = criterion(y_pred, y_train)
@@ -226,27 +231,29 @@ class Client(nn.Module):
                 optimizer.zero_grad() # clear grad from last batch
                 loss.backward() # back propogation & get gradients
                 optimizer.step() # adding noises & update model parameters
+                optimizer.steps += 1
 
                 train_acc += correct.item()
                 train_loss += loss.item()
 
-                # logs.append(copy.deepcopy(optimizer.log))
+                logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
             losses.append(copy.deepcopy(train_loss)/self.dataset_size)
+            
             # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
-        if self.kfilter:
+        # if self.kfilter:
             # var of noisy gradients
-            layer_num = [len(g.reshape(-1)) for g in optimizer.last_grad]
-            noisy = []
-            self.noisy_layervar = []
-            for i in range(len(self.longlogs)): #round
-                _, n, _ = self.longlogs[i]
-                noisy.append(grad_flat(n))
-            noisy =  torch.var(torch.stack(noisy, dim=0), dim=0)
-            start = 0
-            for num in layer_num:
-                self.noisy_layervar.append( torch.mean(noisy[start:start+num]))
-                start += num
+            # layer_num = [len(g.reshape(-1)) for g in optimizer.last_grad]
+            # noisy = []
+            # self.noisy_layervar = []
+            # for i in range(len(self.longlogs)): #round
+            #     _, n, _ = self.longlogs[i]
+            #     noisy.append(grad_flat(n))
+            # noisy =  torch.var(torch.stack(noisy, dim=0), dim=0)
+            # start = 0
+            # for num in layer_num:
+            #     self.noisy_layervar.append( torch.mean(noisy[start:start+num]))
+            #     start += num
 
         updates = [weight.data for weight in model.state_dict().values()]
         if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta

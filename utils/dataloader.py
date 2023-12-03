@@ -9,25 +9,26 @@ from torchvision import datasets, transforms
 import numpy as np
 from flamby.datasets.fed_heart_disease import HeartDiseaseRaw, FedHeartDisease
 
-
-
 def loader(name, noniid):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = 'cuda'
     if name == 'MNIST':
         train_dataloader = datasets.MNIST(root='~/data', train=True, download=False, transform=transforms.ToTensor())
-        x_train = train_dataloader.data.float().unsqueeze(1).to(device)
-        y_train = train_dataloader.targets.to(device)
+        x_train = train_dataloader.data.float().unsqueeze(1)
+        y_train = train_dataloader.targets
         # normalize manually, as "transform.totensor" does not work well
         me = 0.1307
         std = 0.3081
         indices_train = torch.argsort(y_train)
-        sorted_x_train = (x_train[indices_train] / 255. - me) / std
+        sorted_x_train = x_train[indices_train]
+        # sorted_x_train = (x_train[indices_train] / 255. - me) / std
 
         sorted_y_train = y_train[indices_train]
         test_dataloader = datasets.MNIST(root='~/data', train=False, download=False, transform=transforms.ToTensor())
-        x_test = (test_dataloader.data.float().unsqueeze(1).to(device) / 255. - me) / std
-        y_test = test_dataloader.targets.to(device)
-        return None, None, None, None
+        # x_test = (test_dataloader.data.float().unsqueeze(1) / 255. - me) / std
+        x_test = test_dataloader.data.float().unsqueeze(1)
+        y_test = test_dataloader.targets
+        
 
     if name == 'CIFAR10':
         transform = transforms.Compose(
@@ -111,4 +112,3 @@ def loader(name, noniid):
 
 
     return sorted_x_train, sorted_y_train, x_test, y_test
-'''

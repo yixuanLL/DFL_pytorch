@@ -149,7 +149,6 @@ class KFilterDPOptimizer(KFilterOptimizer):
         self.last_grad_noisy = []
         self.global_last_grad = []
         self.log = []
-        self.steps = 1
 
         for p in self.params:
             p.summed_grad = None

@@ -1,7 +1,8 @@
 
 import matplotlib.pyplot as plt
 import torch
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+import numpy
+
 
 def loss_plot(losses):
     global_round = len(losses)
@@ -30,6 +31,7 @@ def grad_plot(log):
     clean = []
     clean1 = []
     noisy = []
+    noisy1 = []
     estimate = []
     rounds = 0
     for i in range(global_round):
@@ -39,10 +41,11 @@ def grad_plot(log):
             if j%(local_round/2) != 0:
                 continue
             c, n, e = log[i][j]
-            clean.append(c[0].reshape(-1)[0])
-            clean1.append(c[1].reshape(-1)[0])
-            norm.append(torch.norm(grad_flat(c), dim=0))
-            # noisy.append(n[0].reshape(-1)[0])
+            clean.append(c[0].reshape(-1)[0].cpu())
+            clean1.append(c[1].reshape(-1)[0].cpu())
+            norm.append(torch.norm(grad_flat(c), dim=0).cpu())
+            noisy.append(n[0].reshape(-1)[0].cpu())
+            noisy1.append(n[1].reshape(-1)[0].cpu())
             # estimate.append(e[0].reshape(-1)[0])
             rounds += 1 
 
@@ -52,7 +55,8 @@ def grad_plot(log):
     plt.plot(r, clean, 'skyblue', label='clean grad, layer1')
     plt.plot(r, clean1, 'yellowgreen', label='clean grad, layer2')
 
-    # plt.plot(r, noisy, 'g', label='noisy grad')
+    plt.plot(r, noisy, 'g', label='noisy grad, layer1')
+    plt.plot(r, noisy1, 'olive', label='noisy grad, layer2')
     # plt.plot(r, estimate, 'c', label='estimate grad')
 
     plt.ylabel('Gradients')
@@ -168,6 +172,7 @@ def grad_var_t(log): #variance of certain dimension along time step (var of T gr
     plt.close()
 
 def grad_flat(param):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     vec = torch.tensor([]).to(device)
     for p in param:
         vec = torch.cat((vec, p.reshape(-1)))

@@ -1,74 +1,13 @@
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --kf=True
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --kf=True
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --kf=True
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 8s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 6s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 8s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 6s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --kf=True
-[time] build py time is 0min 5s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 5s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.1 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.2 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 0min 7s
-[finished]!
-slurmstepd-h100server: error: Detected 25 oom-kill event(s) in StepId=2918.batch. Some of your processes may have been killed by the cgroup out-of-memory handler.
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
