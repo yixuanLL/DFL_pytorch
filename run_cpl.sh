@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=cpl
 #SBATCH --output=out_cpl
-#SBATCH --gres=gpu:2
-#SBATCH --mem=1GB
+#SBATCH --gres=gpu:1
+#SBATCH --mem=8GB
 cur_path=`pwd`
 
 cur_date="`date +%Y%m%d`" 
@@ -18,20 +18,25 @@ if [ ! -f "$logfile" ]; then
 fi
 
 
-# MNIST
-# seed=(0)
-# momentum=(0.0)
-# lr=(0.1)
-# g_p_norm=(0.1 0.5 1.0)
-# eps=(0.5 1)
-# iidflag=("--save_dir=result")
+# # MNIST
+seed=(0)
+momentum=(0.0)
+lr=(0.1) # 0.2)
+g_p_norm=(0.2) # 0.5 1)
+eps=(0.3) # 0.5 1)
+# kf=("--kf=True")
+kf=("--save_dir=result") 
+iidflag=("--save_dir=result")
+
 
 #FLamby
-seed=(0)
-lr=(0.01 0.1 0.5)
-g_p_norm=(0.01 0.05 0.1 0.2)
-eps=(0.3 0.5 1)
-iidflag=("--save_dir=result") # "--noniid=True")
+# seed=(0) #(5 9 15)
+# lr=(0.1 0.5)
+# g_p_norm=(0.05 0.1)
+# eps=(0.3 0.5 1)
+# # kf=("--save_dir=result") 
+# kf=("--kf=True")
+# iidflag=("--save_dir=result") # "--noniid=True")
 
 #CIFAR10
 # seed=(0)
@@ -47,17 +52,15 @@ echo "${time}">>$logfile
 echo "====NoDP====">>$logfile
 for s in ${seed[@]}
 do
-    for iid in ${iidflag[@]}
+    for k in ${kf[@]}
     do
         for l in ${lr[@]}
         do
             for gpn in ${g_p_norm[@]}
             do
-                # py_req="python ${cur_path}/main_lenet5.py --cpl=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${iid}";
-                # py_req="python ${cur_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
-                py_req="python ${cur_path}/main_flamby.py --seed=${s} --cpl=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${iid}";
-                # py_req="python ${cur_path}/main_test.py --cpl=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
-
+                # py_req="python ${cur_path}/main_test.py --cpl=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5";
+                py_req="python ${cur_path}/main_test.py --cpl=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
+               # py_req="python ${cur_path}/main_flamby.py --seed=${s} --cpl=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
@@ -83,7 +86,7 @@ output=0
 echo "====DP====">>$logfile
 for s in ${seed[@]}
 do
-    for iid in ${iidflag[@]}
+    for k in ${kf[@]}
     do
         for e in ${eps[@]}
         do
@@ -91,10 +94,9 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    # py_req="python ${cur_path}/main_lenet5.py --cpl=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --eps_2=0.02 ${iid}";
-                    # py_req="python ${cur_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=0.02";
-                    py_req="python ${cur_path}/main_flamby.py --seed=${s} --cpl=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${iid}";
-                    # py_req="python ${cur_path}/main_test.py --cpl=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
+                    # py_req="python ${cur_path}/main_test.py --cpl=True --dp=True --eps=${e} --eps_2=0.05 --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=0.05 ${k}";
+                    py_req="python ${cur_path}/main_test.py --cpl=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
+                    # py_req="python ${cur_path}/main_flamby.py --seed=${s} --cpl=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)

@@ -1,13 +1,32 @@
-python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.1 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=0.3 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_lenet5.py --grad_norm=1.0 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 27s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.3 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 39s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 31s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 38s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.3 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 32s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.3  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.5  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 41s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.3 --dp=True --eps=0.5  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=1.0 --dp=True --eps=0.5  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+[time] build py time is 29min 19s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.5  --eps_2=0.05 --local_round=2 --global_round=200 --lr=0.5 --dataset=CIFAR10 --model=lenet5 --save_dir=result
+slurmstepd-h100server: error: *** JOB 4401 ON h100server CANCELLED AT 2023-12-03T17:18:20 ***

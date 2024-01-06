@@ -21,10 +21,11 @@ fi
 # # MNIST
 # seed=(0)
 # momentum=(0.0)
-# lr=(0.1 0.2)
-# g_p_norm=(0.1 0.2 0.5 1)
-# eps=(0.5 3)
-# kf=("--kf=True")
+# lr=(0.1) # 0.2)
+# g_p_norm=(0.2) # 0.5 1)
+# eps=(0.3) # 0.5 1)
+# # kf=("--kf=True")
+# kf=("--save_dir=result") 
 # iidflag=("--save_dir=result")
 
 
@@ -93,9 +94,9 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${cur_path}/main_test.py --DRtest=True --dp=True --eps=${e} --eps_2=0.05 --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=0.05 ${k}";
+                    # py_req="python ${cur_path}/main_test.py --DRtest=True --dp=True --eps=${e} --eps_2=0.05 --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=0.05 ${k}";
                     # py_req="python ${cur_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.05 ${k}";
-                    # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
+                    py_req="python ${cur_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)

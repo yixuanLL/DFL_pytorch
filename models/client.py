@@ -130,7 +130,10 @@ class Client(nn.Module):
             clipping = 'topk_flat'
         if self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'cpl_dp_flat'    
+            if not self.kfilter:
+                clipping = 'cpl_dp_flat'    
+            else:
+                clipping = 'clip_kf_dp_flat'
         if not self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'cpl_flat'  
@@ -166,6 +169,7 @@ class Client(nn.Module):
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
                 optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
+                # optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
                 optimizer.last_grad_noisy = optimizer.last_grad
             # for KF filter
             if self.kfilter:

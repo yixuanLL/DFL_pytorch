@@ -45,6 +45,9 @@ class CplOptimizer(DPOptimizer):
         self.last_grad_noisy = []
         self.global_last_grad = []
         self.log = []
+        self.steps = 1
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         
     def pre_step(
         self, closure: Optional[Callable[[], float]] = None
@@ -143,7 +146,14 @@ class CplOptimizer(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
-        self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
+        # self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
+        # accumulative gradients
+        mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
+        if self.steps == 1:
+            self.last_grad = mean_g
+        else:
+            self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
+ 
 
 
     def clip_g_perp(self, g_perp):
@@ -163,8 +173,8 @@ class CplOptimizer(DPOptimizer):
             g_perp_clipped.append(grad)
         return g_perp_clipped
 
-# class CplDPOptimizer(CplOptimizer):
-class CplDPOptimizer_bak(CplOptimizer):
+class CplDPOptimizer(CplOptimizer):
+# class CplDPOptimizer_bak(CplOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -198,6 +208,8 @@ class CplDPOptimizer_bak(CplOptimizer):
         self.rate_dr = max_grad_norm[2]
         self.last_grad = []
         self.global_last_grad = []
+        self.log = []
+        self.steps = 1
     
     def add_noise(self):
         """
@@ -219,12 +231,98 @@ class CplDPOptimizer_bak(CplOptimizer):
             # print('noise/grad perp norm norm:{},{}'.format(torch.norm(noise), torch.norm(p.summed_grad)))
 
             _mark_as_processed(p.summed_grad)
+        # accumulative gradients
+        mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
+        if self.steps == 1:
+            self.last_grad = mean_g
+        else:
+            self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
 
 
+class CplKFDPOptimizer(CplDPOptimizer):
+    ## use max_grad_norm as grad norm, perp norm and rate_dr
+    def __init__(self,
+        optimizer: DPOptimizer,
+        *,
+        noise_multiplier: float,
+        max_grad_norm: Optional[float],
+        expected_batch_size: Optional[int],
+        loss_reduction: str = "mean",
+        generator=None,
+        secure_mode: bool = False):
+        # super(CplOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
+        self.original_optimizer = optimizer
+        self.noise_multiplier = noise_multiplier
+        self.loss_reduction = loss_reduction
+        self.expected_batch_size = expected_batch_size
+        self.step_hook = None
+        self.generator = generator
+        self.secure_mode = secure_mode
 
+        self.param_groups = self.original_optimizer.param_groups
+        self.defaults = self.original_optimizer.defaults
+        self.state = self.original_optimizer.state
+        self._step_skip_queue = []
+        self._is_last_step_skipped = False
 
-class CplDPOptimizer(CplOptimizer): #similar with DIFF2; use clean gradient for complementary calculation
-# class diff2(CplOptimizer):
+        for p in self.params:
+            p.summed_grad = None
+        
+        self.max_grad_norm = max_grad_norm[0]
+        self.perp_grad_norm = max_grad_norm[1]
+        self.rate_dr = max_grad_norm[2]
+        self.last_grad = []
+        self.global_last_grad = []
+        self.log = []
+        self.steps = 1
+
+    def pre_step(
+        self, closure: Optional[Callable[[], float]] = None
+    ) -> Optional[float]:
+        """
+        Perform actions specific to ``DPOptimizer`` before calling
+        underlying  ``optimizer.step()``
+
+        Args:
+            closure: A closure that reevaluates the model and
+                returns the loss. Optional for most optimizers.
+        """
+
+        self.clip_and_accumulate()
+        if self._check_skip_next_step():
+            self._is_last_step_skipped = True
+            return False
+        if self.last_grad == []:
+            self.complement_process()
+            self.add_noise()
+            self.kfilter.x = self.last_grad  
+        else:
+            self.KFpredict()
+            self.complement_process()
+            self.add_noise()
+            self.KFcorrect()
+
+        self.scale_grad()
+
+        if self.step_hook:
+            self.step_hook(self)
+
+        self._is_last_step_skipped = False
+        return True 
+
+    def KFpredict(self):
+        self.kfilter.predict()
+
+    def KFcorrect(self):
+        num_samples = len(self.grad_samples[0])
+        z = self.last_grad
+        g_estimate = self.kfilter.correct(z) # g_estimate
+        # for i in range(len(self.params)):
+        #     self.params[i].grad = g_estimate[i] * num_samples
+        self.last_grad = g_estimate
+
+# class CplDPOptimizer(CplOptimizer): #similar with DIFF2; use clean gradient for complementary calculation
+class diff2(CplOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,

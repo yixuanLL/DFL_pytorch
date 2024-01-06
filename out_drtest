@@ -6,4 +6,55 @@
 [time] build py time is 0min 0s
 
 [time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --dp=True --eps=0.3 --eps_2=0.05 --grad_perp_norm=0.05 --local_round=2 --global_round=200 --lr=0.1 --dataset=CIFAR10 --model=lenet5 --clip_paral=0.05 --kf=True
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 215, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 44, in grad_plot
+    clean.append(c[0].reshape(-1)[0].cpu())
+IndexError: list index out of range
+[time] build py time is 1min 19s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 215, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 44, in grad_plot
+    clean.append(c[0].reshape(-1)[0].cpu())
+IndexError: list index out of range
+[time] build py time is 1min 20s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 215, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 44, in grad_plot
+    clean.append(c[0].reshape(-1)[0].cpu())
+IndexError: list index out of range
+[time] build py time is 1min 20s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.3 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.5 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 215, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 44, in grad_plot
+    clean.append(c[0].reshape(-1)[0].cpu())
+IndexError: list index out of range
+[time] build py time is 1min 40s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.05 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+Traceback (most recent call last):
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 215, in <module>
+    main(args)
+  File "/home/yliu270/workspace/DFL_pytorch/main_flamby.py", line 171, in main
+    grad_plot(log)
+  File "/home/yliu270/workspace/DFL_pytorch/utils/grad_plot.py", line 44, in grad_plot
+    clean.append(c[0].reshape(-1)[0].cpu())
+IndexError: list index out of range
+[time] build py time is 1min 21s
+python /home/yliu270/workspace/DFL_pytorch/main_flamby.py --seed=0 --DRtest=True --dp=True --eps=0.5 --grad_perp_norm=0.1 --local_round=2 --global_round=50 --lr=0.1 --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 --kf=True
+slurmstepd-h100server: error: *** JOB 4685 ON h100server CANCELLED AT 2023-12-04T23:33:12 ***
