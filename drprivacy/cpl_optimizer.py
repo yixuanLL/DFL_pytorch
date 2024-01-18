@@ -146,13 +146,13 @@ class CplOptimizer(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
-        # self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
+        self.last_grad = [p.grad for p in self.params] 
         # accumulative gradients
-        mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
-        if self.steps == 1:
-            self.last_grad = mean_g
-        else:
-            self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
+        # mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
+        # if self.steps == 1:
+        #     self.last_grad = mean_g
+        # else:
+        #     self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
  
 
 
@@ -232,7 +232,7 @@ class CplDPOptimizer(CplOptimizer):
 
             _mark_as_processed(p.summed_grad)
         # accumulative gradients
-        mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
+        mean_g = [p.grad for p in self.params] 
         if self.steps == 1:
             self.last_grad = mean_g
         else:
@@ -422,7 +422,7 @@ class diff2(CplOptimizer):
 
             _mark_as_processed(p.summed_grad)
 
-        self.last_grad_noisy = [p.grad/len(p.grad_sample) for p in self.params] # noisy gradients
+        self.last_grad_noisy = [p.grad for p in self.params] # noisy gradients
 
     def KFpredict(self):
         self.kfilter.predict()

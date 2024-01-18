@@ -117,7 +117,8 @@ def main(args):
     # start communication
     for r in range(communication_round):   
         # precheck and pick up candidates
-        candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
+        # candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
+        candidates = [pin for pin in range(2) if clients[pin].precheck()] # only train 2 clients
         last_parameters = copy.deepcopy(global_model).parameters()
         
         # local update
@@ -185,15 +186,15 @@ if __name__ == '__main__':
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=False)
+    parser.add_argument('--DRtest', type=bool, default=True)
     parser.add_argument('--global_round', type=int, default=100)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=10) 
     parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=0.3)
-    parser.add_argument('--eps_2', type=float, default=0.02)
+    parser.add_argument('--eps_2', type=float, default=0.2)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=10)
     parser.add_argument('--grad_perp_norm', type=float, default=0.2)
@@ -206,7 +207,7 @@ if __name__ == '__main__':
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=1, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

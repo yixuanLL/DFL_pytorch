@@ -26,16 +26,13 @@ source /home/yliu270/anaconda3/bin/activate flamby
 # eps=(0.5 3)
 # iidflag=("--save_dir=result")
 # kf=("--kf=True")
-
-
-# tmp
-# seed=(0)
-# momentum=(0.0)
-# lr=(0.1)
-# g_norm=(0.2)
-# eps=(1)
-# iidflag=("--save_dir=result")
-# kf=("--save_dir=result") 
+seed=(0)
+lr=(0.1 0.2 0.5)
+g_norm=(0.01 0.1 0.5)
+eps=(0.1 0.5 1)
+iidflag=("--save_dir=result")
+kf=("--save_dir=result")
+momentum=(0.0)
 
 # FLamby
 # seed=(0) # 5 9 15)
@@ -47,14 +44,14 @@ source /home/yliu270/anaconda3/bin/activate flamby
 # iidflag=("--save_dir=result" "--noniid=True")
 
 #CIFAR10
-seed=(0)
-momentum=(0.0)
-lr=(0.1 0.5)
-g_norm=(0.1 0.3 1.0)
-eps=(0.3 0.5 1)
-# kf=("--kf=True")
-kf=("--save_dir=result")
-iidflag=("--save_dir=result")
+# seed=(0)
+# momentum=(0.0)
+# lr=(0.1 0.5)
+# g_norm=(0.1 0.3 1.0)
+# eps=(0.3 0.5 1)
+# # kf=("--kf=True")
+# kf=("--save_dir=result")
+# iidflag=("--save_dir=result")
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
@@ -68,14 +65,14 @@ do
         do
             for gn in ${g_norm[@]}
             do
-                py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k}";
-                # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
+                # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k}";
+                py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
                 echo "FedSVG without DP, but with clip">>$logfile
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                # output=`${py_req}`;
+                output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -104,8 +101,8 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --eps_2=0.05 --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k}";
-                    # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
+                    # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --eps_2=0.05 --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k}";
+                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile

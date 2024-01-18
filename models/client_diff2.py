@@ -104,7 +104,7 @@ class Client(nn.Module):
             grad_norm = self.grad_norm
             clipping = 'flat'
         if not self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'dr_flat'
         if not self.dp and self.DRtest:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
@@ -155,23 +155,21 @@ class Client(nn.Module):
 
         # global_last_grad
         # if self.DR or self.DRV2 or self.DRtest:
-        # if self.DR or self.DRV2:
-        if False:
+        if self.DR or self.DRV2:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
         if self.Topk:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             optimizer.last_grad_origin = [p/self.batch_size for p in self.global_last_grad] 
-        if self.DRtest or self.DR:
+        if self.DRtest:
             if self.global_last_grad != []:
                 last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
                 norm = torch.stack(last_norm).norm(2)
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
-                optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
-                # optimizer.last_grad = [p/norm for p in self.global_last_grad] # opt 1
-                # optimizer.last_grad = self.global_last_grad # opt 2
+                # optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
+                optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
                 optimizer.last_grad_noisy = optimizer.last_grad
             # for KF filter
             if self.kfilter:
@@ -183,51 +181,48 @@ class Client(nn.Module):
             optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
             # entire gradient filter
             optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
-            # layer-wise gradient filter
-            # grad_noise_var = [(self.grad_norm*0.01)**2, (self.grad_norm*0.1)**2]
-            # grad_noise_var = [(self.grad_norm*noise/self.batch_size)**2 * 0.001, (self.grad_norm*noise/self.batch_size)**2 * 0.01]
-            # grad_noise_var = [0.00005, 0.0006]
-            # dp_noise_var = (self.grad_norm*noise/self.batch_size)**2 * 0.001
 
-            # grad_noise_var = [0.00005+0.5, 0.0006+0.5]
-            # grad_noise_var = [0.5,0.5]
-            # obsv_noise_var = [0.05, 0.1]
-
-            # grad_noise_var = self.noisy_layervar
-            # true_g = [0.00005, 0.006]
-            # obsv_noise_var = [v-(self.grad_norm*noise/self.batch_size)**2-e for v,e in zip(self.noisy_layervar, true_g)]
-            # obsv_noise_var = [0.05, 0.05]
-
-            # grad_noise_var = self.noisy_layervar
-            # n_var= (self.grad_norm*noise/self.batch_size)**2
-            # grad_noise_var = [n_var+0.005, n_var+0.06]
-            # obsv_noise_var = []
-            # if self.noisy_layervar != []:
-            #     obsv_noise_var = [abs(self.noisy_layervar[0]-n_var), abs(self.noisy_layervar[1]-n_var)]
-            # # obsv_noise_var = [abs(g-n_var)*self.ratio for g in self.noisy_layervar]
-            # optimizer.kfilter = KalmanFilterLayer(optimizer.last_grad, grad_noise_var, obsv_noise_var)
-
-            # grad_noise_var = self.noisy_layervar
-            # n_var= (self.grad_norm*noise/self.batch_size)**2
-            # grad_noise_var = [0.005, 0.06]
-            # # grad_noise_var = [n_var, n_var]
-            # obsv_noise_var = []
-            # if self.noisy_layervar != []:
-            #     obsv_noise_var = [abs(self.noisy_layervar[0]-0.005), abs(self.noisy_layervar[1]-0.06)]
-            # # obsv_noise_var = [abs(g-n_var)*self.ratio for g in self.noisy_layervar]
-            # optimizer.kfilter = KalmanFilterLayer(optimizer.last_grad, grad_noise_var, obsv_noise_var)
- 
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
         losses = []
         
         # train
+        model_t_1 = None
+        model_t_2, optimizer_t_2, train_loader2 = privacy_engine.make_private(module=model,
+                                                                        optimizer=optimizer,
+                                                                        clipping=clipping,
+                                                                        data_loader=data_loader,
+                                                                        noise_multiplier=noise,
+                                                                        max_grad_norm=grad_norm)
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
             for x_train, y_train in data_loader:
                 x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
+                ## save model for next time
+                if model_t_1 != None:
+                    # model_t_2 = copy.deepcopy(model_t_1) #w_{t-2}
+                    model_t_2.load_state_dict(model_t_1)
+                    optimizer_t_2.load_state_dict(optimizer_t_1)
+                    ## use last model for diff2 projection
+                    y_pred = model_t_2(x_train)
+                    loss = criterion(y_pred, y_train)
+                    optimizer_t_2.zero_grad()
+                    loss.backward(retain_graph=True)
+                    optimizer.proj_base = [optimizer_t_2._get_flat_grad_sample(p)/len(x_train) for p in model_t_2.parameters()]
+                    if optimizer.proj_base == []:
+                        print(1)
+                    # print(optimizer_t_2.proj_base)
+                    # for param in model_t_2.parameters():
+                    #     param.grad.detach_()
+                    #     param.grad.zero_()
+
+                model_t_1 = model.state_dict() #w_{t-1}
+                optimizer_t_1 = optimizer.state_dict()
+
+
+                ## start normal training
                 y_pred = model(x_train)
                 loss = criterion(y_pred, y_train)
 
@@ -236,29 +231,21 @@ class Client(nn.Module):
 
                 optimizer.zero_grad() # clear grad from last batch
                 loss.backward() # back propogation & get gradients
+
                 optimizer.step() # adding noises & update model parameters
                 optimizer.steps += 1
+
                 train_acc += correct.item()
                 train_loss += loss.item()
 
                 logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
+                
+
             losses.append(copy.deepcopy(train_loss)/self.dataset_size)
             
             # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
-        # if self.kfilter:
-            # var of noisy gradients
-            # layer_num = [len(g.reshape(-1)) for g in optimizer.last_grad]
-            # noisy = []
-            # self.noisy_layervar = []
-            # for i in range(len(self.longlogs)): #round
-            #     _, n, _ = self.longlogs[i]
-            #     noisy.append(grad_flat(n))
-            # noisy =  torch.var(torch.stack(noisy, dim=0), dim=0)
-            # start = 0
-            # for num in layer_num:
-            #     self.noisy_layervar.append( torch.mean(noisy[start:start+num]))
-            #     start += num
+
 
         updates = [weight.data for weight in model.state_dict().values()]
         if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta
