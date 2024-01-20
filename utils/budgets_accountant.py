@@ -6,6 +6,7 @@
 import numpy as np
 import copy
 import math
+# from opacus.accountants.analysis import rdp as analysis
 
 
 class BudgetsAccountant:
@@ -32,8 +33,9 @@ class BudgetsAccountant:
         # Then we need to check if client will exhaust her budget in the following round, i.e., temp_accum_bgts > epsilon.
         tmp_steps = self.__curr_steps + loc_steps
         q = batch_size * 1.0 / dataset_size
-        tmp_accum_bgts = 10 * q * math.sqrt(tmp_steps * (-math.log10(self.delta))) / self.noise_multiplier
-
+        # tmp_accum_bgts = 10 * q * math.sqrt(tmp_steps * (-math.log10(self.delta))) / self.noise_multiplier
+        tmp_accum_bgts = 0.001 #lyx tmp
+        # analysis.compute_rdp()
         # If so, set the status as 'finished' and will not participate the rest training anymore; else, return True
         if self.epsilon - tmp_accum_bgts < -1e-5:
             # print(tmp_steps, q, batch_size, dataset_size, tmp_accum_bgts)

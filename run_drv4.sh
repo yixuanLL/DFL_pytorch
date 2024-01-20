@@ -20,15 +20,16 @@ fi
 
 # # MNIST
 seed=(0)
-lr=(0.1 0.2 0.5)
-g_p_norm=(0.01 0.1 0.5)
-clip_paral=(0.05 0.2 1)
-eps=(0.1 0.5 1)
-eps_2=(0.02 0.1 0.2)
+lr=(0.5)
+g_p_norm=(0.01 0.05)
+clip_paral=(0.2)
+eps=(0.1 0.3 0.5)
+eps_2=(0.05 0.1)
 # kf=("--kf=True")
-# kf=("--save_dir=result") 
-# iidflag=("--save_dir=result")
+kf=("--save_dir=result") 
+iidflag=("--save_dir=result")
 # momentum=(0.0)
+
 
 
 
@@ -91,11 +92,11 @@ output=0
 echo "====DP====">>$logfile
 for s in ${seed[@]}
 do
-    for e2 in ${eps_2[@]}
+    for cp in ${clip_paral[@]}
     do
-        for e in ${eps[@]}
+        for e2 in ${eps_2[@]}
         do
-            for cp in ${clip_paral[@]}
+            for e in ${eps[@]}
             do
                 for l in ${lr[@]}
                 do

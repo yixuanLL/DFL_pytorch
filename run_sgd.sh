@@ -19,22 +19,15 @@ fi
 source /home/yliu270/anaconda3/bin/activate flamby
 
 #MNIST
-# seed=(0)
-# momentum=(0.0)
-# lr=(0.1 0.2)
-# g_norm=(0.1 0.2 0.5 1.0)
-# eps=(0.5 3)
-# iidflag=("--save_dir=result")
-# kf=("--kf=True")
 seed=(0)
-# lr=(0.1 0.2 0.5)
-lr=(1)
-# g_norm=(0.01 0.1 0.5)
-g_norm=(0.01)
-eps=(0.1 0.5 1)
+momentum=(0.0)
+lr=(0.2)
+g_norm=(0.01 0.05 0.1 0.5)
+eps=(0.1 0.3 0.5)
 iidflag=("--save_dir=result")
 kf=("--save_dir=result")
-momentum=(0.0)
+
+
 
 # FLamby
 # seed=(0) # 5 9 15)
@@ -74,7 +67,7 @@ do
                 echo "FedSVG without DP, but with clip">>$logfile
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                # output=`${py_req}`;
+                output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"

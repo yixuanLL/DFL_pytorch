@@ -1,9 +1,45 @@
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --local_round=2 --global_round=100 --lr=0.5 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.5 --dataset=MNIST --model=cnn --save_dir=result
-[time] build py time is 0min 0s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.5 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 15min 12s
-python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=1  --local_round=2 --global_round=100 --lr=0.5 --dataset=MNIST --model=cnn  --save_dir=result
-[time] build py time is 15min 7s
-[finished]!
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.01 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
+[time] build py time is 9min 29s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.05 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
+[time] build py time is 10min 4s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
+[time] build py time is 10min 9s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --save_dir=result
+[time] build py time is 9min 29s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.01 --dp=True --eps=0.1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/rdp.py:336: UserWarning: Optimal order is the largest alpha. Please consider expanding the range of alphas to get a tighter privacy bound.
+  warnings.warn(
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/prv/prvs.py:49: RuntimeWarning: invalid value encountered in log
+  z = np.log((np.exp(t) + q - 1) / q)
+[time] build py time is 9min 33s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.05 --dp=True --eps=0.1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/rdp.py:336: UserWarning: Optimal order is the largest alpha. Please consider expanding the range of alphas to get a tighter privacy bound.
+  warnings.warn(
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/prv/prvs.py:49: RuntimeWarning: invalid value encountered in log
+  z = np.log((np.exp(t) + q - 1) / q)
+[time] build py time is 9min 41s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/rdp.py:336: UserWarning: Optimal order is the largest alpha. Please consider expanding the range of alphas to get a tighter privacy bound.
+  warnings.warn(
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/prv/prvs.py:49: RuntimeWarning: invalid value encountered in log
+  z = np.log((np.exp(t) + q - 1) / q)
+[time] build py time is 10min 24s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.5 --dp=True --eps=0.1  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/rdp.py:336: UserWarning: Optimal order is the largest alpha. Please consider expanding the range of alphas to get a tighter privacy bound.
+  warnings.warn(
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/prv/prvs.py:49: RuntimeWarning: invalid value encountered in log
+  z = np.log((np.exp(t) + q - 1) / q)
+[time] build py time is 11min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.01 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/rdp.py:336: UserWarning: Optimal order is the largest alpha. Please consider expanding the range of alphas to get a tighter privacy bound.
+  warnings.warn(
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/prv/prvs.py:49: RuntimeWarning: invalid value encountered in log
+  z = np.log((np.exp(t) + q - 1) / q)
+[time] build py time is 12min 16s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.05 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/rdp.py:336: UserWarning: Optimal order is the largest alpha. Please consider expanding the range of alphas to get a tighter privacy bound.
+  warnings.warn(
+/home/yliu270/anaconda3/envs/flamby/lib/python3.8/site-packages/opacus/accountants/analysis/prv/prvs.py:49: RuntimeWarning: invalid value encountered in log
+  z = np.log((np.exp(t) + q - 1) / q)
+[time] build py time is 12min 43s
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --grad_norm=0.1 --dp=True --eps=0.3  --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn  --save_dir=result

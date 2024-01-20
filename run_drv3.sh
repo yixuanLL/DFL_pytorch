@@ -20,16 +20,16 @@ fi
 
 # # MNIST
 seed=(0)
-lr=(0.1 0.2 0.5)
-g_p_norm=(0.01 0.1 0.5)
-clip_paral=(0.05 0.2 1)
-eps=(0.1 0.5 1)
-eps_2=(0.02 0.1 0.2)
+lr=(0.2)
+g_p_norm=(0.01 0.05)
+clip_paral=(0.05 0.2)
+index=(0 1 2 3 4)
+eps=(0.01 0.02 0.04 0.06 0.08)
+eps_2=(0.005 0.01 0.02 0.03 0.04)
 # kf=("--kf=True")
-# kf=("--save_dir=result") 
-# iidflag=("--save_dir=result")
+kf=("--save_dir=result") 
+iidflag=("--save_dir=result")
 # momentum=(0.0)
-
 
 
 #FLamby
@@ -63,13 +63,13 @@ do
         do
             for gpn in ${g_p_norm[@]}
             do
-                # py_req="python ${cur_path}/main_test.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=0.05";
+                # py_req="python ${cur_path}/main_test.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=${cp}";
                 py_req="python ${cur_path}/main_test.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  --clip_paral=${cp}";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                output=`${py_req}`;
+                # output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -91,35 +91,33 @@ output=0
 echo "====DP====">>$logfile
 for s in ${seed[@]}
 do
-    for e2 in ${eps_2[@]}
+    for cp in ${clip_paral[@]}
     do
-        for e in ${eps[@]}
+        for i in ${index[@]}
         do
-            for cp in ${clip_paral[@]}
+            for l in ${lr[@]}
             do
-                for l in ${lr[@]}
+                for gpn in ${g_p_norm[@]}
                 do
-                    for gpn in ${g_p_norm[@]}
-                    do
-                        # py_req="python ${cur_path}/main_test.py --DR=True --dp=True --eps=${e} --eps_2=0.05 --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=0.05 ${k}";
-                        py_req="python ${cur_path}/main_test.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=${e2} --clip_paral=${cp}";
-                        # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DR=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
-                        echo "${py_req}"
-                        echo "${py_req}">>$logfile
-                        start_time=$(date +%s)
-                        output=`${py_req}`;
-                        end_time=$(date +%s)
-                        if [ $? -ne 0 ]; then
-                            echo "[FAILED] ${py_req}"
-                            echo "[FAILED] ${py_req}">>$logfile
-                            exit 8
-                        fi
-                        sleep 1;
-                        echo "${output}">>$logfile
-                        cost_time=$[ $end_time-$start_time ]
-                        echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
-                        echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
-                    done
+                    # py_req="python ${cur_path}/main_test.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --eps_2=0.05 --clip_paral=${cp}";
+                    # py_req="python ${cur_path}/main_test.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=${e2} --clip_paral=${cp}";
+                    py_req="python ${cur_path}/main_test.py --DR=True --eps=${eps[${i}]} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=${eps_2[${i}]} --clip_paral=${cp}";
+                    # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DR=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
+                    echo "${py_req}"
+                    echo "${py_req}">>$logfile
+                    start_time=$(date +%s)
+                    output=`${py_req}`;
+                    end_time=$(date +%s)
+                    if [ $? -ne 0 ]; then
+                        echo "[FAILED] ${py_req}"
+                        echo "[FAILED] ${py_req}">>$logfile
+                        exit 8
+                    fi
+                    sleep 1;
+                    echo "${output}">>$logfile
+                    cost_time=$[ $end_time-$start_time ]
+                    echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
+                    echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
                 done
             done
         done

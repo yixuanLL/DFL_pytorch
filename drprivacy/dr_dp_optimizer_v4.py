@@ -115,9 +115,9 @@ class DrDPOptimizerV4(DPOptimizer):
     def recover_grad(self, g_perp_noisy, alpha_noisy):
         if self.last_grad == []:
             g_noisy = g_perp_noisy
-            g = g_perp_noisy
         else:
             g_noisy = [gp + a * lg * len(self.grad_samples[0]) for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
+            # g_noisy = [a * lg * len(self.grad_samples[0]) for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
         for p,gi in zip(self.params, g_noisy):
             if p.summed_grad is not None:
                 p.summed_grad += gi
@@ -199,7 +199,7 @@ class DrDPOptimizerV4(DPOptimizer):
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
         std = noise_multiplier * sensitivity
-        std /= (len(self.grad_samples[0]))
+        # std /= (len(self.grad_samples[0])) #因为是先平均后加噪声，所以noise scale=alpha scale
         for c in cos:
             noise = torch.normal(
             mean=0,

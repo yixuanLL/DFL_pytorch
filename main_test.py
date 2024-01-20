@@ -37,6 +37,8 @@ def main(args):
     max_accum_budget_accountant = 0
     save_address = ''
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
     # set seed
     setup_seed(args.seed)
     # prepare local dataset
@@ -177,7 +179,7 @@ def main(args):
     # loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
-    
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
