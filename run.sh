@@ -25,9 +25,9 @@ start_time=$(date +%s)
 # --clip_paral=0.05 \
 # --lr=0.2 \
 # --DRtest=True \
-# --dp=True"
+# --dp=True"    
 
-py_req="python /home/yliu270/workspace/DFL_pytorch/main_test.py --DR=True --eps=0.04 --grad_perp_norm=0.01 --dp=True --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn --eps_2=0.02 --clip_paral=0.2
+py_req="python /home/yliu270/workspace/DFL_pytorch/main_test.py --cpl=True --eps=0.3 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn
 "
 
 

@@ -202,7 +202,6 @@ class Client(nn.Module):
 
                 ## save model for next time
                 if model_t_1 != None:
-                    # model_t_2 = copy.deepcopy(model_t_1) #w_{t-2}
                     model_t_2.load_state_dict(model_t_1)
                     optimizer_t_2.load_state_dict(optimizer_t_1)
                     ## use last model for diff2 projection
@@ -210,8 +209,8 @@ class Client(nn.Module):
                     loss = criterion(y_pred, y_train)
                     optimizer_t_2.zero_grad()
                     loss.backward(retain_graph=True)
-                    optimizer.proj_base = [optimizer_t_2._get_flat_grad_sample(p)/len(x_train) for p in model_t_2.parameters()]
-                    if optimizer.proj_base == []:
+                    optimizer.gt2 = [optimizer_t_2._get_flat_grad_sample(p) for p in model_t_2.parameters()]
+                    if optimizer.gt2 == []:
                         print(1)
                     # print(optimizer_t_2.proj_base)
                     # for param in model_t_2.parameters():

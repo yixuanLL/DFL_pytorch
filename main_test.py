@@ -19,7 +19,7 @@ from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
 from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t
-os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+os.environ['CUDA_VISIBLE_DEVICES'] ='1'
 
 MODEL_PARAMS={
     'MNIST': (784,10),

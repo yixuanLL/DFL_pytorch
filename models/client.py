@@ -79,7 +79,7 @@ class Client(nn.Module):
         parameters = model.parameters()
 
         optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
-        # optimizer = torch.optim.SGD(parameters, lr=self.lr)
+        # optimizer = torch.optim.RMSprop(parameters, lr=self.lr)
         # if self.DR:
         #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
         criterion = nn.CrossEntropyLoss()
@@ -163,7 +163,7 @@ class Client(nn.Module):
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             optimizer.last_grad_origin = [p/self.batch_size for p in self.global_last_grad] 
-        if self.DRtest or self.DR:
+        if self.DRtest or self.DR or self.cpl:
             if self.global_last_grad != []:
                 last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
                 norm = torch.stack(last_norm).norm(2)

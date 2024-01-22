@@ -33,25 +33,25 @@ fi
 
 
 #FLamby
-# seed=(0) #(5 9 15)
-# lr=(0.1 0.2 0.5)
-# g_p_norm=(0.01 0.05 0.1)
-# clip_paral=(0.001 0.01 0.1)
-# eps=(0.1 0.5 1)
-# eps_2=(0.02 0.1 0.2)
-# kf=("--save_dir=result") 
-# # kf=("--kf=True")
-# iidflag=("--save_dir=result") # "--noniid=True")
+seed=(0) #(5 9 15)
+lr=(0.5)
+g_p_norm=(0.01 0.05 0.1)
+clip_paral=(0.01 0.1)
+eps=(0.1 0.5 1)
+eps_2=(0.05 0.1 0.2)
+kf=("--save_dir=result") 
+# kf=("--kf=True")
+iidflag=("--save_dir=result") # "--noniid=True")
 
 #CIFAR10
-seed=(0)
-momentum=(0.0)
-lr=(0.2 0.5 1)
-g_p_norm=(0.01 0.1 1.0)
-clip_paral=(0.2)
-eps=(0.3 0.5 1)
-eps_2=(0.1)
-iidflag=("--save_dir=result")
+# seed=(0)
+# momentum=(0.0)
+# lr=(0.2 0.5 1)
+# g_p_norm=(0.01 0.1 1.0)
+# clip_paral=(0.2)
+# eps=(0.1 0.5 1)
+# eps_2=(0.05 0.1)
+# iidflag=("--save_dir=result")
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
@@ -67,9 +67,9 @@ do
         do
             for gpn in ${g_p_norm[@]}
             do
-                py_req="python ${cur_path}/main_test.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=${cp}";
+                # py_req="python ${cur_path}/main_test.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --clip_paral=${cp}";
                 # py_req="python ${cur_path}/main_test.py --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  --clip_paral=${cp}";
-                # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr --clip_paral=${cp}";
+                py_req="python ${cur_path}/main_test.py --seed=${s} --DR=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=16 --dataset=FLamby --model=mclr --clip_paral=${cp}";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
@@ -105,9 +105,9 @@ do
                 do
                     for gpn in ${g_p_norm[@]}
                     do
-                        py_req="python ${cur_path}/main_test.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --eps_2=${e2} --clip_paral=${cp}";
+                        # py_req="python ${cur_path}/main_test.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 --eps_2=${e2} --clip_paral=${cp}";
                         # py_req="python ${cur_path}/main_test.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --eps_2=${e2} --clip_paral=${cp}";
-                        # py_req="python ${cur_path}/main_flamby.py --seed=${s} --DR=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=${e2} --clip_paral=${cp} --dataset=FLamby --model=mclr";
+                        py_req="python ${cur_path}/main_test.py --seed=${s} --DR=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=16 --eps_2=${e2} --clip_paral=${cp} --dataset=FLamby --model=mclr";
                         echo "${py_req}"
                         echo "${py_req}">>$logfile
                         start_time=$(date +%s)

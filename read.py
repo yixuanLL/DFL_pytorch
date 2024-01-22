@@ -19,7 +19,7 @@ for line in file:
     if 'global_round :' in line:
         rounds = int(line.split(':')[1].strip())/2-1
     if 'csv' in line:
-        # if 'FLamby' not in line:
+        # if 'CIFAR10' not in line:
         #     continue
         print(line)
         line = line.split('/')

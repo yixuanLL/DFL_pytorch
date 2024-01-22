@@ -70,10 +70,6 @@ class CplOptimizer(DPOptimizer):
         
         self.add_noise()
 
-        # noisy local gradient
-        # self.last_grad = [p.grad/len(p.grad_sample) for p in self.params] 
-        # print([torch.norm(g, keepdim=False) for g in self.last_grad])
-
         self.scale_grad()
 
         if self.step_hook:
@@ -210,33 +206,70 @@ class CplDPOptimizer(CplOptimizer):
         self.global_last_grad = []
         self.log = []
         self.steps = 1
-    
-    def add_noise(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def complement_process(self): # baseline V.S. dr_process
+        if self.last_grad == []:
+            delta_g = [p.grad_sample for p in self.params]
+        else:
+            delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]    
+        g_cpl_clipped = self.clip_g_perp(delta_g)
+        self.add_noise_sum(g_cpl_clipped, self.noise_multiplier, self.perp_grad_norm)
+        # print([torch.norm(g, keepdim=False) for g in g_cpl_clipped])
+
+
+        g_reverse = self.reverse_process(g_cpl_clipped)
+        # g_reverse = [torch.sum(g, dim=0) for g in gi_reverse]
+
+        for p,gi in zip(self.params, g_reverse):
+            if p.summed_grad is not None:
+                p.summed_grad += gi
+            else:
+                p.summed_grad = gi
+        return
+            
+    def add_noise_sum(self, vec, noise_multiplier, sensitivity):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-        # self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] # self.last_grad采用clean gradients
-        # self.last_grad = [for p in self.grad_samples]# self.last_grad采用robust gradients
-        for p in self.params:
-            _check_processed_flag(p.summed_grad)
-            # print(torch.norm(p.summed_grad))
-            noise = _generate_noise(
-                std=self.noise_multiplier * self.perp_grad_norm,
-                reference=p.summed_grad,
-                generator=self.generator,
-                secure_mode=self.secure_mode,
-            )
-            p.grad = (p.summed_grad + noise).view_as(p)
-            # p.grad = (p.summed_grad).view_as(p)
-            # print('noise/grad perp norm norm:{},{}'.format(torch.norm(noise), torch.norm(p.summed_grad)))
-
-            _mark_as_processed(p.summed_grad)
-        # accumulative gradients
-        mean_g = [p.grad for p in self.params] 
-        if self.steps == 1:
-            self.last_grad = mean_g
-        else:
-            self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
+        std = noise_multiplier * sensitivity
+        for v in vec:
+            noise = torch.normal(
+            mean=0,
+            std=std,
+            size=v.shape,
+            device=self.device,
+            generator=None,
+        )
+            v += noise
+        return vec
+    # def add_noise(self):
+    #     """
+    #     Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
+    #     """
+    #     # self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] # self.last_grad采用clean gradients
+    #     # self.last_grad = [for p in self.grad_samples]# self.last_grad采用robust gradients
+    #     # if self.last_grad == []:
+    #     #     print('DPcpl')
+    #     for p in self.params:
+    #         _check_processed_flag(p.summed_grad)
+    #         # print(torch.norm(p.summed_grad))
+    #         noise = _generate_noise(
+    #             std=self.noise_multiplier * self.perp_grad_norm,
+    #             reference=p.summed_grad,
+    #             generator=self.generator,
+    #             secure_mode=self.secure_mode,
+    #         )
+    #         p.grad = (p.summed_grad + noise).view_as(p)
+    #         # print(torch.norm(p.grad))
+    #         _mark_as_processed(p.summed_grad)
+    #     self.last_grad = [p.grad for p in self.params] 
+    #     # accumulative gradients
+    #     # mean_g = [p.grad for p in self.params] 
+    #     # if self.steps == 1:
+    #     #     self.last_grad = mean_g
+    #     # else:
+    #     #     self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
 
 
 class CplKFDPOptimizer(CplDPOptimizer):
