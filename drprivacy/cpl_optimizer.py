@@ -65,10 +65,14 @@ class CplOptimizer(DPOptimizer):
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
-
+        a = copy.deepcopy(self.last_grad[0]*127)        
         self.complement_process()
         
         self.add_noise()
+
+        b = copy.deepcopy(self.last_grad[0])
+        # print('last grad:', torch.sum(a))
+        # print('delta last grad:', torch.sum(b-a)/128.0)
 
         self.scale_grad()
 
@@ -99,8 +103,9 @@ class CplOptimizer(DPOptimizer):
     def reverse_process(self, gi_cpl):
         if self.last_grad == []:
             return gi_cpl
-        # g_reverse = [gc+torch.tile(lg.unsqueeze(0),[len(gc)]+[1]*len(lg.shape)) for gc, lg in zip(gi_cpl, self.last_grad)]
         g_reverse = [gc + lg*len(self.grad_samples[0]) for gc, lg in zip(gi_cpl, self.last_grad)]
+        # g_reverse = [lg*len(self.grad_samples[0]) for gc, lg in zip(gi_cpl, self.last_grad)]
+        # print('delta/last_grad', torch.sum(gi_cpl[0])/torch.sum(self.last_grad[0]*128))
         return g_reverse
 
 
@@ -233,7 +238,7 @@ class CplDPOptimizer(CplOptimizer):
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
         std = noise_multiplier * sensitivity
-        for v in vec:
+        for i, v in enumerate(vec):
             noise = torch.normal(
             mean=0,
             std=std,
@@ -242,6 +247,8 @@ class CplDPOptimizer(CplOptimizer):
             generator=None,
         )
             v += noise
+            # if i==0:
+            #     print('noise:',torch.sum(noise))
         return vec
     # def add_noise(self):
     #     """

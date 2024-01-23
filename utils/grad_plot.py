@@ -3,6 +3,33 @@ import matplotlib.pyplot as plt
 import torch
 import numpy
 
+def alpha_plot(log):
+    global_round = len(log)
+    alpha0 = []
+    alpha1 = []
+    rounds = 0
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            # only print the certain batch of each local round
+            # if j%(local_round/2) != 0:
+            #     continue
+            a = log[i][j]
+            alpha0.append(a[0].cpu())
+            alpha1.append(a[1].cpu())
+            rounds += 1 
+    plt.switch_backend('agg')
+    r = range(rounds)
+    plt.plot(r, alpha0, 'skyblue', label='a0')
+    plt.plot(r, alpha1, 'green', label='a1')
+    plt.ylabel('alpha')
+    plt.xlabel('Rounds')
+    plt.legend(loc='lower right', fontsize=8)
+
+    plt.show()
+    root_path = '/home/yliu270/workspace/DFL_pytorch/'
+    plt.savefig(root_path+'alpha.png', dpi=600)
+    plt.close()
 
 def loss_plot(losses):
     global_round = len(losses)

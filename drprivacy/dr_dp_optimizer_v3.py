@@ -70,9 +70,13 @@ class DrDPOptimizerV3(DPOptimizer):
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
-
+        a = copy.deepcopy(self.last_grad[0]*127)    
         self.dr_process()
         self.add_noise()
+        b = copy.deepcopy(self.last_grad[0])
+        # print('last grad:', torch.sum(a))
+        print('delta last grad:', torch.sum(b-a))
+
         self.scale_grad()
         self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
 

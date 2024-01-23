@@ -70,11 +70,17 @@ class DrOptimizerV3(DPOptimizer):
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
-
+        
+        # a = copy.deepcopy(self.last_grad[0]*127)    
         self.dr_process()
         self.add_noise()
+        # b = copy.deepcopy(self.last_grad[0])
+        # print('last grad:', torch.sum(a))
+        # print('delta last grad:', torch.sum(b-a))
+
         self.scale_grad()
-        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
+        # self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
+        
 
         if self.step_hook:
             self.step_hook(self)
@@ -90,6 +96,8 @@ class DrOptimizerV3(DPOptimizer):
         if self.last_grad != []:
             clip_p = self.clip_paral
             alpha = self.clip(alpha_i, clip_p)
+            # print([p/128 for p in alpha])
+            self.log = [p/128 for p in alpha]
         else:
             alpha = 0
             alpha_clean = 0
@@ -114,6 +122,7 @@ class DrOptimizerV3(DPOptimizer):
             g = g_perp_noisy
         else:
             g_noisy = [gp + a * lg for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
+            # g_noisy = [gp + 0.3*128 * lg for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
         for p,gi in zip(self.params, g_noisy):
             if p.summed_grad is not None:
                 p.summed_grad += gi
