@@ -87,7 +87,7 @@ class DrDPOptimizerV5(DPOptimizer):
         return True  
 
     def dr_process(self):
-        paral_alpha = [torch.tensor(0.3)]*8
+        paral_alpha = [torch.tensor(0.3)]*len(self.grad_samples)
         gi_perp = self.decompose_grad(paral_alpha)   
         g_perp = self.clip_g_perp(gi_perp) 
         g_perp_clean = copy.deepcopy(g_perp) 
@@ -99,7 +99,7 @@ class DrDPOptimizerV5(DPOptimizer):
     def decompose_grad(self, paral_alpha):
         if self.last_grad == []:      
             print('DPDR V5')
-            return self.grad_samples, [torch.tensor(1.).to(self.device)]*8
+            return self.grad_samples
         # last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         # paral_alpha = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
         gi_paral = [paral * torch.tile(lg.unsqueeze(0),[len(self.grad_samples[0])]+[1]*len(lg.shape)) for paral, lg in zip(paral_alpha, self.last_grad)]

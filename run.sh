@@ -27,9 +27,9 @@ start_time=$(date +%s)
 # --DRtest=True \
 # --dp=True"    
 
-py_req="python /home/yliu270/workspace/DFL_pytorch/main_test.py --cpl=True --eps=0.3 --grad_perp_norm=0.1 --dp=True --local_round=2 --global_round=100 --lr=0.2 --dataset=MNIST --model=cnn
-"
-
+# py_req="python /home/yliu270/workspace/DFL_pytorch/main_test.py --DR=True --grad_perp_norm=11 --local_round=2 --global_round=100 --lr=0.2 --dataset=CIFAR10 --model=lenet5 --clip_paral=100"
+# py_req="python /home/yliu270/workspace/DFL_pytorch/main_test.py --cpl=True --grad_perp_norm=11 --local_round=2 --global_round=100 --lr=0.2 --dataset=CIFAR10 --model=lenet5"
+python /home/yliu270/workspace/DFL_pytorch/main_test.py --DRtest=True --grad_perp_norm=11 --local_round=2 --global_round=100 --lr=0.2 --dataset=CIFAR10 --model=lenet5 --clip_paral=100
 
 output=`${py_req}`;
 echo "${output}"

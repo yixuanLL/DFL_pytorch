@@ -180,7 +180,7 @@ def main(args):
     # loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
-    alpha_plot(log)
+    # alpha_plot(log)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
