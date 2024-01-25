@@ -10,55 +10,82 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-#MNIST
-class Model(nn.Module):
-    def __init__(self, input_dim, output_dim):
-        super(Model, self).__init__()
-        self.name = 'LeNet5'
-        self.layer1 = nn.Sequential(nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0), # 1, 6 for MNIST
-                                    nn.Tanh(),
-                                    nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
 
-        self.layer2 = nn.Sequential(nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
-                                    nn.Tanh(),
-                                    nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
+# class Model(nn.Module):
+#     def __init__(self, input_dim, output_dim):
+#         super(Model, self).__init__()
+#         self.name = 'LeNet5'
+#         self.layer1 = nn.Sequential(nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0), # 1, 6 for MNIST
+#                                     nn.Tanh(),
+#                                     nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
 
-        self.fc = nn.Sequential(nn.Linear(16 * 5 * 5, 120), # 16*4*4 for MNIST
-                                nn.Tanh(),
-                                nn.Linear(120, 84),
-                                nn.Tanh(),
-                                nn.Linear(84, output_dim))
+#         self.layer2 = nn.Sequential(nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
+#                                     nn.Tanh(),
+#                                     nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
 
-    def forward(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        return x
+#         self.fc = nn.Sequential(nn.Linear(16 * 5 * 5, 120), # 16*4*4 for MNIST
+#                                 nn.Tanh(),
+#                                 nn.Linear(120, 84),
+#                                 nn.Tanh(),
+#                                 nn.Linear(84, output_dim))
+
+#     def forward(self, x):
+#         x = self.layer1(x)
+#         x = self.layer2(x)
+#         x = x.view(x.size(0), -1)
+#         x = self.fc(x)
+#         return x
 
 
 
 
 #CIFAR10
-class Model_CIFAR10(nn.Module):
+# class Model_CIFAR10(nn.Module):
+#     def __init__(self, input_dim, output_dim):
+#         super(Model_CIFAR10, self).__init__()
+#         self.name = 'LeNet5'
+#         self.layer1 = nn.Sequential(nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
+#                                     nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
+
+#         self.layer2 = nn.Sequential(nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
+#                                     nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
+
+#         self.fc = nn.Sequential(nn.Linear(16 * 5 * 5, 120),
+#                                 nn.ReLU(),
+#                                 nn.Linear(120, 84),
+#                                 nn.ReLU(),
+#                                 nn.Linear(84, output_dim))
+
+#     def forward(self, x):
+#         x = self.layer1(x)
+#         x = self.layer2(x)
+#         x = x.view(x.size(0), -1)
+#         x = self.fc(x)
+#         return x
+
+class Model(nn.Module):
     def __init__(self, input_dim, output_dim):
-        super(Model_CIFAR10, self).__init__()
+        super(Model, self).__init__()
         self.name = 'LeNet5'
-        self.layer1 = nn.Sequential(nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
+        self.nn_layer = nn.ModuleList()
+        self.layer1 = nn.Sequential(nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0), # 1, 6 for MNIST
+                                    nn.Tanh(),
                                     nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
-
+        self.nn_layer.append(self.layer1)
         self.layer2 = nn.Sequential(nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
+                                    nn.Tanh(),
                                     nn.MaxPool2d(kernel_size=2, stride=2, padding=0))
-
-        self.fc = nn.Sequential(nn.Linear(16 * 5 * 5, 120),
-                                nn.ReLU(),
+        self.nn_layer.append(self.layer2)
+        self.fc = nn.Sequential(nn.Linear(16 * 5 * 5, 120), # 16*4*4 for MNIST
+                                nn.Tanh(),
                                 nn.Linear(120, 84),
-                                nn.ReLU(),
+                                nn.Tanh(),
                                 nn.Linear(84, output_dim))
-
+        self.nn_layer.append(self.fc)
     def forward(self, x):
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
+        for id, layer in enumerate(self.nn_layer):
+            if id == len(self.nn_layer)-1:
+                x = x.view(x.size(0), -1)
+            x = layer(x)
         return x
+

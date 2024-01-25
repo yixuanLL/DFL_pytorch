@@ -15,10 +15,12 @@ import copy
 from utils.grad_plot import grad_flat
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, clip_paral):
+    def __init__(self, x_train, y_train, x_test, y_test, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, num_clients, clip_paral):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
+        self.x_test = x_test
+        self.y_test = y_test
         self.dataset = dataset
 
         try:
@@ -53,6 +55,8 @@ class Client(nn.Module):
         self.noisy_layervar = [0.3, 0.3]
         self.longlogs = []
         self.ratio = 1
+        self.opt = opt
+        self.num_clients = num_clients
 
     def download(self, model, global_last_grad):
         # self.model = model
@@ -76,12 +80,14 @@ class Client(nn.Module):
 
     def local_update(self):
         model = self.model.train()
-        parameters = model.parameters()
+        # parameters = model.parameters()
+        # default optimizer: SGD
+        optimizer = torch.optim.SGD(model.nn_layer.parameters(), lr=self.lr, momentum=self.momentum)
+        if self.opt == 'rmsprop':
+            optimizer = torch.optim.RMSprop(model.nn_layer.parameters(), lr=self.lr)
+        if self.opt == 'adam':
+            optimizer = torch.optim.Adam(model.nn_layer.parameters(), lr=self.lr)
 
-        optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
-        # optimizer = torch.optim.RMSprop(parameters, lr=self.lr)
-        # if self.DR:
-        #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
         criterion = nn.CrossEntropyLoss()
 
         x_batch = self.x_train[self.dataset]
@@ -183,39 +189,7 @@ class Client(nn.Module):
             optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
             # entire gradient filter
             optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
-            # layer-wise gradient filter
-            # grad_noise_var = [(self.grad_norm*0.01)**2, (self.grad_norm*0.1)**2]
-            # grad_noise_var = [(self.grad_norm*noise/self.batch_size)**2 * 0.001, (self.grad_norm*noise/self.batch_size)**2 * 0.01]
-            # grad_noise_var = [0.00005, 0.0006]
-            # dp_noise_var = (self.grad_norm*noise/self.batch_size)**2 * 0.001
 
-            # grad_noise_var = [0.00005+0.5, 0.0006+0.5]
-            # grad_noise_var = [0.5,0.5]
-            # obsv_noise_var = [0.05, 0.1]
-
-            # grad_noise_var = self.noisy_layervar
-            # true_g = [0.00005, 0.006]
-            # obsv_noise_var = [v-(self.grad_norm*noise/self.batch_size)**2-e for v,e in zip(self.noisy_layervar, true_g)]
-            # obsv_noise_var = [0.05, 0.05]
-
-            # grad_noise_var = self.noisy_layervar
-            # n_var= (self.grad_norm*noise/self.batch_size)**2
-            # grad_noise_var = [n_var+0.005, n_var+0.06]
-            # obsv_noise_var = []
-            # if self.noisy_layervar != []:
-            #     obsv_noise_var = [abs(self.noisy_layervar[0]-n_var), abs(self.noisy_layervar[1]-n_var)]
-            # # obsv_noise_var = [abs(g-n_var)*self.ratio for g in self.noisy_layervar]
-            # optimizer.kfilter = KalmanFilterLayer(optimizer.last_grad, grad_noise_var, obsv_noise_var)
-
-            # grad_noise_var = self.noisy_layervar
-            # n_var= (self.grad_norm*noise/self.batch_size)**2
-            # grad_noise_var = [0.005, 0.06]
-            # # grad_noise_var = [n_var, n_var]
-            # obsv_noise_var = []
-            # if self.noisy_layervar != []:
-            #     obsv_noise_var = [abs(self.noisy_layervar[0]-0.005), abs(self.noisy_layervar[1]-0.06)]
-            # # obsv_noise_var = [abs(g-n_var)*self.ratio for g in self.noisy_layervar]
-            # optimizer.kfilter = KalmanFilterLayer(optimizer.last_grad, grad_noise_var, obsv_noise_var)
  
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
@@ -241,24 +215,12 @@ class Client(nn.Module):
                 train_acc += correct.item()
                 train_loss += loss.item()
 
-                logs.append(copy.deepcopy(optimizer.log))
+                # logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
-            losses.append(copy.deepcopy(train_loss)/self.dataset_size)
-            
-            # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
-        # if self.kfilter:
-            # var of noisy gradients
-            # layer_num = [len(g.reshape(-1)) for g in optimizer.last_grad]
-            # noisy = []
-            # self.noisy_layervar = []
-            # for i in range(len(self.longlogs)): #round
-            #     _, n, _ = self.longlogs[i]
-            #     noisy.append(grad_flat(n))
-            # noisy =  torch.var(torch.stack(noisy, dim=0), dim=0)
-            # start = 0
-            # for num in layer_num:
-            #     self.noisy_layervar.append( torch.mean(noisy[start:start+num]))
-            #     start += num
+            # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
+            if self.num_clients == 1:
+                test_acc, test_loss = self.test(copy.deepcopy(model))
+                print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f, Test acc: %.4f, Test loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size, test_acc, test_loss))
 
         updates = [weight.data for weight in model.state_dict().values()]
         if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta
@@ -277,3 +239,27 @@ class Client(nn.Module):
 
         return updates, accum_budget_accountant, Bytes1, Bytes2
 
+    def test(self, model):
+        model.eval() #.to(self.device)
+        data_loader = TensorDataset(self.x_test.to(self.device), self.y_test.to(self.device))
+        data_loader = DataLoader(data_loader, batch_size=128, shuffle=True)
+        criterion = nn.CrossEntropyLoss()
+        test_loss = 0
+        test_acc = 0
+
+        with torch.no_grad():
+            for x_test, y_test in data_loader:
+                # x_test, y_test = x_test.to(self.device), y_test.to(self.device)
+
+                output = model(x_test)
+                loss = criterion(output, y_test)
+
+                _, test_pred = torch.max(output, 1)
+
+                correct = (test_pred == y_test).sum()
+
+                test_acc += correct.item()
+                test_loss += loss.item()
+
+        # print()
+        return test_acc / len(self.x_test), test_loss / len(self.y_test)

@@ -9,8 +9,8 @@ import argparse
 import importlib
 from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
-# from models.client_kdp import Client
-# # print('__client_kdp__')
+# from models.client_diff2 import Client
+# print('__client_diff2__')
 from models.client import Client
 print('__client__')
 from models.server import Server
@@ -18,8 +18,8 @@ from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
-from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t
-os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t, alpha_plot
+os.environ['CUDA_VISIBLE_DEVICES'] ='1'
 
 MODEL_PARAMS={
     'MNIST': (784,10),
@@ -37,6 +37,8 @@ def main(args):
     max_accum_budget_accountant = 0
     save_address = ''
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
     # set seed
     setup_seed(args.seed)
     # prepare local dataset
@@ -55,10 +57,7 @@ def main(args):
         if args.dp:
             eps = args.eps
             eps_2 = 10e6
-            if args.DR or args.DRtest:
-                eps_2 = args.eps_2
-                eps = args.eps - eps_2
-            if args.DRV2:
+            if args.DR or args.DRtest or args.DRV2:
                 eps_2 = args.eps_2
                 eps = args.eps - eps_2
             try:
@@ -73,6 +72,8 @@ def main(args):
                     
         clients.append(Client(x_train=x_train,
                         y_train=y_train,
+                        x_test=x_test,
+                        y_test=y_test,
                         dataset=dataset[i],
                         batch_size=args.batch_size,
                         FLalg=args.FLalg, 
@@ -91,6 +92,8 @@ def main(args):
                         momentum=args.momentum,
                         budget_accountant=budget_accountant,
                         device=device,
+                        opt=args.opt,
+                        num_clients=args.num_clients,
                         clip_paral=args.clip_paral))
     print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2)) 
     
@@ -100,13 +103,8 @@ def main(args):
     model = getattr(mod, 'Model')
     server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device)
     server.init_alg(dp=args.dp, FLalg=args.FLalg) # init server algo: fedavg + dp
-    # server_model = server.init_global_model() # global model why use server_model?
     global_model = server.init_global_model() # global model
-    if args.FLalg == 'FedDrAvg':
-        # server.global_last_grad = [p.data.to('cuda') for p in global_model.parameters()]
-        server.global_last_grad = []
-    if args.cpl:
-        server.global_last_grad = [p.data.to(device) for p in global_model.parameters()]
+    server.global_last_grad = [p.data.to(device) for p in global_model.parameters()]
 
     
     # communication round
@@ -123,7 +121,6 @@ def main(args):
         # local update
         for p_id, participant in enumerate(candidates):
             # download global model
-            # clients[participant].download(copy.deepcopy(server_model)) # why use server_model?
             clients[participant].download(copy.deepcopy(global_model), server.global_last_grad)
             
             # update
@@ -139,9 +136,9 @@ def main(args):
             server.aggregate(model_state)
             
             # log
-            if p_id == 0:
-                log.append(bytes2[0])
-                loss.append(bytes2[1])
+            # if p_id == 0:
+            #     log.append(bytes2[0])
+            #     loss.append(bytes2[1])
             
             # if args.dp:
             #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
@@ -158,53 +155,55 @@ def main(args):
         accuracy_accountant.append(test_accuracy)
         print_accuracy_and_loss(r, test_accuracy, test_loss)
         
-        # if args.dp:
-        #     privacy_accountant.append(max_accum_budget_accountant)
-        #     if args.DR:
-        #         accum_nbytes_list1.append(accum_nbytes1)
-        #         accum_nbytes_list2.append(accum_nbytes2)
-        #         save_address = save_progress(args, accuracy_accountant, privacy_accountant, accum_nbytes_list1, accum_nbytes_list2)
-        #     else:
-        #        save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
-        # else:
-        #     save_address = save_progress(args, accuracy_accountant)
+        if args.dp:
+            privacy_accountant.append(max_accum_budget_accountant)
+            if args.DR:
+                accum_nbytes_list1.append(accum_nbytes1)
+                accum_nbytes_list2.append(accum_nbytes2)
+                save_address = save_progress(args, accuracy_accountant, privacy_accountant, accum_nbytes_list1, accum_nbytes_list2)
+            else:
+               save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
+        else:
+            save_address = save_progress(args, accuracy_accountant)
         
-        # if r > 10:
+        # if r > 3:
         #     break
-    # print(save_address)
-    grad_plot(log)
+    print(save_address)
+    # grad_plot(log)
     # grad_plot_t(log)
-    loss_plot(loss)
+    # loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
-    
+    # alpha_plot(log)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='MNIST')
+    parser.add_argument('--dataset', type=str, default='CIFAR10')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=True)
-    parser.add_argument('--global_round', type=int, default=100)
-    parser.add_argument('--local_round', type=int, default=2)
+    parser.add_argument('--DRtest', type=bool, default=False)
+    parser.add_argument('--global_round', type=int, default=10)
+    parser.add_argument('--local_round', type=int, default=10)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=10) 
+    parser.add_argument('--num_clients', type=int, default=1) 
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=0.5)
-    parser.add_argument('--eps_2', type=float, default=0.05)
+    parser.add_argument('--eps', type=float, default=0.3)
+    parser.add_argument('--eps_2', type=float, default=0.02)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=3)
+    parser.add_argument('--grad_norm', type=float, default=10)
     parser.add_argument('--grad_perp_norm', type=float, default=0.2)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model', type=str, default='cnn')
-    parser.add_argument('--lr', type=float, default=0.2)
+    parser.add_argument('--model', type=str, default='cnn5')
+    parser.add_argument('--lr', type=float, default=0.1)
     parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
-    parser.add_argument('--kf', type=bool, default=True)
+    parser.add_argument('--kf', type=bool, default=False)
+    parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
     args = parser.parse_args() 

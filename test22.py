@@ -11,7 +11,7 @@ import math
 import re
 import numpy as np
 from opacus.accountants.utils import get_noise_multiplier
-from opacus.accountants.analysis import get_privacy_spent
+# from opacus.accountants.analysis import get_privacy_spent
 
 np.random.seed(10)
 
@@ -106,14 +106,14 @@ def advanced_comp(q, epochs, noise_multipler, delta):
     epsilon=eps_prime*np.sqrt(2*T*math.log(1/delta)) + T*eps_prime*(math.exp(eps_prime)-1)/(math.exp(eps_prime)-1)
     return epsilon
 
-q = 128.0/6000
-epochs = 2*50
+q = 256.0/50000
+epochs = 20
 T = epochs/q #到底怎么计算？？？？
 print(T,q)
-eps = 0.2
+eps = 3
 
 
-n1=compute_noise_multiplier(6000, 128, epochs, eps, 1e-5)
+n1=compute_noise_multiplier(50000, 256, epochs, eps, 1e-5)
 print(n1)
 
 n = m(q, epochs, eps, 1e-5)

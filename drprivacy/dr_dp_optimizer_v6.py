@@ -71,15 +71,20 @@ class DrDPOptimizerV6(DPOptimizer):
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
+
+        # param_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of per sample gradient
+        # a = torch.stack(param_norms).norm(2, dim=-1) # norm of per sample gradient
         # a = copy.deepcopy(self.last_grad[0]*127)    
         self.dr_process()
         self.add_noise()
+
         # b = copy.deepcopy(self.last_grad[0])
         # print('last grad:', torch.sum(a))
         # print('delta last grad:', torch.sum(b-a))
 
         self.scale_grad()
-        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
+
+        # self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
 
         if self.step_hook:
             self.step_hook(self)
@@ -88,18 +93,30 @@ class DrDPOptimizerV6(DPOptimizer):
         return True  
 
     def dr_process(self):
-        paral_alpha = [torch.tensor(0.3)]*len(self.grad_samples)
+        paral_alpha = [torch.tensor(self.clip_paral)]*len(self.grad_samples)
         gi_perp = self.decompose_grad(paral_alpha)   
         g_perp = self.clip_g_perp(gi_perp) 
-        g_perp_clean = copy.deepcopy(g_perp) 
+        # g_perp_clean = copy.deepcopy(g_perp) s
+
+        # param_norms = [(g/128).reshape(-1).norm(2, dim=-1) for g in g_perp_clean] # norm of per laryer of per sample gradient
+        # a = torch.stack(param_norms).norm(2, dim=-1) # norm of per sample gradient
+
         self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
-
+        # param_norms = [(g/128).reshape(-1).norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
+        # b = torch.stack(param_norms).norm(2, dim=-1) # norm of per sample gradient
+        # print(a/b,a,b)
         g_perp = self.recover_grad(g_perp, paral_alpha) 
-
+    
+    # def dr_process2(self):
+    #     paral_alpha = [torch.tensor(self.clip_paral)]*len(self.grad_samples)
+    #     gi_perp = self.decompose_grad(paral_alpha)   
+    #     g_perp = self.clip_g_perp(gi_perp) 
+    #     g_noisy = self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
+    #     g_perp = self.recover_grad(g_noisy, paral_alpha) 
 
     def decompose_grad(self, paral_alpha):
         if self.last_grad == []:      
-            print('DPDR V5')
+            print('DPDR V6')
             return self.grad_samples
         # last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
         # paral_alpha = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
@@ -111,7 +128,7 @@ class DrDPOptimizerV6(DPOptimizer):
     def recover_grad(self, g_perp_noisy, alpha_noisy):
         if self.last_grad == []:
             g_noisy = g_perp_noisy
-            g = g_perp_noisy
+            # g = g_perp_noisy
         else:
             g_noisy = [gp + a * lg * len(self.grad_samples[0]) for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
         for p,gi in zip(self.params, g_noisy):

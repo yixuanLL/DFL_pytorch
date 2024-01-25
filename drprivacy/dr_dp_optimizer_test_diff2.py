@@ -89,7 +89,7 @@ class DrDPOptimizerDiff2(DPOptimizer):
         g_delta_clean = copy.deepcopy(g_delta) 
         self.add_noise_sum(g_delta, self.noise_multiplier, self.perp_grad_norm)
 
-        g_noisy = self.recover_grad(g_delta) 
+        self.recover_grad(g_delta) 
 
     
     def diff(self):
@@ -102,10 +102,9 @@ class DrDPOptimizerDiff2(DPOptimizer):
     def recover_grad(self, g_delta):
         if self.last_grad == []:
             self.last_grad = g_delta
-        # if self.gt2 == []:
-        #     self.last_grad = g_delta
+            g_noisy = g_delta #这里的浅复制会/sample size吗
         else:
-            g_noisy = [d + g*128 for d, g in zip(g_delta, self.last_grad)] #sum of gradients
+            g_noisy = [d + g*len(self.last_grad[0]) for d, g in zip(g_delta, self.last_grad)] #sum of gradients
         for p,gi in zip(self.params, g_noisy):
             if p.summed_grad is not None:
                 p.summed_grad += gi

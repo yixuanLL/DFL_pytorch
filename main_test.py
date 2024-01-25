@@ -75,6 +75,8 @@ def main(args):
                     
         clients.append(Client(x_train=x_train,
                         y_train=y_train,
+                        x_test=x_test,
+                        y_test=y_test,
                         dataset=dataset[i],
                         batch_size=args.batch_size,
                         FLalg=args.FLalg, 
@@ -93,6 +95,8 @@ def main(args):
                         momentum=args.momentum,
                         budget_accountant=budget_accountant,
                         device=device,
+                        opt=args.opt,
+                        num_clients=args.num_clients,
                         clip_paral=args.clip_paral))
     print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2)) 
     
@@ -209,6 +213,7 @@ if __name__ == '__main__':
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--kf', type=bool, default=False)
+    parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
     args = parser.parse_args() 

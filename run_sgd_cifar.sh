@@ -46,18 +46,19 @@ source /home/yliu270/anaconda3/bin/activate flamby
 #CIFAR10
 seed=(0)
 momentum=(0.0)
-lr=(0.5 1)
-g_norm=(0.1 0.3 1.0)
-eps=(0.3 0.5 1)
+lr=(0.001 0.01 0.1)
+g_norm=(0.01 0.1 0.3)
+eps=(0.1)
 # kf=("--kf=True")
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
+opt=('adam')
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
 echo "====NoDP====">>$logfile
-for s in ${seed[@]}
+for o in ${opt[@]}
 do
     for k in ${kf[@]}
     do
@@ -65,7 +66,7 @@ do
         do
             for gn in ${g_norm[@]}
             do
-                py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k}";
+                py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --opt=${o}";
                 # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn ${k}";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
@@ -91,7 +92,7 @@ done
 
 output=0
 echo "====DP====">>$logfile
-for s in ${seed[@]}
+for o in ${opt[@]}
 do
     for k in ${kf[@]}
     do
@@ -101,7 +102,7 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k}";
+                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --opt=${o}";
                     # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
