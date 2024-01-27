@@ -162,7 +162,7 @@ class CplOptimizer(DPOptimizer):
             g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp
         ] # norm of per laryer of per sample gradient
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
-        print(per_sample_norms[0:5])
+        # print(per_sample_norms[0:5])
         per_sample_clip_factor = (
             self.perp_grad_norm / (per_sample_norms + 1e-6)
         ).clamp(max=1.0) # clip [ max min ]

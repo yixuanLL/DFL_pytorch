@@ -11,8 +11,8 @@ from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
 # from models.client_diff2 import Client
 # print('__client_diff2__')
-from models.client import Client
-print('__client__')
+from models.client_test import Client
+print('__client_test__')
 from models.server import Server
 from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
@@ -183,18 +183,18 @@ if __name__ == '__main__':
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=False)
-    parser.add_argument('--global_round', type=int, default=10)
-    parser.add_argument('--local_round', type=int, default=10)
+    parser.add_argument('--DRtest', type=bool, default=True)
+    parser.add_argument('--global_round', type=int, default=20)
+    parser.add_argument('--local_round', type=int, default=20)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=1) 
-    parser.add_argument('--batch_size', type=int, default=128)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=0.3)
+    parser.add_argument('--batch_size', type=int, default=256)
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
+    parser.add_argument('--eps', type=float, default=1)
     parser.add_argument('--eps_2', type=float, default=0.02)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
     parser.add_argument('--grad_norm', type=float, default=10)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.2)
+    parser.add_argument('--grad_perp_norm', type=float, default=0.01)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--model', type=str, default='cnn5')
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=0.5, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

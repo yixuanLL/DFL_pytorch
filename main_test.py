@@ -59,10 +59,10 @@ def main(args):
             eps_2 = 10e6
             if args.DR or args.DRtest:
                 eps_2 = args.eps_2
-                eps = args.eps - eps_2
+                # eps = args.eps - eps_2
             if args.DRV2:
                 eps_2 = args.eps_2
-                eps = args.eps - eps_2
+                # eps = args.eps - eps_2
             try:
                 data_size = len(dataset[i])
             except:

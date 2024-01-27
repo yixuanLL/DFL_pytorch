@@ -70,7 +70,7 @@ do
                 echo "FedSVG without DP, but with clip">>$logfile
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                output=`${py_req}`;
+                # output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -93,10 +93,10 @@ done
 # sgd; lr=4 mom=0.9 norm=0.005 50%
 round=20
 seed=(0)
-momentum=(0 0.9)
+momentum=(0.9)
 lr=(4)
-g_norm=(0.002 0.005 0.01)
-eps=(1 2 3 4)
+g_norm=(0.01)
+eps=(1)
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
 opt=('sgd')
@@ -113,13 +113,14 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${momentum}  --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
                     # py_req="python ${dir_path}/main_stand.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)
-                    # output=`${py_req}`;
+                    output=`${py_req}`;
                     end_time=$(date +%s)
                     if [ $? -ne 0 ]; then
                         echo "[FAILED] ${py_req}"

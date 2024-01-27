@@ -80,12 +80,14 @@ class Client(nn.Module):
 
     def local_update(self):
         model = self.model.train()
-        parameters = model.parameters()
+        # parameters = model.parameters()
+        # default optimizer: SGD
+        optimizer = torch.optim.SGD(model.nn_layer.parameters(), lr=self.lr, momentum=self.momentum)
+        if self.opt == 'rmsprop':
+            optimizer = torch.optim.RMSprop(model.nn_layer.parameters(), lr=self.lr)
+        if self.opt == 'adam':
+            optimizer = torch.optim.Adam(model.nn_layer.parameters(), lr=self.lr)
 
-        optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
-        # optimizer = torch.optim.SGD(parameters, lr=self.lr)
-        # if self.DR:
-        #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
         criterion = nn.CrossEntropyLoss()
 
         x_batch = self.x_train[self.dataset]
@@ -108,7 +110,7 @@ class Client(nn.Module):
             grad_norm = self.grad_norm
             clipping = 'flat'
         if not self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
             clipping = 'dr_flat'
         if not self.dp and self.DRtest:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
@@ -159,21 +161,23 @@ class Client(nn.Module):
 
         # global_last_grad
         # if self.DR or self.DRV2 or self.DRtest:
-        if self.DR or self.DRV2:
+        # if self.DR or self.DRV2:
+        if False:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
         if self.Topk:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             optimizer.last_grad_origin = [p/self.batch_size for p in self.global_last_grad] 
-        if self.DRtest:
+        if self.DRtest or self.DR or self.cpl:
             if self.global_last_grad != []:
                 last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
                 norm = torch.stack(last_norm).norm(2)
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
-                # optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
-                optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
+                optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
+                # optimizer.last_grad = [p/norm for p in self.global_last_grad] # opt 1
+                # optimizer.last_grad = self.global_last_grad # opt 2
                 optimizer.last_grad_noisy = optimizer.last_grad
             # for KF filter
             if self.kfilter:
@@ -186,46 +190,18 @@ class Client(nn.Module):
             # entire gradient filter
             optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
 
+ 
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
         losses = []
         
         # train
-        model_t_1 = None
-        model_t_2, optimizer_t_2, train_loader2 = privacy_engine.make_private(module=model,
-                                                                        optimizer=optimizer,
-                                                                        clipping=clipping,
-                                                                        data_loader=data_loader,
-                                                                        noise_multiplier=noise,
-                                                                        max_grad_norm=grad_norm)
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
             for x_train, y_train in data_loader:
                 x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
-                ## save model for next time
-                if model_t_1 != None:
-                    model_t_2.load_state_dict(model_t_1)
-                    optimizer_t_2.load_state_dict(optimizer_t_1)
-                    ## use last model for diff2 projection
-                    y_pred = model_t_2(x_train)
-                    loss = criterion(y_pred, y_train)
-                    optimizer_t_2.zero_grad()
-                    loss.backward(retain_graph=True)
-                    optimizer.gt2 = [optimizer_t_2._get_flat_grad_sample(p) for p in model_t_2.parameters()]
-                    if optimizer.gt2 == []:
-                        print(1)
-                    # print(optimizer_t_2.proj_base)
-                    # for param in model_t_2.parameters():
-                    #     param.grad.detach_()
-                    #     param.grad.zero_()
-
-                model_t_1 = model.state_dict() #w_{t-1}
-                optimizer_t_1 = optimizer.state_dict()
-
-
-                ## start normal training
                 y_pred = model(x_train)
                 loss = criterion(y_pred, y_train)
 
@@ -234,14 +210,14 @@ class Client(nn.Module):
 
                 optimizer.zero_grad() # clear grad from last batch
                 loss.backward() # back propogation & get gradients
-
+                if self.DRtest and optimizer.steps % 20 == 0:
+                    optimizer.update_alpha()
                 optimizer.step() # adding noises & update model parameters
                 optimizer.steps += 1
-
                 train_acc += correct.item()
                 train_loss += loss.item()
 
-                 # logs.append(copy.deepcopy(optimizer.log))
+                # logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
             # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
             if self.num_clients == 1:

@@ -44,7 +44,7 @@ fi
 round=20
 momentum=0.0
 seed=(0)
-lr=(0.1 1)
+lr=(0.1)
 g_p_norm=(100)
 clip_paral=(0.0 0.2 0.4 0.6 0.8 1.0) # alpha actucally
 iidflag=("--save_dir=result")
@@ -64,13 +64,13 @@ do
         do
             for gpn in ${g_p_norm[@]}
             do
-                py_req="python ${dir_path}/main_stand.py --DR=True --grad_norm=100 --grad_perp_norm=${gpn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  ${k} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                py_req="python ${dir_path}/main_stand.py --DR=True --grad_norm=100 --grad_perp_norm=${gpn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} ${k} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
                 # py_req="python ${dir_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  --clip_paral=${cp}";
                 # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                output=`${py_req}`;
+                # output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -91,10 +91,10 @@ done
 round=20
 momentum=0.0
 seed=(0)
-lr=(0.1 1)
-g_p_norm=(0.01 0.1)
-clip_paral=(0.0 0.2 0.4 0.6 0.8 1.0) # alpha actucally
-eps=(1 3)
+lr=(0.1)
+g_p_norm=(0.01)
+clip_paral=(0.8) # alpha actucally
+eps=(0.01)
 iidflag=("--save_dir=result")
 opt=('sgd')
 
@@ -116,7 +116,7 @@ do
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)
-                    # output=`${py_req}`;
+                    output=`${py_req}`;
                     end_time=$(date +%s)
                     if [ $? -ne 0 ]; then
                         echo "[FAILED] ${py_req}"
