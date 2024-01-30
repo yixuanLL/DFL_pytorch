@@ -209,12 +209,14 @@ class Client(nn.Module):
                 correct = (test_pred == y_train).sum()
 
                 optimizer.zero_grad() # clear grad from last batch
+                
                 loss.backward() # back propogation & get gradients
                 optimizer.step() # adding noises & update model parameters
+                
                 optimizer.steps += 1
                 train_acc += correct.item()
                 train_loss += loss.item()
-
+                
                 # logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
             # losses.append(copy.deepcopy(train_loss)/self.dataset_size)

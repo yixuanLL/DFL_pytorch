@@ -102,7 +102,7 @@ class DrDPOptimizerDiff2(DPOptimizer):
     def recover_grad(self, g_delta):
         if self.last_grad == []:
             self.last_grad = g_delta
-            g_noisy = g_delta #这里的浅复制会/sample size吗
+            g_noisy = g_delta 
         else:
             g_noisy = [d + g*len(self.last_grad[0]) for d, g in zip(g_delta, self.last_grad)] #sum of gradients
         for p,gi in zip(self.params, g_noisy):
@@ -110,7 +110,8 @@ class DrDPOptimizerDiff2(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = g_noisy # mean of g_boisy
+        # self.last_grad = g_noisy # wrong
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
 
 
     def clip_and_sum(self, g_perp, clip_bound, mod):

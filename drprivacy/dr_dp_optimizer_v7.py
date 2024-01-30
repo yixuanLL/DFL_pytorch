@@ -130,15 +130,14 @@ class DrDPOptimizerV7(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = copy.deepcopy(g_noisy)
-        self.last_grad = [g/len(self.grad_samples[0]) for g in self.last_grad]
+        # self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
 
         # for historical grad
-        # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
-        # if self.steps == 1: # accumulation
-        #     self.last_grad_noisy = noisy_mean_g
-        # else:
-        #     self.last_grad_noisy = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(noisy_mean_g, self.last_grad_noisy)]
+        noisy_mean_g = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
+        if self.steps == 1: # accumulation
+            self.last_grad = noisy_mean_g
+        else:
+            self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(noisy_mean_g, self.last_grad)]
         
         return g_perp_noisy
 

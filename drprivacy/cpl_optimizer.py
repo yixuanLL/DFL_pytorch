@@ -147,7 +147,9 @@ class CplOptimizer(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
-        self.last_grad = [p.grad for p in self.params] 
+        # self.last_grad = [p.grad for p in self.params] 
+        # self.last_grad = g_noisy # wrong
+        self.last_grad = copy.deepcopy([p.grad/len(self.grad_samples[0]) for p in self.params]) 
         # accumulative gradients
         # mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
         # if self.steps == 1:

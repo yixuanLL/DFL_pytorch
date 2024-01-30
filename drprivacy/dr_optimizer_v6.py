@@ -117,7 +117,8 @@ class DrOptimizerV6(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = g_noisy
+        # self.last_grad = g_noisy # V6
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
 
         # for historical grad
         # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]

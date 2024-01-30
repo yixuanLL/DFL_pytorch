@@ -97,7 +97,7 @@ class DrOptimizerV3(DPOptimizer):
             clip_p = self.clip_paral
             alpha = self.clip(alpha_i, clip_p)
             # print([p/128 for p in alpha])
-            self.log = [p/128 for p in alpha]
+            # self.log = [p/128 for p in alpha]
         else:
             alpha = 0
             alpha_clean = 0
@@ -128,7 +128,7 @@ class DrOptimizerV3(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = g_noisy
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
 
         # for historical grad
         # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
@@ -144,7 +144,7 @@ class DrOptimizerV3(DPOptimizer):
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
         per_sample_clip_factor = (self.perp_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
-        print(per_sample_norms[0:5])
+        # print(per_sample_norms[0:5])
         g_perp_clipped = []
         for p in g_perp:
             grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum

@@ -86,11 +86,11 @@ done
 
 #CIFAR10
 round=20
-momentum=(0.0)
+momentum=(0.0 0.9)
 seed=(0)
-lr=(0.1)
-g_p_norm=(0.01 0.1)
-eps=(0.1 1)
+lr=(1 2 4)
+g_p_norm=(0.05 0.1 0.5)
+eps=(1 3)
 iidflag=("--save_dir=result")
 opt=('sgd')
 

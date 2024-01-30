@@ -74,7 +74,8 @@ class DrDPOptimizerV6(DPOptimizer):
 
         # param_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of per sample gradient
         # a = torch.stack(param_norms).norm(2, dim=-1) # norm of per sample gradient
-        # a = copy.deepcopy(self.last_grad[0]*127)    
+        # a = copy.deepcopy(self.last_grad[0]*127)  
+
         self.dr_process()
         self.add_noise()
 
@@ -82,7 +83,9 @@ class DrDPOptimizerV6(DPOptimizer):
         # print('last grad:', torch.sum(a))
         # print('delta last grad:', torch.sum(b-a))
 
+
         self.scale_grad()
+
 
         # self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
 
@@ -124,29 +127,6 @@ class DrDPOptimizerV6(DPOptimizer):
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
         return gi_perp
 
-    # def recover_grad(self, g_perp, g_perp_noisy, costheta, costheta_noisy):
-    def recover_grad(self, g_perp_noisy, alpha_noisy):
-        if self.last_grad == []:
-            g_noisy = g_perp_noisy
-            # g = g_perp_noisy
-        else:
-            g_noisy = [gp + a * lg * len(self.grad_samples[0]) for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
-        for p,gi in zip(self.params, g_noisy):
-            if p.summed_grad is not None:
-                p.summed_grad += gi
-            else:
-                p.summed_grad = gi
-        self.last_grad = g_noisy
-
-        # for historical grad
-        # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
-        # if self.steps == 1: # accumulation
-        #     self.last_grad_noisy = noisy_mean_g
-        # else:
-        #     self.last_grad_noisy = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(noisy_mean_g, self.last_grad_noisy)]
-        
-        return g_perp_noisy
-
 
     def clip_g_perp(self, g_perp):
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
@@ -158,6 +138,33 @@ class DrDPOptimizerV6(DPOptimizer):
             grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
             g_perp_clipped.append(grad)
         return g_perp_clipped
+
+
+    def recover_grad(self, g_perp_noisy, alpha_noisy):
+        if self.last_grad == []:
+            g_noisy = g_perp_noisy
+            # g = g_perp_noisy
+        else:
+            g_noisy = [gp + a * lg * len(self.grad_samples[0]) for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
+        for p,gi in zip(self.params, g_noisy):
+            if p.summed_grad is not None:
+                p.summed_grad += gi
+            else:
+                p.summed_grad = gi
+        # self.last_grad = g_noisy # V6
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
+
+        # for historical grad
+        # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
+        # if self.steps == 1: # accumulation
+        #     self.last_grad_noisy = noisy_mean_g
+        # else:
+        #     self.last_grad_noisy = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(noisy_mean_g, self.last_grad_noisy)]
+        
+        return g_perp_noisy
+
+
+
 
 
     def clip_and_accumulate(self):
@@ -189,15 +196,15 @@ class DrDPOptimizerV6(DPOptimizer):
         # print(1)
 
 
-    def clip(self, vec, clip_bound):
-        # print(vec)
-        # norm = vec
-        norm = torch.stack(vec, dim=1).norm(2, dim=1)
-        clip_factor = (
-            clip_bound / (norm + 1e-6)
-        ).clamp(max=1.0)
-        vec = [torch.sum(clip_factor * v) for v in vec]
-        return vec
+    # def clip(self, vec, clip_bound):
+    #     # print(vec)
+    #     # norm = vec
+    #     norm = torch.stack(vec, dim=1).norm(2, dim=1)
+    #     clip_factor = (
+    #         clip_bound / (norm + 1e-6)
+    #     ).clamp(max=1.0)
+    #     vec = [torch.sum(clip_factor * v) for v in vec]
+    #     return vec
 
     def add_noise(self):
         """
@@ -208,22 +215,6 @@ class DrDPOptimizerV6(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
             _mark_as_processed(p.summed_grad)
 
-    # def add_noise_mean(self, cos, noise_multiplier, sensitivity): 
-    #     """
-    #     Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
-    #     """
-    #     std = noise_multiplier * sensitivity
-    #     std /= (len(self.grad_samples[0]))
-    #     for c in cos:
-    #         noise = torch.normal(
-    #         mean=0,
-    #         std=std,
-    #         size=c.shape,
-    #         device=self.device,
-    #         generator=None,
-    #     )
-    #         c += noise
-    #     return cos
 
     def add_noise_sum(self, vec, noise_multiplier, sensitivity):
         """

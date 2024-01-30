@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=drV6_cifar_stand
-#SBATCH --output=out_drV6_cifar_stand
+#SBATCH --job-name=drv3_cifar_stand
+#SBATCH --output=out_drv3_cifar_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 dir_path=$(dirname $(pwd))
@@ -8,7 +8,7 @@ echo "${dir_path}"
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_drv6_cifar_$cur_date
+logfile=${dir_path}/logs/standalone/log_drv3_cifar_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -44,16 +44,16 @@ fi
 round=20
 momentum=0.0
 seed=(0)
-lr=(1)
+lr=(2 4)
 g_p_norm=(100)
-clip_paral=(0.0 0.1 0.2) # alpha actucally
+clip_paral=(100) # alpha actucally
 iidflag=("--save_dir=result")
 opt=('sgd')
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
-echo "====DRtest=True; V6 ====">>$logfile
+echo "====DRtest=True; V3 ====">>$logfile
 
 echo "====NoDP====">>$logfile
 for o in ${opt[@]}
@@ -64,7 +64,7 @@ do
         do
             for gpn in ${g_p_norm[@]}
             do
-                py_req="python ${dir_path}/main_stand.py --DR=True --grad_norm=100 --grad_perp_norm=${gpn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} ${k} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                py_req="python ${dir_path}/main_stand.py --DRtest=True --grad_norm=100 --grad_perp_norm=${gpn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} ${k} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
                 # py_req="python ${dir_path}/main_test.py --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  --clip_paral=${cp}";
                 # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr --clip_p=0.001";
                 echo "${py_req}"
@@ -89,20 +89,22 @@ done
 
 #CIFAR10
 round=20
-momentum=0.0
+momentum=(0.0)
 seed=(0)
-lr=(2 4)
-g_p_norm=(0.001 0.01)
-clip_paral=(0.1 0.2 0.0) # alpha actucally
-eps=(1)
+lr=(2)
+g_p_norm=(0.1 0.2)
+clip_paral=(0.05 0.1) # alpha actucally
+index=(0 1 2)
+eps=(2.98 2.95 2.9)
+eps_2=(0.02 0.05 0.1)
 iidflag=("--save_dir=result")
 opt=('sgd')
 
 output=0
 echo "====DP====">>$logfile
-for o in ${opt[@]}
+for m in ${momentum[@]}
 do
-    for e in ${eps[@]}
+    for i in ${index[@]}
     do
         for cp in ${clip_paral[@]}
         do
@@ -110,7 +112,7 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
                     # py_req="python ${dir_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"

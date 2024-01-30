@@ -70,12 +70,12 @@ class DrDPOptimizerV3(DPOptimizer):
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
-        a = copy.deepcopy(self.last_grad[0]*127)    
+        # a = copy.deepcopy(self.last_grad[0]*127)    
         self.dr_process()
         self.add_noise()
-        b = copy.deepcopy(self.last_grad[0])
+        # b = copy.deepcopy(self.last_grad[0])
         # print('last grad:', torch.sum(a))
-        print('delta last grad:', torch.sum(b-a))
+        # print('delta last grad:', torch.sum(b-a))
 
         self.scale_grad()
         self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
@@ -98,6 +98,13 @@ class DrDPOptimizerV3(DPOptimizer):
             alpha = self.clip(alpha_i, clip_p)
             alpha_clean = copy.deepcopy(alpha)
             self.add_noise_sum(alpha, self.noise_multiplier_2, clip_p) 
+            
+            a_norm = torch.stack(alpha).norm(2)
+            # b_norm = torch.stack(alpha_clean).norm(2)
+            alpha = [a/a_norm for a in alpha]
+            # if self.steps % 5000:
+            #     print(a_norm, b_norm)
+
         else:
             alpha = 0
             alpha_clean = 0
@@ -126,7 +133,9 @@ class DrDPOptimizerV3(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        self.last_grad = g_noisy
+        # self.last_grad = g_noisy # wrong
+        fac = (0.9**(self.steps//200))
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0])*fac for g in g_noisy]) 
 
         # for historical grad
         # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
@@ -142,7 +151,6 @@ class DrDPOptimizerV3(DPOptimizer):
         per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
         per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
         per_sample_clip_factor = (self.perp_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
-
         g_perp_clipped = []
         for p in g_perp:
             grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
@@ -230,6 +238,16 @@ class DrDPOptimizerV3(DPOptimizer):
         )
             v += noise
         return vec
+
+    def scale_grad(self):
+        if self.loss_reduction == "mean":
+            fac = (0.9**(self.steps//200))
+            for p in self.params:
+                p.grad /= self.expected_batch_size * self.accumulated_iterations
+                p.grad *= fac
+                
+
+            
       
 class DrKFDPOptimizertest2(DrDPOptimizerV3): # add KF filter
     ## use max_grad_norm as grad norm, perp norm and rate_dr
