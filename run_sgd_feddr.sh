@@ -40,10 +40,11 @@ source /home/yliu270/anaconda3/bin/activate flamby
 
 #CIFAR10
 seed=(0)
-momentum=(0.5)
-lr=(0.001 0.01 0.1)
-g_norm=(0.01 0.1 0.3)
-eps=(0.1)
+sample_ratio=(0.1 1)
+momentum=(0.0)
+lr=(0.2 2)
+g_norm=(0.01 0.1)
+eps=(1 3)
 # kf=("--kf=True")
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
@@ -54,14 +55,14 @@ echo "${time}">>$logfile
 echo "====NoDP====">>$logfile
 for m in ${momentum[@]}
 do
-    for k in ${kf[@]}
+    for r in ${sample_ratio[@]}
     do
         for l in ${lr[@]}
         do
             for gn in ${g_norm[@]}
             do
-                py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
-                # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn --momentum=${m}";
+                # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
+                py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --dataset=MNIST --model=cnn --momentum=${m} --sample_ratio=${r} --nium_clients=1000";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
                 echo "FedSVG without DP, but with clip">>$logfile
@@ -88,7 +89,7 @@ output=0
 echo "====DP====">>$logfile
 for m in ${momentum[@]}
 do
-    for k in ${kf[@]}
+    for r in ${sample_ratio[@]}
     do
         for e in ${eps[@]}
         do
@@ -96,8 +97,8 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
-                    # py_req="python ${cur_path}/main_test.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k} --momentum=${m}";
+                    # py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
+                    py_req="python ${cur_path}/main_fed.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=50 --lr=${l} --dataset=MNIST --model=cnn  ${k} --momentum=${m}  --sample_ratio=${r} --num_clients=1000";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile

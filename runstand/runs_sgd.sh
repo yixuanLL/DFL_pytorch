@@ -1,23 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=stand_sgd_cifar
-#SBATCH --output=out_sgd_cifar_stand
+#SBATCH --job-name=stand_sgd
+#SBATCH --output=out_sgd_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 # cur_path=`pwd`
-dir_path=$(dirname $(pwd))
-echo "${dir_path}"
-cur_date="`date +%Y%m%d`" 
 
-logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_sgd_cifar_$cur_date
-if [ ! -x $logfile_path ]; then
- mkdir "$logfile_path"
-fi
-
-if [ ! -f "$logfile" ]; then
- touch "$logfile"
-fi
-source /home/yliu270/anaconda3/bin/activate flamby
 
 #MNIST
 # seed=(0)
@@ -51,6 +38,23 @@ g_norm=(100)
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
 opt=('sgd')
+data="MNIST"
+
+
+dir_path=$(dirname $(pwd))
+echo "${dir_path}"
+cur_date="`date +%Y%m%d`" 
+
+logfile_path=${dir_path}/logs/
+logfile=${dir_path}/logs/standalone/log_sgd_$data_$cur_date
+if [ ! -x $logfile_path ]; then
+ mkdir "$logfile_path"
+fi
+
+if [ ! -f "$logfile" ]; then
+ touch "$logfile"
+fi
+source /home/yliu270/anaconda3/bin/activate flamby
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
@@ -65,7 +69,7 @@ do
             for gn in ${g_norm[@]}
             do
                 py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
-                # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --model=cnn ${k}  --num_clients=1";
+                # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k}  --num_clients=1";
                 echo "${py_req}"
                 echo "FedSVG without DP, but with clip">>$logfile
                 echo "${py_req}">>$logfile
@@ -94,8 +98,8 @@ done
 round=20
 seed=(0)
 momentum=(0.0)
-lr=(0.001)
-g_norm=(1 1.5 2)
+lr=(0.01)
+g_norm=(0.01 0.1 1)
 eps=(1 3)
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
@@ -113,7 +117,8 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
+                    # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn  ${k}";
                     # py_req="python ${dir_path}/main_stand.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";

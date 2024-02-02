@@ -71,10 +71,10 @@ class DrDPOptimizerDiff2(DPOptimizer):
             self._is_last_step_skipped = True
             return False
 
-        self.dr_process()
+        g_delta_clean = self.dr_process()
         self.add_noise()
         self.scale_grad()
-        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
+        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], g_delta_clean, []]
 
         if self.step_hook:
             self.step_hook(self)
@@ -90,6 +90,7 @@ class DrDPOptimizerDiff2(DPOptimizer):
         self.add_noise_sum(g_delta, self.noise_multiplier, self.perp_grad_norm)
 
         self.recover_grad(g_delta) 
+        return [g/len(self.grad_samples[0]) for g in g_delta_clean]
 
     
     def diff(self):
@@ -110,7 +111,6 @@ class DrDPOptimizerDiff2(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
-        # self.last_grad = g_noisy # wrong
         self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
 
 

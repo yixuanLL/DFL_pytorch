@@ -57,7 +57,7 @@ def main(args):
         if args.dp:
             eps = args.eps
             eps_2 = 10e6
-            if args.DR or args.DRtest or args.DRV2:
+            if args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
                 eps_2 = args.eps_2
                 # eps = args.eps - eps_2
             try:
@@ -67,6 +67,11 @@ def main(args):
             noise_multiplier = compute_noise_multiplier(local_dataset_size=data_size,  local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
                                                 epsilon=eps, delta=args.delta)
             noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                    epsilon=eps_2, delta=args.delta)
+            if 'DP' in args.FLalg:
+                noise_multiplier = compute_noise_multiplier(local_dataset_size=data_size,  local_batch_size=data_size*args.sample_ratio, T=args.global_round * args.sample_ratio,
+                                                epsilon=eps, delta=args.delta)
+                noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=data_size*args.sample_ratio, T=args.global_round * args.sample_ratio,
                                     epsilon=eps_2, delta=args.delta)
             budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2)
                     
@@ -101,7 +106,7 @@ def main(args):
     model_path = '%s.%s' % ('models', args.model)
     mod = importlib.import_module(model_path)
     model = getattr(mod, 'Model')
-    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device)
+    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device, perp_grad_norm=args.grad_perp_norm, clip_paral=args.clip_paral, noise_multiplier=noise_multiplier, noise_multiplier_2=noise_multiplier_2)
     server.init_alg(dp=args.dp, FLalg=args.FLalg) # init server algo: fedavg + dp
     global_model = server.init_global_model() # global model
     server.global_last_grad = [p.data.to(device) for p in global_model.parameters()]
@@ -117,7 +122,7 @@ def main(args):
         # precheck and pick up candidates
         candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
         last_parameters = copy.deepcopy(global_model).parameters()
-        
+        global_last_model = copy.deepcopy([weight.data.to(device) for weight in global_model.state_dict().values()])
         # local update
         for p_id, participant in enumerate(candidates):
             # download global model
@@ -133,7 +138,7 @@ def main(args):
             if accum_budget_accountant:
                 max_accum_budget_accountant = max(max_accum_budget_accountant, accum_budget_accountant)
             # aggregate
-            server.aggregate(model_state)
+            server.aggregate(model_state, global_last_model)
             
             # log
             # if p_id == 0:
@@ -144,7 +149,7 @@ def main(args):
             #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
             #           % ((participant+1), args.delta, clients[participant].budget_accountant.epsilon, clients[participant].budget_accountant.accum_bgts))
         # load average weight
-        global_model = server.update()
+        global_model = server.update(global_last_model)
         
         # for global_last_grad
         server.global_last_grad = [(p1.data-p2.data).to(device) for p1,p2 in zip(global_model.parameters(), last_parameters)]
@@ -179,25 +184,25 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='CIFAR10')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=True)
+    parser.add_argument('--DRtest', type=bool, default=False)
     parser.add_argument('--global_round', type=int, default=20)
-    parser.add_argument('--local_round', type=int, default=20)
+    parser.add_argument('--local_round', type=int, default=1)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
-    parser.add_argument('--num_clients', type=int, default=1) 
-    parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=0.98)
-    parser.add_argument('--eps_2', type=float, default=0.02)
+    parser.add_argument('--num_clients', type=int, default=20) 
+    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    parser.add_argument('--eps', type=float, default=3)
+    parser.add_argument('--eps_2', type=float, default=1)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=0.1)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.06)
-    parser.add_argument('--sample_ratio', type=float, default=1)
+    parser.add_argument('--grad_norm', type=float, default=1)
+    parser.add_argument('--grad_perp_norm', type=float, default=1)
+    parser.add_argument('--sample_ratio', type=float, default=0.1)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model', type=str, default='cnn5')
+    parser.add_argument('--model', type=str, default='cnn')
     parser.add_argument('--lr', type=float, default=2)
     parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
@@ -205,7 +210,7 @@ if __name__ == '__main__':
     parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=0.5, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

@@ -82,7 +82,7 @@ class Client(nn.Module):
         model = self.model.train()
         parameters = model.parameters()
 
-        optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
+        optimizer_sgd = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
         # optimizer = torch.optim.SGD(parameters, lr=self.lr)
         # if self.DR:
         #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
@@ -150,7 +150,7 @@ class Client(nn.Module):
         # print('clipping:', clipping)
         privacy_engine = PrivacyEngine(secure_mode=False)
         model, optimizer, train_loader = privacy_engine.make_private(module=model,
-                                                                        optimizer=optimizer,
+                                                                        optimizer=optimizer_sgd,
                                                                         clipping=clipping,
                                                                         data_loader=data_loader,
                                                                         noise_multiplier=noise,
@@ -192,37 +192,48 @@ class Client(nn.Module):
         
         # train
         model_t_1 = None
-        model_t_2, optimizer_t_2, train_loader2 = privacy_engine.make_private(module=model,
-                                                                        optimizer=optimizer,
-                                                                        clipping=clipping,
-                                                                        data_loader=data_loader,
-                                                                        noise_multiplier=noise,
-                                                                        max_grad_norm=grad_norm)
+        optimizer_t_1 = None
+        # model2 = self.model.train()
+        # parameters2 = model2.parameters()
+        # optimizer_sgd2 = torch.optim.SGD(parameters2, lr=self.lr, momentum=self.momentum)
+        # model_t_2, optimizer_t_2, train_loader2 = privacy_engine.make_private(module=model,
+        #                                                                 optimizer=optimizer_sgd,
+        #                                                                 clipping=clipping,
+        #                                                                 data_loader=data_loader,
+        #                                                                 noise_multiplier=noise,
+        #                                                                 max_grad_norm=grad_norm)
+
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
             for x_train, y_train in data_loader:
                 x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
+                model_tmp = copy.deepcopy(model.state_dict()) #w_{t-1}
+                optimizer_tmp = copy.deepcopy(optimizer.state_dict())
+
+
                 ## save model for next time
                 if model_t_1 != None:
-                    model_t_2.load_state_dict(model_t_1)
-                    optimizer_t_2.load_state_dict(optimizer_t_1)
+                    model.load_state_dict(model_t_1)
+                    optimizer.load_state_dict(optimizer_t_1)
                     ## use last model for diff2 projection
-                    y_pred = model_t_2(x_train)
+                    y_pred = model(x_train)
                     loss = criterion(y_pred, y_train)
-                    optimizer_t_2.zero_grad()
+                    optimizer.zero_grad()
                     loss.backward(retain_graph=True)
-                    optimizer.gt2 = [optimizer_t_2._get_flat_grad_sample(p) for p in model_t_2.parameters()]
-                    if optimizer.gt2 == []:
-                        print(1)
+                    optimizer.gt2 = copy.deepcopy([optimizer._get_flat_grad_sample(p) for p in model.parameters()])
                     # print(optimizer_t_2.proj_base)
                     # for param in model_t_2.parameters():
                     #     param.grad.detach_()
                     #     param.grad.zero_()
 
-                model_t_1 = model.state_dict() #w_{t-1}
-                optimizer_t_1 = optimizer.state_dict()
+
+                model_t_1 = copy.deepcopy(model_tmp) #w_{t-1}
+                optimizer_t_1 = copy.deepcopy(optimizer_tmp)
+
+                model.load_state_dict(model_t_1)
+                optimizer.load_state_dict(optimizer_t_1)
 
 
                 ## start normal training
@@ -241,7 +252,10 @@ class Client(nn.Module):
                 train_acc += correct.item()
                 train_loss += loss.item()
 
-                 # logs.append(copy.deepcopy(optimizer.log))
+                # model_t_2 = model_t_1 #w_{t-2}
+                # optimizer_t_2 = optimizer_t_1
+
+                # logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
             # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
             if self.num_clients == 1:

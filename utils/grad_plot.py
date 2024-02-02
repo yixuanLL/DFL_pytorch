@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 import torch
-import numpy
+import numpy as np
 
 def alpha_plot(log):
     global_round = len(log)
@@ -199,10 +199,11 @@ def grad_var_t(log): #variance of certain dimension along time step (var of T gr
     plt.close()
 
 def grad_flat(param):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = 'cpu'
     vec = torch.tensor([]).to(device)
     for p in param:
-        vec = torch.cat((vec, p.reshape(-1)))
+        vec = torch.cat((vec, p.reshape(-1).to(device)))
     return vec
 
 def grad_var(log): #variance of certain dimension along time step (var of t-1 gradients)
@@ -330,3 +331,52 @@ def grad_var_t(log): #variance of certain dimension along time step
     root_path = '/home/yliu270/workspace/DFL_pytorch/'
     plt.savefig(root_path+'grad_var_t_dim0.png', dpi=600)
     plt.close()
+
+def grad_dist(log):
+    global_round = len(log)
+    grads = []
+    grads_p = []
+    grads_d = []
+    rounds = 0
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            a = log[i][j]
+            grad = (grad_flat(a[0])).numpy()
+            grad_p = (grad_flat(a[1])).numpy()
+            # grad_d = (grad_flat(a[2])).numpy()
+
+            rounds += 1 
+            if j % 100 == 0:
+                # print(grad_d)
+                # print(grad)
+                plt.switch_backend('agg')
+                plt.hist(grad, bins=500, color='skyblue', label='grad', alpha=1)
+                plt.hist(grad_p,  bins=500, color='green', label='grad_perp', alpha=0.4)
+                # plt.hist(grad_d,  bins=500, color='red', label='grad_diff', alpha=0.2)
+                plt.ylabel('Amounts')
+                plt.xlabel('Value')
+                plt.xlim(-0.01,0.01)
+                plt.legend(loc='lower right', fontsize=8)
+
+                plt.show()
+                root_path = '/home/yliu270/workspace/DFL_pytorch/'
+                plt.savefig(root_path+str(rounds-1)+' epochs.png', dpi=600)
+                plt.close()
+            grads.append(np.linalg.norm(grad))
+            grads_p.append(np.linalg.norm(grad_p))
+            # grads_d.append(np.linalg.norm(grad_d))
+
+        plt.switch_backend('agg')
+        r = range(rounds)
+        plt.plot(r, grads, color='skyblue', label='grad', alpha=0.8)
+        plt.plot(r, grads_p,  color='green', label='grad_perp', alpha=0.6)
+        # plt.plot(r, grads_d,  color='red', label='grad_diff', alpha=0.6)
+        plt.ylabel('Norm')
+        plt.xlabel('Steps')
+        plt.legend(loc='lower right', fontsize=8)
+
+        plt.show()
+        root_path = '/home/yliu270/workspace/DFL_pytorch/'
+        plt.savefig(root_path+'Norm.png', dpi=600)
+        plt.close()

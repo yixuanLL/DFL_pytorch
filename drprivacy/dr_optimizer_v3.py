@@ -72,14 +72,14 @@ class DrOptimizerV3(DPOptimizer):
             return False
         
         # a = copy.deepcopy(self.last_grad[0]*127)    
-        self.dr_process()
+        g_perp, g_diff = self.dr_process()
         self.add_noise()
         # b = copy.deepcopy(self.last_grad[0])
         # print('last grad:', torch.sum(a))
         # print('delta last grad:', torch.sum(b-a))
 
         self.scale_grad()
-        # self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
+        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], g_perp, g_diff]
         
 
         if self.step_hook:
@@ -89,7 +89,7 @@ class DrOptimizerV3(DPOptimizer):
         return True  
 
     def dr_process(self):
-        gi_perp, alpha_i = self.decompose_grad()   
+        gi_perp, alpha_i, g_diff = self.decompose_grad()   
         g_perp = self.clip_g_perp(gi_perp) 
 
         # preserve paral factor
@@ -102,6 +102,7 @@ class DrOptimizerV3(DPOptimizer):
             alpha = 0
             alpha_clean = 0
         g_perp = self.recover_grad(g_perp, alpha) 
+        return g_perp, g_diff
 
 
     def decompose_grad(self):
@@ -113,7 +114,8 @@ class DrOptimizerV3(DPOptimizer):
         paral_alpha = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
         gi_paral = [paral.reshape([len(self.grad_samples[0])]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(self.grad_samples[0])]+[1]*len(lg.shape)) for paral, lg in zip(paral_alpha, self.last_grad)]
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
-        return gi_perp, paral_alpha
+        g_diff = [torch.mean(g, dim=0)-lg for g, lg in zip(self.grad_samples, self.last_grad)]
+        return gi_perp, paral_alpha, g_diff
 
     # def recover_grad(self, g_perp, g_perp_noisy, costheta, costheta_noisy):
     def recover_grad(self, g_perp_noisy, alpha_noisy):
@@ -129,13 +131,7 @@ class DrOptimizerV3(DPOptimizer):
             else:
                 p.summed_grad = gi
         self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
-
-        # for historical grad
-        # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
-        # if self.steps == 1: # accumulation
-        #     self.last_grad_noisy = noisy_mean_g
-        # else:
-        #     self.last_grad_noisy = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(noisy_mean_g, self.last_grad_noisy)]
+        g_perp_noisy = [g/len(self.grad_samples[0]) for g in g_perp_noisy]
         
         return g_perp_noisy
 

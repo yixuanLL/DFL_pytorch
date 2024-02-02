@@ -78,7 +78,7 @@ class DrDPOptimizerV3(DPOptimizer):
         # print('delta last grad:', torch.sum(b-a))
 
         self.scale_grad()
-        self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
+        # self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
 
         if self.step_hook:
             self.step_hook(self)
@@ -99,9 +99,9 @@ class DrDPOptimizerV3(DPOptimizer):
             alpha_clean = copy.deepcopy(alpha)
             self.add_noise_sum(alpha, self.noise_multiplier_2, clip_p) 
             
-            a_norm = torch.stack(alpha).norm(2)
+            # a_norm = torch.stack(alpha).norm(2)
             # b_norm = torch.stack(alpha_clean).norm(2)
-            alpha = [a/a_norm for a in alpha]
+            # alpha = [a/a_norm for a in alpha]
             # if self.steps % 5000:
             #     print(a_norm, b_norm)
 
@@ -134,8 +134,7 @@ class DrDPOptimizerV3(DPOptimizer):
             else:
                 p.summed_grad = gi
         # self.last_grad = g_noisy # wrong
-        fac = (0.9**(self.steps//200))
-        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0])*fac for g in g_noisy]) 
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
 
         # for historical grad
         # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
@@ -239,13 +238,6 @@ class DrDPOptimizerV3(DPOptimizer):
             v += noise
         return vec
 
-    def scale_grad(self):
-        if self.loss_reduction == "mean":
-            fac = (0.9**(self.steps//200))
-            for p in self.params:
-                p.grad /= self.expected_batch_size * self.accumulated_iterations
-                p.grad *= fac
-                
 
             
       

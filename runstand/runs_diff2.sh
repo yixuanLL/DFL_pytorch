@@ -86,10 +86,10 @@ done
 
 #CIFAR10
 round=20
-momentum=(0.0 0.9)
+momentum=(0.0)
 seed=(0)
-lr=(1 2 4)
-g_p_norm=(0.05 0.1 0.5)
+lr=(2 4)
+g_p_norm=(0.05 0.1 0.2 0.3 0.5 1)
 eps=(1 3)
 iidflag=("--save_dir=result")
 opt=('sgd')
@@ -106,7 +106,9 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
+                    py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
+                    # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --model=cnn  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
+
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)

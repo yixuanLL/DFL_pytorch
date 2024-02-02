@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=drv3_cifar_stand
-#SBATCH --output=out_drv3_cifar_stand
+#SBATCH --job-name=drv3_stand
+#SBATCH --output=out_drv3_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 dir_path=$(dirname $(pwd))
@@ -8,7 +8,7 @@ echo "${dir_path}"
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_drv3_cifar_$cur_date
+logfile=${dir_path}/logs/standalone/log_drv3_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -91,12 +91,12 @@ done
 round=20
 momentum=(0.0)
 seed=(0)
-lr=(2)
-g_p_norm=(0.1 0.2)
-clip_paral=(0.05 0.1) # alpha actucally
-index=(0 1 2)
-eps=(2.98 2.95 2.9)
-eps_2=(0.02 0.05 0.1)
+lr=(2 4)
+g_p_norm=(0.1 0.2 0.5)
+clip_paral=(0.01 0.05 0.1) # alpha actucally
+index=(0)
+eps=(2.95 0.98)
+eps_2=(0.05 0.02)
 iidflag=("--save_dir=result")
 opt=('sgd')
 
@@ -112,8 +112,9 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
-                    # py_req="python ${dir_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
+                    # py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
+                    # py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --model=cnn  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=FLamby --model=mclr  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=48";
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile

@@ -89,14 +89,14 @@ class DrDPOptimizerV4(DPOptimizer):
         self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
 
         # preserve paral factor
-        if self.last_grad != []:
-            clip_p = self.clip_paral
-            alpha = self.clip(alpha, clip_p)
-            alpha_clean = copy.deepcopy(alpha)
-            self.add_noise_mean(alpha, self.noise_multiplier_2, clip_p) 
-        else:
-            alpha = 0
-            alpha_clean = 0
+        # if self.last_grad != []:
+        #     clip_p = self.clip_paral
+        #     alpha = self.clip(alpha, clip_p)
+        #     alpha_clean = copy.deepcopy(alpha)
+        #     self.add_noise_mean(alpha, self.noise_multiplier_2, clip_p) 
+        # else:
+        #     alpha = 0
+        #     alpha_clean = 0
         g_perp = self.recover_grad(g_perp, alpha) 
 
 
@@ -106,7 +106,9 @@ class DrDPOptimizerV4(DPOptimizer):
             return self.grad_samples, [torch.tensor(1.).to(self.device)]*8
         # per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
         last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
-        paral_alpha = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm)) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
+        paral_alpha_i = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
+        paral_alpha = self.clip(paral_alpha_i, self.clip_paral)
+        self.add_noise_mean(paral_alpha, self.noise_multiplier_2, self.clip_paral) 
         gi_paral = [paral * torch.tile(lg.unsqueeze(0),[len(self.grad_samples[0])]+[1]*len(lg.shape)) for paral, lg in zip(paral_alpha, self.last_grad)]
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
         return gi_perp, paral_alpha
@@ -178,11 +180,11 @@ class DrDPOptimizerV4(DPOptimizer):
 
     def clip(self, vec, clip_bound):
         # print(vec)
-        norm = torch.stack(vec).norm(2, dim=0)
+        norm = torch.stack(vec, dim=1).norm(2, dim=1)
         clip_factor = (
             clip_bound / (norm + 1e-6)
         ).clamp(max=1.0)
-        vec = [clip_factor * v for v in vec]
+        vec = [torch.mean(clip_factor * v) for v in vec]
         return vec
 
     def add_noise(self):
