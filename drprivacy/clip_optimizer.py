@@ -52,7 +52,7 @@ class ClipOptimizer(DPOptimizer):
             p.grad = (p.summed_grad).view_as(p)
 
             _mark_as_processed(p.summed_grad)
-        ns = len(self.grad_samples[0])
+        # ns = len(self.grad_samples[0])
         # self.log = [[p.summed_grad/ns for p in self.params], [p.grad/ns for p in self.params], []]
 
 

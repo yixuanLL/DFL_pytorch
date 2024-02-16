@@ -1,14 +1,16 @@
 #!/bin/bash
-#SBATCH --job-name=drV6_cifar_stand
-#SBATCH --output=out_drV6_cifar_stand
+#SBATCH --job-name=drv5_stand
+#SBATCH --output=out_drv5_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
+data="CIFAR100"
+
 dir_path=$(dirname $(pwd))
 echo "${dir_path}"
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_drv6_cifar_$cur_date
+logfile=${dir_path}/logs/standalone/log_drv5_${data}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -53,7 +55,7 @@ opt=('sgd')
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
-echo "====DRtest=True; V6 ====">>$logfile
+echo "====DR=True; V5 ====">>$logfile
 
 echo "====NoDP====">>$logfile
 for o in ${opt[@]}
@@ -91,10 +93,12 @@ done
 round=20
 momentum=0.0
 seed=(0)
-lr=(2 4)
-g_p_norm=(0.001 0.01)
-clip_paral=(0.1 0.2 0.0) # alpha actucally
-eps=(1)
+lr=(2)
+g_p_norm=(0.1 0.3)
+clip_paral=(0.1 0.3 0.5) # alpha actucally
+index=(0)
+eps=(2.9 2.95)
+eps_2=(0.1 0.05)
 iidflag=("--save_dir=result")
 opt=('sgd')
 
@@ -102,7 +106,7 @@ output=0
 echo "====DP====">>$logfile
 for o in ${opt[@]}
 do
-    for e in ${eps[@]}
+    for i in ${index[@]}
     do
         for cp in ${clip_paral[@]}
         do
@@ -110,7 +114,9 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --DR=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn5  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                    # py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                    # py_req="python ${dir_path}/main_stand.py --DR=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=32";
                     # py_req="python ${dir_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"
@@ -126,6 +132,8 @@ do
                     sleep 1;
                     echo "${output}">>$logfile
                     cost_time=$[ $end_time-$start_time ]
+                    time=$(date "+%H:%M:%S")
+                    echo "${time}">>$logfile
                     echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
                     echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
                 done

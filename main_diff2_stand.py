@@ -68,7 +68,9 @@ def main(args):
                                                 epsilon=eps, delta=args.delta)
             noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
                                     epsilon=eps_2, delta=args.delta)
-            budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2)
+            noise_multiplier_3 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                    epsilon=eps_2+eps, delta=args.delta)
+            budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2, noise_multiplier_3)
                     
         clients.append(Client(x_train=x_train,
                         y_train=y_train,
@@ -95,7 +97,7 @@ def main(args):
                         opt=args.opt,
                         num_clients=args.num_clients,
                         clip_paral=args.clip_paral))
-    print('client noise multiplier is %f, %f' % (noise_multiplier, noise_multiplier_2)) 
+    print('client noise multiplier is %f, %f, %f' % (noise_multiplier, noise_multiplier_2, noise_multiplier_3)) 
     
     # set server
     model_path = '%s.%s' % ('models', args.model)

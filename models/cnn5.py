@@ -22,6 +22,8 @@ class Model(nn.Module):
         self.classifier = None
         self.norm = None
         self.input_norm=None
+        self.input_dim=input_dim
+        self.output_dim=output_dim
         self.nn_layer = nn.ModuleList()
         self.build(self.input_norm, **kwargs)
 
@@ -65,9 +67,9 @@ class Model(nn.Module):
 
         if self.in_channels == 3:
             hidden = 128
-            self.classifier = nn.Sequential(nn.Linear(c * 4 * 4, hidden), act(), nn.Linear(hidden, 10))
+            self.classifier = nn.Sequential(nn.Linear(c * 4 * 4, hidden), act(), nn.Linear(hidden, self.output_dim))
         else:
-            self.classifier = nn.Linear(c * 4 * 4, 10)
+            self.classifier = nn.Linear(c * 4 * 4, self.output_dim)
         self.nn_layer.append(self.classifier)
 
     def forward(self, x):

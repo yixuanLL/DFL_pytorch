@@ -1,15 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=diff2_stand
-#SBATCH --output=out_diff2_stand
+#SBATCH --job-name=fed
+#SBATCH --output=out_fed
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
-dir_path=$(dirname $(pwd))
-echo "${dir_path}"
-cur_date="`date +%Y%m%d`" 
-data="FLamby"
+cur_path=`pwd`
 
-logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_diff2_${data}_$cur_date
+cur_date="`date +%Y%m%d`" 
+dataset="MNIST"
+
+logfile_path=${cur_path}/logs/
+logfile=${cur_path}/logs/log_sgd_fed_${dataset}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -17,55 +17,57 @@ fi
 if [ ! -f "$logfile" ]; then
  touch "$logfile"
 fi
+source /home/yliu270/anaconda3/bin/activate flamby
 
-
-# # MNIST
+#MNIST
 # seed=(0)
-# lr=(0.5)
-# g_p_norm=(0.01 0.05 0.1)
-# eps=(0.04 0.06 0.08 0.1 0.12 0.32 0.52)
-# # kf=("--kf=True")
-# kf=("--save_dir=result") 
+# momentum=(0.9)
+# lr=(0.2)
+# g_norm=(0.01 0.1)
+# eps=(0.1 0.3 0.5)
 # iidflag=("--save_dir=result")
-# # momentum=(0.0)
+# kf=("--save_dir=result")
 
 
 
-
-#FLamby
-# seed=(0) #(5 9 15)
+# FLamby
+# seed=(0) # 5 9 15)
 # lr=(0.1 0.5)
-# g_p_norm=(0.05 0.1)
-# eps=(0.3 0.5 1)
-# # kf=("--save_dir=result") 
-# kf=("--kf=True")
-# iidflag=("--save_dir=result") # "--noniid=True")
+# g_norm=(0.05 0.1 0.2)
+# # eps=(0.3 0.5 1)
+# eps=(0.5)
+# kf=("--kf=True") # "--save_dir=result")
+# iidflag=("--save_dir=result" "--noniid=True")
 
 #CIFAR10
-round=20
-momentum=(0.0)
 seed=(0)
-lr=(0.1 1)
-g_p_norm=(100)
+sample_ratio=(0.1 0.5 1)
+momentum=(0.0)
+lr=(0.1)
+g_norm=(0.05 0.1)
+index=(0)
+eps=(3)
+# kf=("--kf=True")
+kf=("--save_dir=result")
 iidflag=("--save_dir=result")
-opt=('sgd')
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
-echo "====DRtest=True; V6 ====">>$logfile
-
 echo "====NoDP====">>$logfile
-for o in ${opt[@]}
+for m in ${momentum[@]}
 do
-    for m in ${momentum[@]}
+    for r in ${sample_ratio[@]}
     do
         for l in ${lr[@]}
         do
-            for gpn in ${g_p_norm[@]}
+            for k in ${kf[@]}
             do
-                py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --grad_norm=100 --grad_perp_norm=${gpn} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
+                # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
+                py_req="python ${cur_path}/main_fed.py --local_round=2 --global_round=50 --lr=${l} --dataset=${dataset} --model=cnn --momentum=${m} --sample_ratio=${r} --num_clients=100 --FLalg=FedAvg";
+                # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
+                echo "FedAVG without DP, no clip">>$logfile
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
                 # output=`${py_req}`;
@@ -85,32 +87,21 @@ do
     done
 done
 
-#CIFAR10
-round=20
-momentum=(0.0)
-seed=(0)
-lr=(2 4)
-g_p_norm=(0.05 0.1 0.2 0.3 0.5 1)
-eps=(1 3)
-iidflag=("--save_dir=result")
-opt=('sgd')
-
 output=0
 echo "====DP====">>$logfile
-for o in ${opt[@]}
+for m in ${momentum[@]}
 do
-    for e in ${eps[@]}
+    for r in ${sample_ratio[@]}
     do
-        for m in ${momentum[@]}
+        for i in ${index[@]}
         do
             for l in ${lr[@]}
             do
-                for gpn in ${g_p_norm[@]}
+                for g in ${g_norm[@]}
                 do
-                    # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
-                    # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --model=cnn  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
-                    py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=32";
-
+                    # py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
+                    py_req="python ${cur_path}/main_fed.py --grad_norm=${g} --eps=${eps[${i}]} --local_round=2 --global_round=50 --lr=${l} --dataset=${dataset} --model=cnn --momentum=${m}  --sample_ratio=${r} --num_clients=100  --FLalg=FedDPAvg";
+                    # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)
@@ -131,7 +122,6 @@ do
         done
     done
 done
-
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile

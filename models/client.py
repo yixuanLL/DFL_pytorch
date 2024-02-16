@@ -13,15 +13,17 @@ from operator import mul
 from utils.kalman_filter import KalmanFilter, KalmanFilterLayer
 import copy
 from utils.grad_plot import grad_flat
+# from torchmetrics.functional.regression import mean_squared_error
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, x_test, y_test, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, num_clients, clip_paral):
+    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, num_clients, clip_paral):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
         self.x_test = x_test
         self.y_test = y_test
         self.dataset = dataset
+        self.dataname = dataname
 
         try:
             self.dataset_size = len(self.dataset)
@@ -88,7 +90,10 @@ class Client(nn.Module):
         if self.opt == 'adam':
             optimizer = torch.optim.Adam(model.nn_layer.parameters(), lr=self.lr)
 
-        criterion = nn.CrossEntropyLoss()
+        if self.dataname == 'CAHouse':
+            criterion = nn.MSELoss(reduction='sum')
+        else:
+            criterion = nn.CrossEntropyLoss()
 
         x_batch = self.x_train[self.dataset]
         y_batch = self.y_train[self.dataset]
@@ -104,7 +109,8 @@ class Client(nn.Module):
             noise_2 = self.budget_accountant.noise_multiplier_2
         if not self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl and not self.kfilter:
             grad_norm = self.grad_norm
-            clipping = 'clip_flat'
+            # clipping = 'clip_flat' #不需要单独验证clip的效果了
+            clipping = 'flat'
         # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
         if self.dp and not self.DR and not self.DRV2 and not self.kfilter and not self.cpl:
             grad_norm = self.grad_norm
@@ -124,9 +130,9 @@ class Client(nn.Module):
                 clipping = 'dr_dp_flat_test'
             else:
                 clipping = 'drkf_dp_flat_test'
-        if self.dp and self.DR:
-            # grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
+        if self.dp and self.DR: # for DRV5
+            noise_3 = self.budget_accountant.noise_multiplier_3
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral, noise_3]
             clipping = 'dr_dp_flat'  
         if self.dp and self.DRV2:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
@@ -150,8 +156,9 @@ class Client(nn.Module):
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'kfilter_dp_flat'                               
         # print('clipping:', clipping)
-        privacy_engine = PrivacyEngine(secure_mode=False)
-        model, optimizer, train_loader = privacy_engine.make_private(module=model,
+        if self.dp:
+            privacy_engine = PrivacyEngine(secure_mode=False)
+            model, optimizer, train_loader = privacy_engine.make_private(module=model,
                                                                         optimizer=optimizer,
                                                                         clipping=clipping,
                                                                         data_loader=data_loader,
@@ -223,6 +230,8 @@ class Client(nn.Module):
             if self.num_clients == 1:
                 test_acc, test_loss = self.test(copy.deepcopy(model))
                 print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f, Test acc: %.4f, Test loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size, test_acc, test_loss))
+            
+            # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
 
         updates = [weight.data for weight in model.state_dict().values()]
         if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta
@@ -245,7 +254,10 @@ class Client(nn.Module):
         model.eval() #.to(self.device)
         data_loader = TensorDataset(self.x_test.to(self.device), self.y_test.to(self.device))
         data_loader = DataLoader(data_loader, batch_size=128, shuffle=True)
-        criterion = nn.CrossEntropyLoss()
+        if self.dataname == 'CAHouse':
+            criterion = nn.MSELoss()
+        else:
+            criterion = nn.CrossEntropyLoss()
         test_loss = 0
         test_acc = 0
 

@@ -5,6 +5,7 @@
 
 import numpy as np
 import math
+import torch
 
 
 def create_iid_clients(num_clients, num_examples, num_classes, num_examples_per_client, num_classes_per_client, seed, datasetname):
@@ -73,15 +74,17 @@ def check_labels(N, client_set, y_train):
         idx = [int(val) for val in client_set[cid]]
         labels_set.append(set(np.array(y_train)[idx]))
 
-        labels_count = [0]*10
+        labels_count = [0]* N
         for label in np.array(y_train)[idx]:
             labels_count[int(label)] += 1
-        # print('cid: {}, number of labels: {}/10.'.format(cid, len(labels_set[cid])))
+        # print('cid: {}, number of labels: {}/{}.'.format(cid, len(labels_set[cid]), N))
         # print(labels_count)
     print()
 
 
 def prepare_local_dataset(noniid, num_clients, y_train, seed, datasetname):
+    N = len(torch.unique(y_train))
+    # print(torch.unique(y_train))
     if not noniid:
         dataset = create_iid_clients(num_clients=num_clients,
                                      num_examples=len(y_train),
@@ -101,6 +104,8 @@ def prepare_local_dataset(noniid, num_clients, y_train, seed, datasetname):
                                         datasetname=datasetname)
     if datasetname == 'FLamby' and noniid:
         num_clients = 4
+    if datasetname == 'CAHouse':
+        pass
     else:
-        check_labels(10, dataset, y_train)
+        check_labels(N, dataset, y_train)
     return dataset, num_clients

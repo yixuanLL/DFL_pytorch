@@ -98,12 +98,6 @@ class DrDPOptimizerV3(DPOptimizer):
             alpha = self.clip(alpha_i, clip_p)
             alpha_clean = copy.deepcopy(alpha)
             self.add_noise_sum(alpha, self.noise_multiplier_2, clip_p) 
-            
-            # a_norm = torch.stack(alpha).norm(2)
-            # b_norm = torch.stack(alpha_clean).norm(2)
-            # alpha = [a/a_norm for a in alpha]
-            # if self.steps % 5000:
-            #     print(a_norm, b_norm)
 
         else:
             alpha = 0

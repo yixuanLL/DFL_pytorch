@@ -1,14 +1,15 @@
 #!/bin/bash
-#SBATCH --job-name=sgdmom
-#SBATCH --output=out_sgdmom
+#SBATCH --job-name=fed
+#SBATCH --output=out_fed
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
 cur_path=`pwd`
 
 cur_date="`date +%Y%m%d`" 
+dataset="MNIST"
 
 logfile_path=${cur_path}/logs/
-logfile=${cur_path}/logs/log_sgdmom_$cur_date
+logfile=${cur_path}/logs/log_sgd_fed_${dataset}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -42,9 +43,10 @@ source /home/yliu270/anaconda3/bin/activate flamby
 seed=(0)
 sample_ratio=(0.1 1)
 momentum=(0.0)
-lr=(0.2 2)
-g_norm=(0.01 0.1)
-eps=(1 3)
+lr=(2)
+g_norm=(0.1 0.3 0.5)
+index=(0)
+eps=(3)
 # kf=("--kf=True")
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
@@ -59,16 +61,16 @@ do
     do
         for l in ${lr[@]}
         do
-            for gn in ${g_norm[@]}
+            for k in ${kf[@]}
             do
                 # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
-                py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --dataset=MNIST --model=cnn --momentum=${m} --sample_ratio=${r} --nium_clients=1000";
+                py_req="python ${cur_path}/main_fed.py --local_round=2 --global_round=50 --lr=${l} --dataset=${dataset} --model=cnn --momentum=${m} --sample_ratio=${r} --num_clients=100 --FLalg=FedAvg";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
-                echo "FedSVG without DP, but with clip">>$logfile
+                echo "FedAVG without DP, no clip">>$logfile
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)
-                output=`${py_req}`;
+                # output=`${py_req}`;
                 end_time=$(date +%s)
                 if [ $? -ne 0 ]; then
                     echo "[FAILED] ${py_req}"
@@ -91,14 +93,14 @@ for m in ${momentum[@]}
 do
     for r in ${sample_ratio[@]}
     do
-        for e in ${eps[@]}
+        for i in ${index[@]}
         do
             for l in ${lr[@]}
             do
-                for gn in ${g_norm[@]}
+                for g in ${g_norm[@]}
                 do
                     # py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
-                    py_req="python ${cur_path}/main_fed.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=50 --lr=${l} --dataset=MNIST --model=cnn  ${k} --momentum=${m}  --sample_ratio=${r} --num_clients=1000";
+                    py_req="python ${cur_path}/main_fed.py --grad_norm=${g} --eps=${eps[${i}]} --local_round=2 --global_round=50 --lr=${l} --dataset=${dataset} --model=cnn --momentum=${m}  --sample_ratio=${r} --num_clients=100  --FLalg=FedDPAdam";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
