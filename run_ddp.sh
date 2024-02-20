@@ -9,7 +9,7 @@ cur_date="`date +%Y%m%d`"
 dataset="MNIST"
 
 logfile_path=${cur_path}/logs/
-logfile=${cur_path}/logs/log_sgd_ddp_${dataset}_$cur_date
+logfile=${cur_path}/logs/log_ddp_sgd_${dataset}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -23,19 +23,21 @@ source /home/yliu270/anaconda3/bin/activate flamby
 seed=(0)
 sample_ratio=(0.1)
 momentum=(0.0)
-lr=(0.1)
-g_norm=(0.1)
+lr=(0.1 1 3)
+global_lr=(0.3 1 2)
+g_norm=(0.05 0.1 0.3)
 index=(0)
-eps=(3)
+eps=(3 10)
 # kf=("--kf=True")
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
+py_req='0'
 
 echo "====NoDP====">>$logfile
-for m in ${momentum[@]}
+for glr in ${global_lr[@]}
 do
     for r in ${sample_ratio[@]}
     do
@@ -44,7 +46,7 @@ do
             for k in ${kf[@]}
             do
                 # py_req="python ${cur_path}/main_lenet5.py --grad_norm=${gn} --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
-                py_req="python ${cur_path}/main_fed.py --local_round=1 --global_round=500 --lr=${l} --dataset=${dataset} --model=cnn --momentum=${m} --sample_ratio=${r} --num_clients=1000 --FLalg=FedAvg";
+                # py_req="python ${cur_path}/main_fed.py --local_round=1 --global_round=500 --lr=${l} --dataset=${dataset} --model=cnn --glr=${glr} --sample_ratio=${r} --num_clients=1000 --FLalg=FedAvg";
                 # py_req="python ${cur_path}/main_flamby.py --seed=${s} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --dataset=FLamby --model=mclr ${k}";                
                 echo "${py_req}"
                 echo "FedAVG without DP, no clip">>$logfile
@@ -69,7 +71,7 @@ done
 
 output=0
 echo "====DP====">>$logfile
-for m in ${momentum[@]}
+for glr in ${global_lr[@]}
 do
     for r in ${sample_ratio[@]}
     do
@@ -80,7 +82,48 @@ do
                 for g in ${g_norm[@]}
                 do
                     # py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
-                    py_req="python ${cur_path}/main_fed.py --grad_norm=${g} --eps=${eps[${i}]} --local_round=1 --global_round=500 --lr=${l} --dataset=${dataset} --model=cnn --momentum=${m}  --sample_ratio=${r} --num_clients=1000  --FLalg=FedDPAvg";
+                    # py_req="python ${cur_path}/main_fed.py --grad_norm=${g} --eps=${eps[${i}]} --local_round=1 --global_round=500 --lr=${l} --dataset=${dataset} --model=cnn --glr=${glr}  --sample_ratio=${r} --num_clients=1000  --FLalg=FedDPAvg";
+                    # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
+                    echo "${py_req}"
+                    echo "${py_req}">>$logfile
+                    start_time=$(date +%s)
+                    output=`${py_req}`;
+                    end_time=$(date +%s)
+                    if [ $? -ne 0 ]; then
+                        echo "[FAILED] ${py_req}"
+                        echo "[FAILED] ${py_req}">>$logfile
+                        exit 8
+                    fi
+                    sleep 1;
+                    echo "${output}">>$logfile
+                    cost_time=$[ $end_time-$start_time ]
+                    echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
+                    echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
+                done
+            done
+        done
+    done
+done
+
+time=$(date "+%Y-%m-%d %H:%M:%S")
+echo "${time}">>$logfile
+echo "[finished]!"
+echo "[finished]!">>$logfile
+
+
+echo "====Momentum====">>$logfile
+for r in ${sample_ratio[@]}
+do
+    for glr in ${global_lr[@]}
+    do
+        for i in ${index[@]}
+        do
+            for l in ${lr[@]}
+            do
+                for g in ${g_norm[@]}
+                do
+                    # py_req="python ${cur_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e}  --local_round=2 --global_round=200 --lr=${l} --dataset=CIFAR10 --model=lenet5 ${k} --momentum=${m}";
+                    py_req="python ${cur_path}/main_fed.py --grad_norm=${g} --eps=${eps[${i}]} --local_round=1 --global_round=500 --lr=${l} --dataset=${dataset} --model=cnn --glr=${glr}  --sample_ratio=${r} --num_clients=1000  --FLalg=FedDPAdam";
                     # py_req="python ${cur_path}/main_flamby.py --seed=${s} --dp=True --eps=${e} --grad_norm=${gn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2  --dataset=FLamby --model=mclr ${k}";
                     echo "${py_req}"
                     echo "${py_req}">>$logfile
