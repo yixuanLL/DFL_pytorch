@@ -6,7 +6,7 @@
 dir_path=$(dirname $(pwd))
 echo "${dir_path}"
 cur_date="`date +%Y%m%d`" 
-data="CIFAR100"
+data="MNIST"
 
 logfile_path=${dir_path}/logs/
 logfile=${dir_path}/logs/standalone/log_drv3_${data}_$cur_date
@@ -93,12 +93,12 @@ done
 round=20
 momentum=(0.0)
 seed=(0)
-lr=(2 4)
-g_p_norm=(0.5 1)
-clip_paral=(0.5) # alpha actucally
+lr=(1 2)
+g_p_norm=(0.1 0.2 0.3) 0.5
+clip_paral=(0.01 0.1 0.2 0.5  1) # alpha actucally
 index=(0 1)
-eps=(2.5 2.9)
-eps_2=(0.5 0.1)
+eps=(2.98 2.9)
+eps_2=(0.02 0.1)
 iidflag=("--save_dir=result")
 opt=('sgd')
 
@@ -114,8 +114,8 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn5  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
-                    # py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --model=cnn  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
+                    # py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn5  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --DRtest=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr  --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=128";
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"

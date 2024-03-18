@@ -6,22 +6,6 @@
 # cur_path=`pwd`
 
 
-#MNIST
-# seed=(0)
-# momentum=(0.0)
-# lr=(0.1 0.2)
-# g_norm=(0.1 0.2 0.5 1.0)
-# eps=(0.5 3)
-# iidflag=("--save_dir=result")
-# kf=("--kf=True")
-# seed=(0)
-# lr=(0.1 0.2 0.5)
-# g_norm=(0.01 0.1 0.5)
-# eps=(0.1 0.5 1)
-# iidflag=("--save_dir=result")
-# kf=("--save_dir=result")
-# momentum=(0.0)
-
 
 #CIFAR10
 ## non-DP
@@ -60,45 +44,44 @@ time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
 
-round=20
+global_round=(20 40)
 seed=(0)
 momentum=(0.0)
-lr=(2 4)
-g_norm=(100)
-kf=("--save_dir=result")
-iidflag=("--save_dir=result")
+lr=(0.05 0.1 0.5)
+batch_size=(20 256 1024)
 opt=('sgd')
 
-echo "====NoDP====">>$logfile
-for o in ${opt[@]}
+py_req='0'
+echo "====NoDP====">>$logfil]e
+for round in ${global_round[@]}
 do
-    for m in ${momentum[@]}
+    for o in ${opt[@]}
     do
-        for l in ${lr[@]}
+        for m in ${momentum[@]}
         do
-            for gn in ${g_norm[@]}
+            for l in ${lr[@]}
             do
-                py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn5 ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256";
-                # py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k}  --num_clients=1";
-                # py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=32";
-                # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
-
-                echo "${py_req}"
-                echo "FedSVG without DP, but with clip">>$logfile
-                echo "${py_req}">>$logfile
-                start_time=$(date +%s)
-                output=`${py_req}`;
-                end_time=$(date +%s)
-                if [ $? -ne 0 ]; then
-                    echo "[FAILED] ${py_req}"
-                    echo "[FAILED] ${py_req}">>$logfile
-                    exit 8
-                fi
-                sleep 1;
-                echo "${output}">>$logfile
-                cost_time=$[ $end_time-$start_time ]
-                echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
-                echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
+                for b in ${batch_size[@]}
+                do
+                    # py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
+                    # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
+                    echo "${py_req}"
+                    echo "FedSVG without DP, but with clip">>$logfile
+                    echo "${py_req}">>$logfile
+                    start_time=$(date +%s)
+                    output=`${py_req}`;
+                    end_time=$(date +%s)
+                    if [ $? -ne 0 ]; then
+                        echo "[FAILED] ${py_req}"
+                        echo "[FAILED] ${py_req}">>$logfile
+                        exit 8
+                    fi
+                    sleep 1;
+                    echo "${output}">>$logfile
+                    cost_time=$[ $end_time-$start_time ]
+                    echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
+                    echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s">>$logfile
+                done
             done
         done
     done
@@ -111,14 +94,15 @@ done
 round=20
 seed=(0)
 momentum=(0.0)
-lr=(2)
-g_norm=(0.01 0.05 0.1 0.2 0.3 0.5)
+lr=(0.1 1)
+g_norm=(0.01 0.1 0.3 0.5)
 eps=(3)
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
 opt=('sgd')
 
 output=0
+py_req='0'
 echo "====DP====">>$logfile
 for o in ${opt[@]}
 do
@@ -130,9 +114,7 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
-                    # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
-                    # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=128";
+                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=2";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     echo "${py_req}"

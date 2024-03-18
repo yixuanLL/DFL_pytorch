@@ -18,7 +18,7 @@ glr = '#'
 sample_ratio = '#'
 eps = 'non-dp'
 grad_norm = '#'
-grad_perp_norm = 'v'
+grad_perp_norm = '#'
 FLalg = 'Non'
 clip_alpha = '#'
 # lr = []
@@ -63,7 +63,7 @@ for line in file:
                 glr = item.split('=')[1]
             if 'sample_ratio' in item:
                 sample_ratio = item.split('=')[1]
-            if 'eps' in item:
+            if '--eps=' in item:
                 eps = item.split('=')[1]
             if 'grad_norm' in item:
                 grad_norm = item.split('=')[1]
@@ -99,21 +99,28 @@ i=0
 print('g_norm:', '\t'.join(set(grad_norm_list)))
 print('g_perp_norm:', '\t'.join(set(grad_perp_norm_list)))
 print('sample_ratio:', '\t'.join(set(sample_ratio_list)))
+print('clip_paral:', '\t'.join(set(clip_alpha_list)))
 
-print('FL \t glr \t eps \t lr')
+print('FL \t clip_paral \t glr \t eps \t lr')
 while i < len(acc):
     if FLalg_list[i] == 'FedAvg':
         num_col = 1
     elif FLalg_list[i] == 'FedDPAvg' or FLalg_list[i] == 'FedDPAdam':
         tmp = set(grad_norm_list)
-        tmp.remove('#')
+        try:
+            tmp.remove('#')
+        except:
+            pass
         num_col = len(tmp)
     else:
         tmp = set(grad_perp_norm_list)
-        tmp.remove('#')
+        try:
+            tmp.remove('#')
+        except:
+            pass
         num_col = len(tmp)
 
     res = '\t'.join(acc[i:i+num_col])
     # print(iid_list[i] + '\t' + eps[i]+'\t'+lr[i]+'\t'+res)
-    print(FLalg_list[i] + '\t'+ glr_list[i]+'\t'+eps_list[i]+'\t'+lr_list[i]+'\t'+res)
+    print(FLalg_list[i] + '\t'+ clip_alpha_list[i]  + '\t'+ glr_list[i]+'\t'+eps_list[i]+'\t'+lr_list[i]+'\t'+res)
     i += num_col

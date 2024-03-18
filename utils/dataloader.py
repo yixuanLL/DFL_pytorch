@@ -106,7 +106,6 @@ def loader(name, noniid):
         indices_train = torch.argsort(y_train)
         sorted_x_train = x_train[indices_train]
         sorted_y_train = y_train[indices_train]
-
         test_dataloader = datasets.CIFAR100(root='~/data', train=False, download=False, transform=transform)  
         train_data = torch.utils.data.DataLoader(test_dataloader, batch_size=10000, shuffle=False, num_workers=0)
         x_test, y_test  = next(iter(train_data))      

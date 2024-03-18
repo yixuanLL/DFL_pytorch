@@ -45,7 +45,7 @@ for line in file:
 
 i=0
 num_col = max(len(set(p_norm)), len(set(norm)))
-# num_col = 3
+# num_col = 1
 while i < len(acc):
     res = '\t'.join(acc[i:i+num_col])
     # print(iid_list[i] + '\t' + eps[i]+'\t'+lr[i]+'\t'+res)

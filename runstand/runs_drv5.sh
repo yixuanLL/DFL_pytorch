@@ -3,7 +3,7 @@
 #SBATCH --output=out_drv5_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=8GB
-data="CIFAR100"
+data="MNIST"
 
 dir_path=$(dirname $(pwd))
 echo "${dir_path}"
@@ -93,12 +93,12 @@ done
 round=20
 momentum=0.0
 seed=(0)
-lr=(2)
-g_p_norm=(0.1 0.3)
-clip_paral=(0.1 0.3 0.5) # alpha actucally
+lr=(1.5 2)
+g_p_norm=(0.3)
+clip_paral=(1 1.5 2) # alpha actucally
 index=(0)
-eps=(2.9 2.95)
-eps_2=(0.1 0.05)
+eps=(2.98)
+eps_2=(0.02)
 iidflag=("--save_dir=result")
 opt=('sgd')
 
@@ -114,8 +114,8 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn5  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
-                    # py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                    # py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn5  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
+                    py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --DR=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=32";
                     # py_req="python ${dir_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";

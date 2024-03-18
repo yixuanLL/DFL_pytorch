@@ -23,9 +23,18 @@ os.environ['CUDA_VISIBLE_DEVICES'] ='1'
 
 MODEL_PARAMS={
     'MNIST': (784,10),
-    'CIFAR10': (3*32*32,10),
+    'CIFAR10': (3,10),
+    'CIFAR100': (3*32*32,100),
     'FLamby': (13,2),
     'CAHouse': (8,1)
+}
+DATA_MODEL={
+    'MNIST': "cnn",
+    # 'CIFAR10': "cnn5",
+    'CIFAR10': "resnet",
+    'CIFAR100': "resnet",
+    'FLamby': "mclr",
+    'CAHouse': "mclr"
 }
 from torchvision import datasets, transforms
 def main(args):
@@ -75,8 +84,6 @@ def main(args):
     # set clients
     clients = []
     for i in range(args.num_clients):
-
-                    
         clients.append(Client(x_train=x_train,
                         y_train=y_train,
                         x_test=x_test,
@@ -106,7 +113,7 @@ def main(args):
     print('client noise multiplier is %f, %f, %f' % (noise_multiplier, noise_multiplier_2, noise_multiplier_3)) 
     
     # set server
-    model_path = '%s.%s' % ('models', args.model)
+    model_path = '%s.%s' % ('models', DATA_MODEL[args.dataset])
     mod = importlib.import_module(model_path)
     model = getattr(mod, 'Model')
     server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device, grad_norm=args.grad_norm, perp_grad_norm=args.grad_perp_norm, clip_paral=args.clip_paral, budget_accountant=budget_accountant, glr=args.glr)
@@ -157,7 +164,9 @@ def main(args):
         # for global_last_grad
         server.global_last_grad = [(p1.data-p2.data).to(device) for p1,p2 in zip(global_model.parameters(), last_parameters)]
         # server.global_last_grad = [(p1.data-p2.data) for p1,p2 in zip(global_model.parameters(), last_parameters)]
-        
+
+        if args.num_clients == 1:
+            accuracy_accountant = bytes2[2]        
         # test
         test_accuracy, test_loss = server.test(global_model)
         accuracy_accountant.append(test_accuracy)
@@ -187,8 +196,8 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='MNIST')
-    parser.add_argument('--FLalg', type=str, default='FedDPAdam', help='Algorithm of FL')
+    parser.add_argument('--dataset', type=str, default='CIFAR10')
+    parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
     parser.add_argument('--DRtest', type=bool, default=False)

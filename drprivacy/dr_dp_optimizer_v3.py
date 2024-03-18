@@ -128,7 +128,11 @@ class DrDPOptimizerV3(DPOptimizer):
             else:
                 p.summed_grad = gi
         # self.last_grad = g_noisy # wrong
-        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
+        self.last_grad = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) # 2024/01
+        # normalize for convergence
+        last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
+        norm = torch.stack(last_norm).norm(2)
+        self.last_grad = [p/norm for p in self.last_grad]
 
         # for historical grad
         # noisy_mean_g = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]

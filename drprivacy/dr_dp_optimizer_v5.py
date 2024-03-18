@@ -74,7 +74,8 @@ class DrDPOptimizerV5(DPOptimizer):
         # a = copy.deepcopy(self.last_grad[0]*127)  
         # if self.steps < 1000:
         # if self.steps % 500 < 50 and self.steps < 3000: --eps>1
-        if self.steps % 500 < 50 and self.steps < 2000:
+        # if self.steps % 500 < 50 and self.steps < 2000: # cifar10
+        if self.steps % 300 < 50 and self.steps < 2000: # cifar10
         # if False:
             self.dr_process()
         else: 
@@ -95,7 +96,7 @@ class DrDPOptimizerV5(DPOptimizer):
         return True  
     
     def dpsgd(self):
-        norm = 0.2 # eps=1 -- 0.08 eps=3 --0.2 eps=0.5 -- 0.05?
+        norm = 0.2 # eps=1 -- 0.08 eps=3 --0.2 eps=0.5 -- 0.05? 
         g = self.clip_g_perp(self.grad_samples, norm) 
         g_clean = copy.deepcopy(g) 
         self.add_noise_sum(g, self.noise_multiplier_3, norm)
@@ -151,12 +152,16 @@ class DrDPOptimizerV5(DPOptimizer):
 
         # for historical grad
         noisy_mean_g = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
-        s = 500
+        s = 300
         if self.steps % s == 0:
         # if self.steps == 1: # accumulation
             self.last_grad = noisy_mean_g
         else:
             self.last_grad = [(g+lg*(self.steps%s))/(self.steps%s+1) for g, lg in zip(noisy_mean_g, self.last_grad)]
+            # normalize
+            last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
+            norm = torch.stack(last_norm).norm(2)
+            self.last_grad = [p/norm for p in self.last_grad]
         
         return g_perp_noisy
 

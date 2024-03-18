@@ -10,27 +10,47 @@ import numpy as np
 import torch
 import random
 
+
 np.random.seed(10)
 
 def save_progress(args, Accuracy_accountant, Budgets_accountant=None, nbytes1=None, nbytes2=None):
+    DATA_MODEL={
+        'MNIST': "cnn",
+        'CIFAR10': "cnn5",
+        'CIFAR100': "resnet",
+        'FLamby': "mclr",
+        'CAHouse': "mclr"
+    }
+    eps = 'no-dp'
+    if args.dp:
+        if args.DR or args.DRV2 or args.DRtest:
+            eps = args.eps+args.eps_2
+        else:
+            eps = args.eps
 
     save_dir = os.path.join(os.getcwd(), args.save_dir, 'result', args.dataset,
-                            ('noniid' if args.noniid else 'iid'),
-                            args.model,
-                            (str(args.eps) if args.dp else 'no-dp'))
+                            # ('noniid' if args.noniid else 'iid'),
+                            # DATA_MODEL[args.dataset],
+                            str(args.num_clients),
+                            (str(eps) if args.dp else 'no-dp'))
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    file_name = '{}{}{}{}{}{}{}{}{}'.format(args.lr,
+    file_name = '{}{}{}{}{}{}{}{}{}{}{}{}{}'.format(args.lr,
+                              ('-'+str(args.opt)),
                               ('-'+str(args.momentum)),
                               ('-DR' if args.DR else ''),
+                              ('-DRV2' if args.DR else ''),
                               ('-DRtest' if args.DRtest else ''),
-                              ('-kf' if args.kf else ''),
-                              ('-sgd' if not args.DR and not args.DRtest and not args.cpl and not args.kf else ''),
+                              ('-cpl' if args.DRtest else ''),
+                              ('-SGD' if not args.DR and not args.DRV2 and not args.DRtest and not args.cpl else ''),
+                              ('-'+str(args.eps) if args.dp else '-0'),
+                              ('-'+str(args.eps_2) if args.DR or args.DRV2 or args.DRtest else '-0'),
                               ('-'+str(args.grad_norm)),
                               ('-'+str(args.grad_perp_norm)),
-                              ('-'+str(args.global_round)))
+                              ('-'+str(args.clip_paral)))
+                            #   ('-'+str(args.global_round)))
 
     with open(os.path.join(save_dir, file_name + '.csv'), 'w') as file:
         writer = csv.writer(file, delimiter=',')

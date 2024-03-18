@@ -182,7 +182,7 @@ class Client(nn.Module):
                 norm = torch.stack(last_norm).norm(2)
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
-                optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
+                optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] # for 2024/01 result
                 # optimizer.last_grad = [p/norm for p in self.global_last_grad] # opt 1
                 # optimizer.last_grad = self.global_last_grad # opt 2
                 optimizer.last_grad_noisy = optimizer.last_grad
@@ -201,6 +201,7 @@ class Client(nn.Module):
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
         losses = []
+        accs =[]
         
         # train
         for epoch in range(self.local_round):
@@ -230,7 +231,7 @@ class Client(nn.Module):
             if self.num_clients == 1:
                 test_acc, test_loss = self.test(copy.deepcopy(model))
                 print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f, Test acc: %.4f, Test loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size, test_acc, test_loss))
-            
+                accs.append(test_acc)
             # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
 
         updates = [weight.data for weight in model.state_dict().values()]
@@ -243,7 +244,7 @@ class Client(nn.Module):
         Bytes1 = num_parameter1 * 4
         # print('num parameters: %d, Bytes: %d, M: %.8f' % (num_parameter1, Bytes1, Bytes1/(1024**2)))
 
-        Bytes2 = (logs, losses)
+        Bytes2 = (logs, losses, accs)
 
         # update the budget accountant
         accum_budget_accountant = self.budget_accountant.update(self.local_round) if self.budget_accountant else None

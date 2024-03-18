@@ -24,6 +24,7 @@ def add_weights(num_vars, model_state, agg_model_state):
 def clip(grads, clip_C):
     per_param_norms = [g.norm(2, dim=-1) for g in grads] # norm of per laryer of per sample gradient
     per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
+    # print(per_sample_norms[0:2])
     per_sample_clip_factor = (clip_C / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
     grads_clipped = []
     for p in grads:
@@ -37,6 +38,12 @@ def add_noise_ddp(vec, noise_multiplier, sensitivity, num_clients, device):
     for v in vec:
         noise = torch.normal(mean=0, std=std, size=v.shape, device=device, generator=None)
         v += noise
+    return vec
+
+def grad_flat(param, device):
+    vec = torch.tensor([]).to(device)
+    for p in param:
+        vec = torch.cat((vec, p.reshape(-1).to(device)))
     return vec
 
 class FedAvg:
@@ -56,7 +63,9 @@ class FedAvg:
         self.__model_grads = add_weights(self.num_vars, update_model_grad, self.__model_grads) # concat weights
 
     def average(self, global_last_model=None):
-        g_mean = [torch.mean(g, dim=0) for g in self.__model_grads]
+        # for g in self.__model_grads:
+        #     print (g)
+        g_mean = [torch.mean(torch.tensor(g, dtype=float), dim=0) for g in self.__model_grads]
         mean_updates = [global_last_model[i]+(self.glr * g_mean[i].type(torch.float)).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
         self.__model_grads = []
         return mean_updates        
@@ -102,23 +111,6 @@ class FedDPAvg:
         self.__model_grads = []
         return mean_updates
     
-    # def clip(self, grads, clip_C):
-    #     per_param_norms = [g.norm(2, dim=-1) for g in grads] # norm of per laryer of per sample gradient
-    #     per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
-    #     per_sample_clip_factor = (clip_C / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
-    #     grads_clipped = []
-    #     for p in grads:
-    #         # grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
-    #         grad = per_sample_clip_factor.reshape(len(p),1) * p # mutiply [128] * [128, 16, 1, 8, 8] -> [128, 16, 1, 8, 8] clip & sum
-    #         grads_clipped.append(grad)
-    #     return grads_clipped
-    
-    # def add_noise(self, vec, noise_multiplier, sensitivity, num_clients):
-    #     std = noise_multiplier * sensitivity / math.sqrt(num_clients)
-    #     for v in vec:
-    #         noise = torch.normal(mean=0, std=std, size=v.shape, device=self.device, generator=None)
-    #         v += noise
-    #     return vec
 
 class FedDPAdam:
     def __init__(self, grad_norm, budget_accountant, glr):
@@ -143,8 +135,8 @@ class FedDPAdam:
 
     def average(self, global_last_model=None):
         num_clients = len(self.__model_grads[0])
-        gi = clip(self.__model_grads, self.grad_norm)
-        add_noise_ddp(gi, self.noise_multiplier, self.grad_norm, num_clients, self.device)
+        gi = self.clip(self.__model_grads, self.grad_norm)
+        self.add_noise_ddp(gi, self.noise_multiplier, self.grad_norm, num_clients, self.device)
         g = [torch.mean(g, dim=0) for g in gi]
 
         if self.opt == 'adam':
@@ -170,6 +162,24 @@ class FedDPAdam:
         self.__model_grads = []
         return mean_updates
 
+    def clip(self, grads, clip_C):
+        per_param_norms = [g.norm(2, dim=-1) for g in grads] # norm of per laryer of per sample gradient
+        per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
+        per_sample_clip_factor = (clip_C / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
+        grads_clipped = []
+        for p in grads:
+            # grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
+            grad = per_sample_clip_factor.reshape(len(p),1) * p # mutiply [128] * [128, 16, 1, 8, 8] -> [128, 16, 1, 8, 8] clip & sum
+            grads_clipped.append(grad)
+        return grads_clipped
+
+    def add_noise_ddp(self, vec, noise_multiplier, sensitivity, num_clients, device):
+        std = noise_multiplier * sensitivity / math.sqrt(num_clients)
+        for v in vec:
+            noise = torch.normal(mean=0, std=std, size=v.shape, device=device, generator=None)
+            v += noise
+        return vec
+
 class FedDPDIFF:
     def __init__(self, perp_grad_norm, budget_accountant, glr):
         self.__model_grads = []
@@ -190,15 +200,13 @@ class FedDPDIFF:
         self.__model_grads = add_weights(self.num_vars, update_model_grad, self.__model_grads) # concat weights
         if self.last_grad == None:
             self.last_grad = [g.flatten() for g in global_last_model]
-        else:
-            self.last_grad = [torch.mean(g.reshape(len(g),-1), dim=0) for g in self.__model_grads]
+        # else:
+        #     self.last_grad = [torch.mean(g.reshape(len(g),-1), dim=0) for g in self.__model_grads]
     
     def cpl_process(self):
         num_clients = len(self.__model_grads[0])
         #difference
         gi_delta = [g.reshape(num_clients, -1)-lg for g, lg in zip(self.__model_grads, self.last_grad)]
-        # g_delta = self.clip_g_perp(gi_delta) 
-        # self.add_noise_sum(g_delta, self.noise_multiplier, self.perp_grad_norm)
         gi_delta = clip(gi_delta, self.perp_grad_norm)
         add_noise_ddp(gi_delta, self.noise_multiplier, self.perp_grad_norm, num_clients, self.device)
         g_delta = [torch.mean(g, dim=0) for g in gi_delta]
@@ -214,35 +222,68 @@ class FedDPDIFF:
         self.__model_grads = []
         return mean_updates
 
-    # def clip_g_perp(self, g_perp):
-    #     per_param_norms = [g.norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
-    #     per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
-    #     per_sample_clip_factor = (self.perp_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
-    #     g_perp_clipped = []
-    #     for p in g_perp:
-    #         grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
-    #         g_perp_clipped.append(grad)
-    #     return g_perp_clipped
-
-    # def add_noise_sum(self, vec, noise_multiplier, sensitivity):
-    #     std = noise_multiplier * sensitivity
-    #     for v in vec:
-    #         noise = torch.normal(mean=0, std=std, size=v.shape, device=self.device, generator=None)
-    #         v += noise
-    #     return vec
-
-class FedDRDP:
-    def __init__(self, perp_grad_norm, clip_paral, budget_accountant, glr):
+class FedDPDIFF3:
+    def __init__(self, perp_grad_norm, alpha, budget_accountant, glr):
         self.__model_grads = []
         self.num_vars = None
         self.shape_vars = None
         self.last_grad = None
         self.perp_grad_norm = perp_grad_norm
+        self.noise_multiplier = budget_accountant.noise_multiplier
+        self.glr = glr
+        self.alpha = alpha
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def aggregate(self, model_state, global_last_model):
+        if not self.shape_vars:
+            self.shape_vars = [var.shape for var in model_state] # model weight
+
+        self.num_vars = len(model_state) # num of layers
+        update_model_grad = [state.flatten()-lg.flatten() for state, lg in zip(model_state, global_last_model)] # flatted model params per layer
+        self.__model_grads = add_weights(self.num_vars, update_model_grad, self.__model_grads) # concat weights
+        if self.last_grad == None:
+            self.last_grad = [g.flatten() for g in global_last_model]
+        # else:
+        #     self.last_grad = [torch.mean(g.reshape(len(g),-1), dim=0) for g in self.__model_grads]
+    
+    def cpl_process(self):
+        num_clients = len(self.__model_grads[0])
+        #difference
+        
+        gi_delta = [g.reshape(num_clients, -1)-self.alpha*lg for g, lg in zip(self.__model_grads, self.last_grad)]
+        # g_delta = self.clip_g_perp(gi_delta) 
+        # self.add_noise_sum(g_delta, self.noise_multiplier, self.perp_grad_norm)
+        gi_delta = clip(gi_delta, self.perp_grad_norm)
+        add_noise_ddp(gi_delta, self.noise_multiplier, self.perp_grad_norm, num_clients, self.device)
+        g_delta = [torch.mean(g, dim=0) for g in gi_delta]
+        #recover
+        # g_noisy = [(gd + lg)/num_clients for gd, lg in zip(g_delta, self.last_grad)]
+        g_noisy = [gd + self.alpha*lg for gd, lg in zip(g_delta, self.last_grad)]
+        self.last_grad = copy.deepcopy(g_noisy) 
+        
+
+    def average(self, global_last_model=None):
+        self.cpl_process()
+        mean_updates = [global_last_model[i] + self.glr * self.last_grad[i].type(torch.float).reshape(self.shape_vars[i]) for i in range(self.num_vars)]
+        self.__model_grads = []
+        return mean_updates
+
+
+class FedDRDP:
+    def __init__(self, grad_norm, perp_grad_norm, clip_paral, budget_accountant, glr):
+        self.__model_grads = []
+        self.num_vars = None
+        self.shape_vars = None
+        self.last_grad = None
+        self.perp_grad_norm = perp_grad_norm
+        self.grad_norm = grad_norm
         self.clip_paral = clip_paral
         self.m = 0
         self.v = 0
+        self.steps = 0
         self.noise_multiplier = budget_accountant.noise_multiplier
         self.noise_multiplier_2 = budget_accountant.noise_multiplier_2
+        self.noise_multiplier_3 = budget_accountant.noise_multiplier_3
         self.glr = glr
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -255,25 +296,19 @@ class FedDRDP:
         self.__model_grads = add_weights(self.num_vars, update_model_grad, self.__model_grads) # concat weights
         if self.last_grad == None:
             self.last_grad = [g.flatten() for g in global_last_model]
-        else:
-            self.last_grad = [torch.mean(g.reshape(len(g),-1), dim=0) for g in self.__model_grads]
+        # else:
+            # self.last_grad = [torch.mean(g.reshape(len(g),-1), dim=0) for g in self.__model_grads]
 
     def dr_process(self):
         gi_perp, alpha_i = self.decompose_grad()   
         gi_perp = clip(gi_perp, self.perp_grad_norm)
         add_noise_ddp(gi_perp, self.noise_multiplier, self.perp_grad_norm, len(self.__model_grads[0]), self.device)
         g_perp = [torch.mean(g, dim=0) for g in gi_perp]
-        # g_perp = self.clip_g_perp(gi_perp) 
-        # g_perp_clean = copy.deepcopy(g_perp) 
-        # self.add_noise_sum(g_perp, self.noise_multiplier, self.perp_grad_norm)
-
 
         clip_p = self.clip_paral
         alpha = self.clip_alpha(alpha_i, clip_p)
         add_noise_ddp(alpha, self.noise_multiplier_2, clip_p, len(self.__model_grads[0]), self.device)
         alpha = [torch.mean(a) for a in alpha]
-        # alpha_clean = copy.deepcopy(alpha)
-        # self.add_noise_sum(alpha, self.noise_multiplier_2, clip_p) 
 
         self.recover_grad(g_perp, alpha) 
     
@@ -284,19 +319,10 @@ class FedDRDP:
         gi_paral = [paral.reshape([num_clients]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[num_clients]+[1]*len(lg.shape)) for paral, lg in zip(paral_alpha, self.last_grad)]
         gi_perp = [(g-gl) for g, gl in zip(self.__model_grads, gi_paral)] 
         return gi_perp, paral_alpha
-    
-    # def clip_g_perp(self, g_perp):
-    #     per_param_norms = [g.norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
-    #     per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1) # norm of per sample gradient
-    #     per_sample_clip_factor = (self.perp_grad_norm / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
-    #     g_perp_clipped = []
-    #     for p in g_perp:
-    #         grad = contract("i,i...", per_sample_clip_factor, p) # mutiply [128] * [128, 16, 1, 8, 8] -> [16, 1, 8, 8] clip & sum
-    #         g_perp_clipped.append(grad)
-    #     return g_perp_clipped
 
     def clip_alpha(self, vec, clip_bound):
         norm = torch.stack(vec, dim=1).norm(2, dim=1)
+        # print(norm[0:2])
         clip_factor = (
             clip_bound / (norm + 1e-6)
         ).clamp(max=1.0)
@@ -304,34 +330,116 @@ class FedDRDP:
         vec = [clip_factor * v for v in vec]
         return vec
 
-    # def add_noise_sum(self, vec, noise_multiplier, sensitivity):
-    #     """
-    #     Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
-    #     """
-    #     std = noise_multiplier * sensitivity
-    #     for v in vec:
-    #         noise = torch.normal(mean=0, std=std, size=v.shape, device=self.device, generator=None)
-    #         v += noise
-    #     return vec
-
     def recover_grad(self, g_perp_noisy, alpha_noisy):
         g_noisy = [gp + a * lg for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
         self.last_grad = copy.deepcopy(g_noisy) 
         return g_noisy
 
     def average(self, global_last_model=None):
-        self.dr_process()
-        # g = self.last_grad
-        # num_clients = len(self.__model_grads[0])
-        # beta1 = 0.9
-        # beta2 = 0.99
-        # tau=10e-3
-        # self.m = [beta1 * m + (1-beta1) * gg/num_clients for m, gg in zip(self.m, g)]
-        # self.v = [beta2 * v + (1-beta2) * (gg/num_clients)**2 for v, gg in zip(self.v, g)]
-        # mean_updates = [global_last_model[i]+(self.m[i]/(torch.sqrt(self.v[i]) + tau)).reshape(self.shape_vars[i]) for i in range(self.num_vars)] # mean weights
-
+        # if self.steps % 30 < 10 and self.steps<800:
+        if self.steps!=1:
+            self.dr_process()
+        else:
+            num_clients = len(self.__model_grads[0])
+            gi = clip(self.__model_grads, self.grad_norm)
+            add_noise_ddp(gi, self.noise_multiplier_3, self.grad_norm, num_clients, self.device)
+            g_noisy = [torch.mean(g, dim=0) for g in gi]
+            self.last_grad = copy.deepcopy(g_noisy) 
         mean_updates = [global_last_model[i] + self.glr * self.last_grad[i].type(torch.float).reshape(self.shape_vars[i]) for i in range(self.num_vars)]
         self.__model_grads = []
+        self.steps += 1
+        return mean_updates
+
+class FedDRDPV5:
+    def __init__(self, grad_norm, perp_grad_norm, clip_paral, budget_accountant, glr):
+        self.__model_grads = []
+        self.num_vars = None
+        self.shape_vars = None
+        self.last_grad = None
+        self.perp_grad_norm = perp_grad_norm
+        self.grad_norm = grad_norm
+        self.clip_paral = clip_paral
+        self.m = 0
+        self.v = 0
+        self.steps = 0
+        self.noise_multiplier = budget_accountant.noise_multiplier
+        self.noise_multiplier_2 = budget_accountant.noise_multiplier_2
+        self.noise_multiplier_3 = budget_accountant.noise_multiplier_3
+        self.glr = glr
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def aggregate(self, model_state, global_last_model):
+        if not self.shape_vars:
+            self.shape_vars = [var.shape for var in model_state] # model weight
+
+        self.num_vars = len(model_state) # num of layers
+        update_model_grad = [state.flatten()-lg.flatten() for state, lg in zip(model_state, global_last_model)] # flatted model params per layer
+        self.__model_grads = add_weights(self.num_vars, update_model_grad, self.__model_grads) # concat weights
+        if self.last_grad == None:
+            self.last_grad = [g.flatten() for g in global_last_model]
+        # else:
+            # self.last_grad = [torch.mean(g.reshape(len(g),-1), dim=0) for g in self.__model_grads]
+
+    def dr_process(self):
+        gi_perp, alpha_i = self.decompose_grad()   
+        gi_perp = clip(gi_perp, self.perp_grad_norm)
+        add_noise_ddp(gi_perp, self.noise_multiplier, self.perp_grad_norm, len(self.__model_grads[0]), self.device)
+        g_perp = [torch.mean(g, dim=0) for g in gi_perp]
+
+        clip_p = self.clip_paral
+        alpha = self.clip_alpha(alpha_i, clip_p)
+        add_noise_ddp(alpha, self.noise_multiplier_2, clip_p, len(self.__model_grads[0]), self.device)
+        alpha = [torch.mean(a) for a in alpha]
+
+        self.recover_grad(g_perp, alpha) 
+    
+    def decompose_grad(self):
+        num_clients = len(self.__model_grads[0])
+        last_grad_norms = [g.norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
+        paral_alpha = [torch.sum(g.reshape(num_clients, -1)*lg, dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.__model_grads, self.last_grad, last_grad_norms)]
+        gi_paral = [paral.reshape([num_clients]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[num_clients]+[1]*len(lg.shape)) for paral, lg in zip(paral_alpha, self.last_grad)]
+        gi_perp = [(g-gl) for g, gl in zip(self.__model_grads, gi_paral)] 
+        return gi_perp, paral_alpha
+
+    def clip_alpha(self, vec, clip_bound):
+        norm = torch.stack(vec, dim=1).norm(2, dim=1)
+        # print(norm[0:2])
+        clip_factor = (
+            clip_bound / (norm + 1e-6)
+        ).clamp(max=1.0)
+        # vec = [torch.sum(clip_factor * v) for v in vec]
+        vec = [clip_factor * v for v in vec]
+        return vec
+
+    def recover_grad(self, g_perp_noisy, alpha_noisy):
+        g_noisy = [gp + a * lg for gp, a, lg in zip(g_perp_noisy, alpha_noisy, self.last_grad)]
+        noisy_mean_g = copy.deepcopy(g_noisy) 
+        s = 30
+        if self.steps % s == 0:
+        # if self.steps == 1: # accumulation
+            self.last_grad = noisy_mean_g
+        else:
+            self.last_grad = [(g+lg*(self.steps%s))/(self.steps%s+1) for g, lg in zip(noisy_mean_g, self.last_grad)]
+        # normalize for convergence
+        last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
+        norm = torch.stack(last_norm).norm(2)
+        self.last_grad = [p/norm for p in self.last_grad]
+        return g_noisy
+
+    def average(self, global_last_model=None):
+        s = 30
+        if self.steps % s < 10 and self.steps<80:
+        # if self.steps!=1:
+            self.dr_process()
+        else:
+            num_clients = len(self.__model_grads[0])
+            gi = clip(self.__model_grads, self.grad_norm)
+            add_noise_ddp(gi, self.noise_multiplier_3, self.grad_norm, num_clients, self.device)
+            g_noisy = [torch.mean(g, dim=0) for g in gi]
+            self.last_grad = copy.deepcopy(g_noisy) 
+        mean_updates = [global_last_model[i] + self.glr * self.last_grad[i].type(torch.float).reshape(self.shape_vars[i]) for i in range(self.num_vars)]
+        self.__model_grads = []
+        self.steps += 1
         return mean_updates
 
 
@@ -371,12 +479,15 @@ class Server:
 
     def init_alg(self, dp=True, FLalg='FedAvg'):
         if FLalg == 'FedDRDP': 
-            self.__alg = FedDRDP(self.perp_grad_norm, self.clip_paral, self.budget_accountant, self.glr)
+            self.__alg = FedDRDP(self.grad_norm, self.perp_grad_norm, self.clip_paral, self.budget_accountant, self.glr)
             print('\nUsing FedDRDP algorithm!!!\n')    
-            
+
         elif FLalg == 'FedDPDIFF': 
             self.__alg = FedDPDIFF(self.perp_grad_norm, self.budget_accountant, self.glr)
             print('\nUsing FedDPDIFF algorithm!!!\n') 
+        elif FLalg == 'FedDPDIFF3': 
+            self.__alg = FedDPDIFF3(self.perp_grad_norm, self.clip_paral, self.budget_accountant, self.glr)
+            print('\nUsing FedDPDIFF3 algorithm!!!\n') 
 
         elif FLalg == 'FedDPAvg': 
             self.__alg = FedDPAvg(self.grad_norm, self.budget_accountant, self.glr)

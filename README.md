@@ -90,4 +90,7 @@ v2: 采用8.4的ppt算法，即聚合后再加noise的方案
     seed=5时clip_p调到0.001 eps2=0.01效果最好
   3. 为什么cpl/momentum不好，但是分解的方法好？
 - 稀疏化的方案设计
+
+## 3.7
+wait for run_ddp and runs_sgd nondp
   
