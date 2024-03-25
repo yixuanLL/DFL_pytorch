@@ -92,8 +92,23 @@ def loader(name, noniid):
         sorted_y_train = y_train[indices_train]
 
         test_dataloader = datasets.CIFAR10(root='~/data', train=False, download=False, transform=transform)  
-        train_data = torch.utils.data.DataLoader(test_dataloader, batch_size=10000, shuffle=False, num_workers=0)
-        x_test, y_test  = next(iter(train_data))  
+        test_data = torch.utils.data.DataLoader(test_dataloader, batch_size=10000, shuffle=False, num_workers=0)
+        x_test, y_test  = next(iter(test_data))  
+    
+    if name == 'SVHN':
+        T_normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406],std = [0.229, 0.224, 0.225])
+        transformation = transforms.Compose([transforms.RandomHorizontalFlip(),  transforms.ToTensor(), T_normalize])  
+        train_dataloader = datasets.SVHN(root='~/data', split='train', download=False, transform=transformation)  
+        train_data = torch.utils.data.DataLoader(train_dataloader, batch_size=50000, shuffle=False, num_workers=0)
+        x_train, y_train  = next(iter(train_data))
+
+        indices_train = torch.argsort(y_train)
+        sorted_x_train = x_train[indices_train] #[:256]
+        sorted_y_train = y_train[indices_train] #[:256]
+
+        test_dataloader = datasets.SVHN(root='~/data', split='test', download=False, transform=transformation)  
+        test_data = torch.utils.data.DataLoader(test_dataloader, batch_size=27000, shuffle=False, num_workers=0)
+        x_test, y_test  = next(iter(test_data))  
 
     if name == 'CIFAR100':
         transform = transforms.Compose(

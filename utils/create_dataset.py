@@ -88,18 +88,18 @@ def prepare_local_dataset(noniid, num_clients, y_train, seed, datasetname):
     if not noniid:
         dataset = create_iid_clients(num_clients=num_clients,
                                      num_examples=len(y_train),
-                                     num_classes=10,
+                                     num_classes=N,
                                     #  num_examples_per_client=len(y_train) // 10, original
                                     num_examples_per_client=len(y_train)//num_clients,
-                                     num_classes_per_client=10,
+                                     num_classes_per_client=N,
                                      seed=seed,
                                      datasetname=datasetname)
     else:
         dataset = create_noniid_clients(num_clients=num_clients,
                                         num_examples=len(y_train),
-                                        num_classes=10,
-                                        num_examples_per_client=len(y_train) // 10,
-                                        num_classes_per_client=10,
+                                        num_classes=N,
+                                        num_examples_per_client=len(y_train) // num_clients,
+                                        num_classes_per_client=N,
                                         seed=seed,
                                         datasetname=datasetname)
     if datasetname == 'FLamby' and noniid:

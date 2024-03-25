@@ -19,12 +19,23 @@ from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
 from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t, alpha_plot,grad_dist
-os.environ['CUDA_VISIBLE_DEVICES'] ='2'
+# os.environ['CUDA_VISIBLE_DEVICES'] ='2'
 
 MODEL_PARAMS={
     'MNIST': (784,10),
     'CIFAR10': (3*32*32,10),
-    'FLamby': (13,2)
+    'CIFAR100': (3,100),
+    'SVHN': (3,10),
+    'FLamby': (13,2),
+    'CAHouse': (8,1)
+}
+DATA_MODEL={
+    'MNIST': "cnn",
+    'CIFAR10': "cnn5",
+    'CIFAR100': "resnet",
+    'SVHN': "resnet",
+    'FLamby': "mclr",
+    'CAHouse': "mclr"
 }
 from torchvision import datasets, transforms
 def main(args):
@@ -37,7 +48,7 @@ def main(args):
     max_accum_budget_accountant = 0
     save_address = ''
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    print("[if using gpu]", torch.cuda.is_available())
 
     # set seed
     setup_seed(args.seed)
@@ -77,6 +88,7 @@ def main(args):
                         x_test=x_test,
                         y_test=y_test,
                         dataset=dataset[i],
+                        dataname=args.dataset,
                         batch_size=args.batch_size,
                         FLalg=args.FLalg, 
                         dp=args.dp,
@@ -100,10 +112,11 @@ def main(args):
     print('client noise multiplier is %f, %f, %f' % (noise_multiplier, noise_multiplier_2, noise_multiplier_3)) 
     
     # set server
-    model_path = '%s.%s' % ('models', args.model)
+    model_path = '%s.%s' % ('models', DATA_MODEL[args.dataset])
+    print('Model:', DATA_MODEL[args.dataset])
     mod = importlib.import_module(model_path)
     model = getattr(mod, 'Model')
-    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device, perp_grad_norm=args.grad_perp_norm, clip_paral=args.clip_paral, noise_multiplier=noise_multiplier, noise_multiplier_2=noise_multiplier_2)
+    server = Server(num_clients=args.num_clients, sample_ratio=args.sample_ratio, model=model, x_test=x_test, y_test=y_test, model_param=MODEL_PARAMS[args.dataset], device=device, grad_norm=args.grad_norm, perp_grad_norm=args.grad_perp_norm, clip_paral=args.clip_paral, budget_accountant=budget_accountant, glr=args.glr)    
     server.init_alg(dp=args.dp, FLalg=args.FLalg) # init server algo: fedavg + dp
     global_model = server.init_global_model() # global model
     server.global_last_grad = [p.data.to(device) for p in global_model.parameters()]
@@ -138,8 +151,8 @@ def main(args):
             server.aggregate(model_state, global_last_model)
             
             # log
-            if p_id == 0:
-                log.append(bytes2[0])
+            # if p_id == 0:
+            #     log.append(bytes2[0])
             #     loss.append(bytes2[1])
             
             # if args.dp:
@@ -182,7 +195,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='CIFAR10')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=True)
@@ -200,8 +213,9 @@ if __name__ == '__main__':
     parser.add_argument('--grad_perp_norm', type=float, default=0.1)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--model', type=str, default='cnn5')
+    # parser.add_argument('--model', type=str, default='cnn5')
     parser.add_argument('--lr', type=float, default=4)
+    parser.add_argument('--glr', type=float, default=1, help='global learning rate')
     parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)

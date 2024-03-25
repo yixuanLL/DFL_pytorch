@@ -15,13 +15,14 @@ import copy
 from utils.grad_plot import grad_flat
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, x_test, y_test, dataset, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, num_clients, clip_paral):
+    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, num_clients, clip_paral):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
         self.x_test = x_test
         self.y_test = y_test
         self.dataset = dataset
+        self.dataname = dataname
 
         try:
             self.dataset_size = len(self.dataset)
@@ -80,13 +81,18 @@ class Client(nn.Module):
 
     def local_update(self):
         model = self.model.train()
-        parameters = model.parameters()
+        # parameters = model.parameters()
+        # default optimizer: SGD
+        optimizer_sgd = torch.optim.SGD(model.nn_layer.parameters(), lr=self.lr, momentum=self.momentum)
+        if self.opt == 'rmsprop':
+            optimizer_sgd = torch.optim.RMSprop(model.nn_layer.parameters(), lr=self.lr)
+        if self.opt == 'adam':
+            optimizer_sgd = torch.optim.Adam(model.nn_layer.parameters(), lr=self.lr)
 
-        optimizer_sgd = torch.optim.SGD(parameters, lr=self.lr, momentum=self.momentum)
-        # optimizer = torch.optim.SGD(parameters, lr=self.lr)
-        # if self.DR:
-        #     optimizer = torch.optim.SGD(parameters, lr=self.lr, momentum=0.9, weight_decay=0.01)
-        criterion = nn.CrossEntropyLoss()
+        if self.dataname == 'CAHouse':
+            criterion = nn.MSELoss(reduction='sum')
+        else:
+            criterion = nn.CrossEntropyLoss()
 
         x_batch = self.x_train[self.dataset]
         y_batch = self.y_train[self.dataset]
@@ -102,7 +108,7 @@ class Client(nn.Module):
             noise_2 = self.budget_accountant.noise_multiplier_2
         if not self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl and not self.kfilter:
             grad_norm = self.grad_norm
-            clipping = 'clip_flat'
+            clipping = 'flat'
         # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
         if self.dp and not self.DR and not self.DRV2 and not self.kfilter and not self.cpl:
             grad_norm = self.grad_norm
@@ -148,32 +154,35 @@ class Client(nn.Module):
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'kfilter_dp_flat'                               
         # print('clipping:', clipping)
-        privacy_engine = PrivacyEngine(secure_mode=False)
-        model, optimizer, train_loader = privacy_engine.make_private(module=model,
-                                                                        optimizer=optimizer_sgd,
-                                                                        clipping=clipping,
-                                                                        data_loader=data_loader,
-                                                                        noise_multiplier=noise,
-                                                                        max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
+        if self.dp or self.DR or self.DRtest or self.DRV2:
+            privacy_engine = PrivacyEngine(secure_mode=False)
+            model, optimizer, train_loader = privacy_engine.make_private(module=model,
+                                                                            optimizer=optimizer_sgd,
+                                                                            clipping=clipping,
+                                                                            data_loader=data_loader,
+                                                                            noise_multiplier=noise,
+                                                                            max_grad_norm=grad_norm) #All of the returned objects act just like their non-private counterparts passed as arguments, but with added DP tasks.
 
 
         # global_last_grad
         # if self.DR or self.DRV2 or self.DRtest:
-        if self.DR or self.DRV2:
+        # if self.DR or self.DRV2:
+        if False:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
         if self.Topk:
             norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
             optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, norm)] 
             optimizer.last_grad_origin = [p/self.batch_size for p in self.global_last_grad] 
-        if self.DRtest:
+        if self.DRtest or self.DR or self.cpl or self.DRV2:
             if self.global_last_grad != []:
                 last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.global_last_grad]
                 norm = torch.stack(last_norm).norm(2)
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
-                # optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] 
-                optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
+                optimizer.last_grad = [p/(n+1e-8) for p,n in zip(self.global_last_grad, last_norm)] # for 2024/01 result
+                # optimizer.last_grad = [p/norm for p in self.global_last_grad] # opt 1
+                # optimizer.last_grad = self.global_last_grad # opt 2
                 optimizer.last_grad_noisy = optimizer.last_grad
             # for KF filter
             if self.kfilter:
@@ -189,6 +198,7 @@ class Client(nn.Module):
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
         logs = []
         losses = []
+        accs = []
         
         # train
         model_t_1 = None
@@ -261,7 +271,7 @@ class Client(nn.Module):
             if self.num_clients == 1:
                 test_acc, test_loss = self.test(copy.deepcopy(model))
                 print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f, Test acc: %.4f, Test loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size, test_acc, test_loss))
-
+                accs.append(test_acc)
         updates = [weight.data for weight in model.state_dict().values()]
         if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta
             updates = [optimizer.g_perp_sum, optimizer.cos_sum]
@@ -272,7 +282,7 @@ class Client(nn.Module):
         Bytes1 = num_parameter1 * 4
         # print('num parameters: %d, Bytes: %d, M: %.8f' % (num_parameter1, Bytes1, Bytes1/(1024**2)))
 
-        Bytes2 = (logs, losses)
+        Bytes2 = (logs, losses, accs)
 
         # update the budget accountant
         accum_budget_accountant = self.budget_accountant.update(self.local_round) if self.budget_accountant else None

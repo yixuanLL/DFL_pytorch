@@ -53,6 +53,7 @@ class DrDPOptimizerV5(DPOptimizer):
         self.g_perp_sum = []
         self.cos_sum = []
         self.log = []
+        self.s = 196
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
     def pre_step(
@@ -72,14 +73,44 @@ class DrDPOptimizerV5(DPOptimizer):
             self._is_last_step_skipped = True
             return False
         # a = copy.deepcopy(self.last_grad[0]*127)  
-        # if self.steps < 1000:
-        # if self.steps % 500 < 50 and self.steps < 3000: --eps>1
-        # if self.steps % 500 < 50 and self.steps < 2000: # cifar10
-        if self.steps % 300 < 50 and self.steps < 2000: # cifar10
-        # if False:
-            self.dr_process()
+        # without sgd historical grad
+        # if self.steps < 500: # 55%
+        # if self.steps % 500 < 50 and self.steps < 3000: #--eps>1 57%
+        # if self.steps % 500 < 50 and self.steps < 2000: # cifar10 56%
+        # if self.steps % 300 < 50 and self.steps < 2000: # cifar10 57%
+        # if self.steps % 500 < 100 and self.steps < 3000: 56%
+        # if self.steps % 100 < 50 and self.steps < 1000: # cifar10 53%
+        # if self.steps < 200 or (self.steps % 300 < 50 and self.steps < 2000): #52.57
+        # if self.steps < 200 or (self.steps % 500 < 50 and self.steps < 3000): #52.00
+        # if False: #56.1
+        # if self.steps < 100 or (self.steps % 500 > 450 and self.steps < 3000): #52.01
+        # if True: #41.59
+        # if self.steps % self.s < 20: #55.01
+        # if self.steps % self.s < 20 and self.steps < 2000: #55.16 norm=0.3
+        # if self.steps % self.s < 20 and self.steps < 2000: #57.00 norm=0.2
+        # if self.steps % self.s < 50 and self.steps < 2000: #56.28 norm=0.2
+        # if self.steps % self.s < 20 and self.steps < 3000: #56.46
+
+        # with sgd historical grad
+        # if self.steps % self.s < 20: #55.85
+        # if self.steps % self.s < 20 and self.steps < 3000 : #56.04
+        # if self.steps % self.s < 20 and self.steps < 2000: #54.1 norm=0.3
+        if self.steps < 50: # every 20 57.50; first 50 58.16; every 50 56.91； first 100 56.08； no accum grad  57.64; now 58.38
+           self.dr_process() 
+            # self.dpsgd(self.perp_grad_norm) # comparison with just enlarge norm in SGD
+        # elif self.steps <  1000 and self.steps % self.s < 20:
+        #     self.dr_process()
+        # elif self.steps < 2000 and self.steps % (self.s*2) < 10:
+        #     self.dr_process()
+        # elif self.steps < 3000 and self.steps % (self.s*4) < 10:
+        #     self.dr_process()
+        # if self.steps < 50: #58.09
+        #     self.dr_process() 
+        # if self.steps > 3000: #50.85
+            # self.dr_process()
         else: 
-            self.dpsgd()  
+            # self.dpsgd(0.2)  # for cifar10
+            self.dpsgd(0.6)
 
         self.add_noise()
         # b = copy.deepcopy(self.last_grad[0])
@@ -95,8 +126,9 @@ class DrDPOptimizerV5(DPOptimizer):
         self._is_last_step_skipped = False
         return True  
     
-    def dpsgd(self):
-        norm = 0.2 # eps=1 -- 0.08 eps=3 --0.2 eps=0.5 -- 0.05? 
+    def dpsgd(self, norm):
+        # norm = 0.2 # eps=1 -- 0.08 eps=3 --0.2 eps=0.5 -- 0.05?  for batch size=256
+        # norm = 2 # for batch size=2048
         g = self.clip_g_perp(self.grad_samples, norm) 
         g_clean = copy.deepcopy(g) 
         self.add_noise_sum(g, self.noise_multiplier_3, norm)
@@ -105,6 +137,17 @@ class DrDPOptimizerV5(DPOptimizer):
                 p.summed_grad += gi
             else:
                 p.summed_grad = gi
+        noisy_mean_g = copy.deepcopy([gg/len(self.grad_samples[0]) for gg in g]) 
+        # self.last_grad = noisy_mean_g
+        if self.steps % self.s <= 150:
+        # if self.steps == 1: # accumulation
+            self.last_grad = noisy_mean_g
+        else:
+            self.last_grad = [(g+lg*(self.steps%self.s))/(self.steps%self.s+1) for g, lg in zip(noisy_mean_g, self.last_grad)]
+            # normalize
+            last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
+            norm = torch.stack(last_norm).norm(2)
+            self.last_grad = [p/norm for p in self.last_grad]
 
     def dr_process(self):
         gi_perp, alpha_i = self.decompose_grad()   
@@ -129,8 +172,9 @@ class DrDPOptimizerV5(DPOptimizer):
         if self.last_grad == []:      
             print('DPDR V5')
             return self.grad_samples, [torch.tensor(1.).to(self.device)]*8
-        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
-        paral_alpha = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
+        # last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in self.last_grad] # norm of per laryer of last gradient
+        # paral_alpha = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(self.grad_samples, self.last_grad, last_grad_norms)]
+        paral_alpha = [torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1) for (g, lg) in zip(self.grad_samples, self.last_grad)] # norm of last grad is 1
         gi_paral = [paral.reshape([len(self.grad_samples[0])]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(self.grad_samples[0])]+[1]*len(lg.shape)) for paral, lg in zip(paral_alpha, self.last_grad)]
         gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
         return gi_perp, paral_alpha
@@ -152,16 +196,16 @@ class DrDPOptimizerV5(DPOptimizer):
 
         # for historical grad
         noisy_mean_g = copy.deepcopy([g/len(self.grad_samples[0]) for g in g_noisy]) 
-        s = 300
-        if self.steps % s == 0:
-        # if self.steps == 1: # accumulation
+
+        # if self.steps % self.s == 0: # accumulation
+        if False:
             self.last_grad = noisy_mean_g
         else:
-            self.last_grad = [(g+lg*(self.steps%s))/(self.steps%s+1) for g, lg in zip(noisy_mean_g, self.last_grad)]
+            self.last_grad = [(g+lg*(self.steps%self.s))/(self.steps%self.s+1) for g, lg in zip(noisy_mean_g, self.last_grad)]
             # normalize
             last_norm = [p.reshape(-1).norm(2, dim=-1) for p in self.last_grad]
             norm = torch.stack(last_norm).norm(2)
-            self.last_grad = [p/norm for p in self.last_grad]
+        self.last_grad = [p/norm for p in self.last_grad]
         
         return g_perp_noisy
 

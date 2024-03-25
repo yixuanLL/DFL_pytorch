@@ -156,7 +156,7 @@ class Client(nn.Module):
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'kfilter_dp_flat'                               
         # print('clipping:', clipping)
-        if self.dp:
+        if self.dp or self.DR or self.DRtest:
             privacy_engine = PrivacyEngine(secure_mode=False)
             model, optimizer, train_loader = privacy_engine.make_private(module=model,
                                                                         optimizer=optimizer,
@@ -182,7 +182,7 @@ class Client(nn.Module):
                 norm = torch.stack(last_norm).norm(2)
                 optimizer.norm = norm
                 optimizer.last_normratio = [g/norm for g in last_norm]
-                optimizer.last_grad = [p/n for p,n in zip(self.global_last_grad, last_norm)] # for 2024/01 result
+                optimizer.last_grad = [p/(n+1e-8) for p,n in zip(self.global_last_grad, last_norm)] # for 2024/01 result
                 # optimizer.last_grad = [p/norm for p in self.global_last_grad] # opt 1
                 # optimizer.last_grad = self.global_last_grad # opt 2
                 optimizer.last_grad_noisy = optimizer.last_grad

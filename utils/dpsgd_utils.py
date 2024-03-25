@@ -21,11 +21,11 @@ def compute_noise_multiplier(local_dataset_size, local_batch_size, T, epsilon, d
         return 0
     q = local_batch_size / local_dataset_size
     from opacus.accountants.utils import get_noise_multiplier
-    try:
-        nm = get_noise_multiplier(target_epsilon=epsilon, target_delta=delta,sample_rate=q,epochs=T,accountant='prv', epsilon_tolerance=1e-6)
-    except:
-        nm = get_noise_multiplier(target_epsilon=epsilon, target_delta=delta,sample_rate=q,epochs=T,accountant='rdp', epsilon_tolerance=1e-6)
-    # nm = 10 * q * math.sqrt(T * (-math.log10(delta))) / epsilon
+    # try:
+    #     nm = get_noise_multiplier(target_epsilon=epsilon, target_delta=delta,sample_rate=q,epochs=T,accountant='prv', epsilon_tolerance=1e-6)
+    # except:
+    #     nm = get_noise_multiplier(target_epsilon=epsilon, target_delta=delta,sample_rate=q,epochs=T,accountant='rdp', epsilon_tolerance=1e-6)
+    nm = 10 * q * math.sqrt(T * (-math.log10(delta))) / epsilon
     return nm
 
 def exp_topk(idx_topk, topk_num, epsilon):

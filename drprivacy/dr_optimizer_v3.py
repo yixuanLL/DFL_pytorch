@@ -22,7 +22,7 @@ class DrOptimizerV3(DPOptimizer):
         generator=None,
         secure_mode: bool = False):
         # super(DPOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
-        # print('===Dr DP test===')
+        print('===Dr test===')
         self.original_optimizer = optimizer
         self.noise_multiplier = noise_multiplier
         self.loss_reduction = loss_reduction

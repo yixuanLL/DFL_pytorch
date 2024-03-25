@@ -23,7 +23,7 @@ from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plo
 
 MODEL_PARAMS={
     'MNIST': (784,10),
-    'CIFAR10': (3*32*32,10),
+    'CIFAR10': (3,10),
     'CIFAR100': (3,100),
     'SVHN': (3,10),
     'FLamby': (13,2),
@@ -31,7 +31,7 @@ MODEL_PARAMS={
 }
 DATA_MODEL={
     'MNIST': "cnn",
-    'CIFAR10': "cnn5",
+    'CIFAR10': "resnet",
     'CIFAR100': "resnet",
     'SVHN': "resnet",
     'FLamby': "mclr",
@@ -55,7 +55,7 @@ def main(args):
     # prepare local dataset
     x_train, y_train, x_test, y_test = loader(args.dataset, args.noniid)
     dataset, args.num_clients = prepare_local_dataset(args.noniid, args.num_clients, y_train, args.seed, args.dataset)
-
+    
     # set noise multiplier
     budget_accountant = None
     noise_multiplier = 0
@@ -194,7 +194,11 @@ def main(args):
     # grad_var(log)
     # grad_var_t(log)
     # alpha_plot(log)
+    # f = open('/local/scratch/yliu270/workspace/DFL_pytorch/drv3_grad_dist_bsize5000/log.txt', 'w')
+    # f.write(log)
+    # f.close()
     # grad_dist(log)
+    
     
 
 
@@ -205,22 +209,22 @@ if __name__ == '__main__':
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=False)
+    parser.add_argument('--DRtest', type=bool, default=True)
     parser.add_argument('--global_round', type=int, default=2)
     parser.add_argument('--local_round', type=int, default=2)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=1) 
-    parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=0.98)
-    parser.add_argument('--eps_2', type=float, default=0.02)
+    parser.add_argument('--batch_size', type=int, default=64)
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
+    parser.add_argument('--eps', type=float, default=50)
+    parser.add_argument('--eps_2', type=float, default=50)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=2)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.2)
+    parser.add_argument('--grad_norm', type=float, default=5)
+    parser.add_argument('--grad_perp_norm', type=float, default=0.5)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
     # parser.add_argument('--model', type=str, default='resnet')
-    parser.add_argument('--lr', type=float, default=0.01)
+    parser.add_argument('--lr', type=float, default=0.2)
     parser.add_argument('--glr', type=float, default=1, help='global learning rate')
     parser.add_argument('--momentum', type=float, default=0.0)
     parser.add_argument('--Topk', type=bool, default=False)
@@ -228,7 +232,7 @@ if __name__ == '__main__':
     parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=1.5, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

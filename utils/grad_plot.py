@@ -337,6 +337,7 @@ def grad_dist(log):
     grads = []
     grads_p = []
     grads_d = []
+    ratio = []
     rounds = 0
     for i in range(global_round):
         local_round = len(log[i])
@@ -360,23 +361,25 @@ def grad_dist(log):
                 plt.legend(loc='lower right', fontsize=8)
 
                 plt.show()
-                root_path = '/home/yliu270/workspace/DFL_pytorch/'
+                root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/'
                 plt.savefig(root_path+str(rounds-1)+' epochs.png', dpi=600)
                 plt.close()
             grads.append(np.linalg.norm(grad))
             grads_p.append(np.linalg.norm(grad_p))
+            ratio.append(np.linalg.norm(grad_p)/np.linalg.norm(grad))
             # grads_d.append(np.linalg.norm(grad_d))
 
         plt.switch_backend('agg')
         r = range(rounds)
         plt.plot(r, grads, color='skyblue', label='grad', alpha=0.8)
         plt.plot(r, grads_p,  color='green', label='grad_perp', alpha=0.6)
+        plt.plot(r, ratio,  color='red', label='ratio', alpha=0.6)
         # plt.plot(r, grads_d,  color='red', label='grad_diff', alpha=0.6)
         plt.ylabel('Norm')
         plt.xlabel('Steps')
         plt.legend(loc='lower right', fontsize=8)
 
         plt.show()
-        root_path = '/home/yliu270/workspace/DFL_pytorch/'
+        root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/'
         plt.savefig(root_path+'Norm.png', dpi=600)
         plt.close()

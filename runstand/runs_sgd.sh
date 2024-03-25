@@ -2,9 +2,8 @@
 #SBATCH --job-name=stand_sgd
 #SBATCH --output=out_sgd_stand
 #SBATCH --gres=gpu:1
-#SBATCH --mem=8GB
+#SBATCH --mem=16GB
 # cur_path=`pwd`
-
 
 
 #CIFAR10
@@ -22,7 +21,7 @@ g_norm=(100)
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
 opt=('sgd')
-data="CIFAR100"
+data="SVHN"
 
 
 dir_path=$(dirname $(pwd))
@@ -38,21 +37,22 @@ fi
 if [ ! -f "$logfile" ]; then
  touch "$logfile"
 fi
-source /home/yliu270/anaconda3/bin/activate flamby
+# source /home/yliu270/anaconda3/bin/activate flamby
+source /local/scratch/yliu270/anaconda3/bin/activate flamby
 
 time=$(date "+%Y-%m-%d %H:%M:%S")
 echo "${time}">>$logfile
 
 
-global_round=(20 40)
+global_round=(20)
 seed=(0)
 momentum=(0.0)
-lr=(0.05 0.1 0.5)
-batch_size=(20 256 1024)
+lr=(0.1)
+batch_size=(256)
 opt=('sgd')
 
 py_req='0'
-echo "====NoDP====">>$logfil]e
+echo "====NoDP====">>$logfile
 for round in ${global_round[@]}
 do
     for o in ${opt[@]}
@@ -63,7 +63,7 @@ do
             do
                 for b in ${batch_size[@]}
                 do
-                    # py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
+                    py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     echo "${py_req}"
                     echo "FedSVG without DP, but with clip">>$logfile
@@ -94,17 +94,18 @@ done
 round=20
 seed=(0)
 momentum=(0.0)
-lr=(0.1 1)
-g_norm=(0.01 0.1 0.3 0.5)
+lr=(2)
+g_norm=(0.2 0.3 0.4 0.6 0.8)
 eps=(3)
 kf=("--save_dir=result")
 iidflag=("--save_dir=result")
 opt=('sgd')
+batch=(128)
 
 output=0
 py_req='0'
 echo "====DP====">>$logfile
-for o in ${opt[@]}
+for b in ${batch[@]}
 do
     for m in ${momentum[@]}
     do
@@ -114,7 +115,7 @@ do
             do
                 for gn in ${g_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=2";
+                    py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data}  --num_clients=1 --momentum=${m}  --batch_size=${b}";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     echo "${py_req}"
