@@ -99,7 +99,7 @@ def loader(name, noniid):
         T_normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406],std = [0.229, 0.224, 0.225])
         transformation = transforms.Compose([transforms.RandomHorizontalFlip(),  transforms.ToTensor(), T_normalize])  
         train_dataloader = datasets.SVHN(root='~/data', split='train', download=False, transform=transformation)  
-        train_data = torch.utils.data.DataLoader(train_dataloader, batch_size=50000, shuffle=False, num_workers=0)
+        train_data = torch.utils.data.DataLoader(train_dataloader, batch_size=73257, shuffle=False, num_workers=0)
         x_train, y_train  = next(iter(train_data))
 
         indices_train = torch.argsort(y_train)

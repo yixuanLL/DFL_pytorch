@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Union
 import torch
 from opt_einsum.contract import contract
 import copy
-from utils.dpsgd_utils import exp_topk
+# from utils.dpsgd_utils import exp_topk
 import math
 
 
@@ -42,7 +42,7 @@ class DrDPOptimizerV3(DPOptimizer):
         
         self.max_grad_norm = max_grad_norm[0]
         self.perp_grad_norm = max_grad_norm[1]
-        self.noise_multiplier_2 = max_grad_norm[2]
+        self.noise_multiplier_a = max_grad_norm[2]
         self.clip_paral =  max_grad_norm[3]
         self.last_grad = []
         self.last_normratio = []
@@ -97,7 +97,7 @@ class DrDPOptimizerV3(DPOptimizer):
             clip_p = self.clip_paral
             alpha = self.clip(alpha_i, clip_p)
             alpha_clean = copy.deepcopy(alpha)
-            self.add_noise_sum(alpha, self.noise_multiplier_2, clip_p) 
+            self.add_noise_sum(alpha, self.noise_multiplier_a, clip_p) 
 
         else:
             alpha = 0
@@ -245,140 +245,3 @@ class DrDPOptimizerV3(DPOptimizer):
             v += noise
         return vec
 
-
-            
-      
-class DrKFDPOptimizertest2(DrDPOptimizerV3): # add KF filter
-    ## use max_grad_norm as grad norm, perp norm and rate_dr
-    def __init__(self,
-        optimizer: DPOptimizer,
-        *,
-        noise_multiplier: float,
-        max_grad_norm: Optional[float],
-        expected_batch_size: Optional[int],
-        loss_reduction: str = "mean",
-        generator=None,
-        secure_mode: bool = False):
-        # super(DPOptimizer, self).__init__(optimizer, noise_multiplier, max_grad_norm, expected_batch_size, loss_reduction, generator, secure_mode)
-        # print('===Dr DP test===')
-        self.original_optimizer = optimizer
-        
-        self.noise_multiplier = noise_multiplier
-        self.loss_reduction = loss_reduction
-        self.expected_batch_size = expected_batch_size
-        self.step_hook = None
-        self.generator = generator
-        self.secure_mode = secure_mode
-
-        self.param_groups = self.original_optimizer.param_groups
-        self.defaults = self.original_optimizer.defaults
-        self.state = self.original_optimizer.state
-        self._step_skip_queue = []
-        self._is_last_step_skipped = False
-
-        for p in self.params:
-            p.summed_grad = None
-        
-        self.max_grad_norm = max_grad_norm[0]
-        self.perp_grad_norm = max_grad_norm[1]
-        self.noise_multiplier_2 = max_grad_norm[2]
-        self.clip_paral =  max_grad_norm[3]
-        self.last_grad = []
-        self.last_grad_noisy = []
-        self.last_normratio = []
-        self.norm = 1
-        self.global_last_grad = []
-        self.g_perp_sum = []
-        self.cos_sum = []
-        self.log = []
-        self.steps = 1
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-    def pre_step(
-        self, closure: Optional[Callable[[], float]] = None
-    ) -> Optional[float]:
-        """
-        Perform actions specific to ``DPOptimizer`` before calling
-        underlying  ``optimizer.step()``
-
-        Args:
-            closure: A closure that reevaluates the model and
-                returns the loss. Optional for most optimizers.
-        """
-
-        self.clip_and_accumulate()
-        if self._check_skip_next_step():
-            self._is_last_step_skipped = True
-            return False
-        
-        
-        if self.last_grad == []:
-            self.dr_process()
-            self.add_noise()
-            self.kfilter.x = self.last_grad_noisy 
-            self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad_noisy, self.last_grad_noisy] # clean, noisy, estimate
- 
-        else:        
-            if self.log == []:
-                self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad_noisy, self.last_grad_noisy] # clean, noisy, estimate
-            # self.KFpredict()
-            self.dr_process()
-            self.add_noise()
-            # self.log[0:2] = [self.last_grad, self.last_grad_noisy]
-            # self.KFcorrect()
-
-        self.scale_grad()
-
-
-        if self.step_hook:
-            self.step_hook(self)
-
-        self._is_last_step_skipped = False
-        return True   
-      
-    def KFpredict(self):
-        self.kfilter.predict()
-
-    def KFcorrect(self):
-        num_samples = len(self.grad_samples[0])
-        z = self.last_grad_noisy
-        g_estimate = self.kfilter.correct(z) # g_estimate
-        for i in range(len(self.params)):
-            self.params[i].grad = g_estimate[i] * num_samples
-        self.log[2] = g_estimate
-        self.last_grad = [g/torch.norm(g, keepdim=False) for g in self.last_grad]
-        self.last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in g_estimate]
-
-    # use this function: without diff2; no this function: use diff2
-    def decompose_grad(self):
-        if self.last_grad == []:      
-            return self.grad_samples, [torch.tensor(1.).to(self.device)]*8
-        last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in self.last_grad_noisy]
-        # to test my proof by using clean last_grad
-        # last_grad_noisy = [gi/torch.norm(gi, keepdim=False) for gi in self.last_grad]
-        ## end test
-        per_param_norms = [g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples] # norm of per laryer of per sample gradient
-        last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in last_grad_noisy] # norm of per laryer of last gradient
-        costheta = [torch.mean(torch.sum(g.reshape(len(g), -1)*(lg.reshape(-1)), dim=1)/(g_norm*lg_norm)) for (g, lg, g_norm, lg_norm) in zip(self.grad_samples, last_grad_noisy, per_param_norms, last_grad_norms)]
-        gi_paral = [torch.reshape(gn*cos, [len(gn)]+[1]*len(lg.shape)) * torch.tile(lg.unsqueeze(0),[len(gn)]+[1]*len(lg.shape)) for gn, cos, lg in zip(per_param_norms, costheta, last_grad_noisy)]
-        gi_perp = [(g-gl) for g, gl in zip(self.grad_samples, gi_paral)] 
-        paral_alpha =  [torch.mean(gn*cos, dim=0) for cos, gn in zip(per_param_norms, costheta)]
-        return gi_perp, paral_alpha 
-
-    def recover_grad(self, g_perp, g_perp_noisy, g_norm, g_norm_noisy):
-        if self.last_grad == []:
-            g_noisy = g_perp_noisy
-            g = g_perp_noisy
-            self.last_grad_noisy = g_noisy
-        else:
-            g_noisy = [ gp + gn * lg * len(self.grad_samples[0]) for gp, gn, lg in zip(g_perp_noisy, g_norm_noisy, self.last_grad_noisy)]
-        for p,gi in zip(self.params, g_noisy):
-            if p.summed_grad is not None:
-                p.summed_grad += gi
-            else:
-                p.summed_grad = gi
-        # gt = [torch.sum(p.grad_sample, dim=0) for p in self.params]
-        self.last_grad = [torch.mean(g, dim=0) for g in self.grad_samples]
-        self.last_grad_noisy = [p.summed_grad/len(self.grad_samples[0]) for p in self.params]
-        return g_perp             

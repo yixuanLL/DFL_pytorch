@@ -9,17 +9,17 @@ import argparse
 import importlib
 from utils.create_dataset import prepare_local_dataset
 from utils.dataloader import loader
-# from models.client_diff2 import Client
-# print('__client_diff2__')
-from models.client import Client
-print('__client__')
+from models.client_diff2 import Client
+print('__client_diff2__')
+# from models.client import Client
+# print('__client__')
 from models.server import Server
-from utils.dpsgd_utils import compute_noise_multiplier, privacy_check
+from utils.dpsgd_utils import compute_noise_multiplier
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
-from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t, alpha_plot, grad_dist
-# os.environ['CUDA_VISIBLE_DEVICES'] ='1'
+from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t, alpha_plot,grad_dist
+# os.environ['CUDA_VISIBLE_DEVICES'] ='2'
 
 MODEL_PARAMS={
     'MNIST': (784,10),
@@ -33,7 +33,7 @@ DATA_MODEL={
     'MNIST': "cnn",
     'CIFAR10': "cnn5",
     'CIFAR100': "resnet",
-    'SVHN': "cnn5",
+    'SVHN': "resnet",
     'FLamby': "mclr",
     'CAHouse': "mclr"
 }
@@ -58,49 +58,31 @@ def main(args):
 
     # set noise multiplier
     budget_accountant = None
-    noise_multiplier_g = args.noise_multiplier_g
-    noise_multiplier_p = args.noise_multiplier_p
-    noise_multiplier_a = args.noise_multiplier_a
-    try:
-        data_size = len(dataset[0])
-    except:
-        data_size = len(y_train[0])
+    noise_multiplier = 0
+    noise_multiplier_2 = 0
+
     
-
-    if args.dp or 'DP' in args.FLalg:
-        budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)
-        if args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
-            noise_list = [noise_multiplier_p, noise_multiplier_a]
-        else:
-            noise_list = [noise_multiplier_g]
-        flag = privacy_check(local_dataset_size=data_size,  local_batch_size=args.batch_size, epochs=args.global_round * args.sample_ratio,
-                                            epsilon_budget=args.eps, delta_budget=args.delta, noise_multiplier=noise_list)
-        if not flag:
-            print("noise multiplier is too small to satisfy privacy!", noise_list, args.eps)
-            exit(0)
-        budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)
-
-    # if args.dp or 'DP' in args.FLalg:
-    #     eps = args.eps
-    #     eps_2 = 10e6
-    #     if args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
-    #         eps_2 = args.eps_2
-    #         # eps = args.eps - eps_2
-    #     try:
-    #         data_size = len(dataset[0])
-    #     except:
-    #         data_size = len(y_train[0])
-    #     noise_multiplier = compute_noise_multiplier(local_dataset_size=data_size,  local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-    #                                         epsilon=eps, delta=args.delta)
-    #     noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-    #                             epsilon=eps_2, delta=args.delta)
-    #     noise_multiplier_3 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-    #                             epsilon=eps_2+eps, delta=args.delta)
-    #     budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2, noise_multiplier_3)
-        
     # set clients
     clients = []
-    for i in range(args.num_clients):                    
+    for i in range(args.num_clients):
+        if args.dp:
+            eps = args.eps
+            eps_2 = 10e6
+            if args.DR or args.DRtest or args.DRV2:
+                eps_2 = args.eps_2
+                # eps = args.eps - eps_2
+            try:
+                data_size = len(dataset[i])
+            except:
+                data_size = len(y_train[i])
+            noise_multiplier = compute_noise_multiplier(local_dataset_size=data_size,  local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                                epsilon=eps, delta=args.delta)
+            noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                    epsilon=eps_2, delta=args.delta)
+            noise_multiplier_3 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+                                    epsilon=eps_2+eps, delta=args.delta)
+            budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2, noise_multiplier_3)
+                    
         clients.append(Client(x_train=x_train,
                         y_train=y_train,
                         x_test=x_test,
@@ -127,10 +109,9 @@ def main(args):
                         opt=args.opt,
                         num_clients=args.num_clients,
                         clip_paral=args.clip_paral))
-    print('client noise multiplier is %f, %f, %f' % (noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)) 
+    print('client noise multiplier is %f, %f, %f' % (noise_multiplier, noise_multiplier_2, noise_multiplier_3)) 
     
     # set server
-    # model_path = '%s.%s' % ('models', args.model)
     model_path = '%s.%s' % ('models', DATA_MODEL[args.dataset])
     print('Model:', DATA_MODEL[args.dataset])
     mod = importlib.import_module(model_path)
@@ -151,7 +132,7 @@ def main(args):
         # precheck and pick up candidates
         candidates = server.sample_clients([pin for pin in range(args.num_clients) if clients[pin].precheck()]) 
         last_parameters = copy.deepcopy(global_model).parameters()
-        global_last_model = copy.deepcopy([weight.data.to(device) for weight in global_model.state_dict().values()])        
+        global_last_model = copy.deepcopy([weight.data.to(device) for weight in global_model.state_dict().values()])
         # local update
         for p_id, participant in enumerate(candidates):
             # download global model
@@ -172,7 +153,7 @@ def main(args):
             # log
             # if p_id == 0:
             #     log.append(bytes2[0])
-                # loss.append(bytes2[1])
+            #     loss.append(bytes2[1])
             
             # if args.dp:
             #     print('for client: %d and delta: %.5f the budget: %.8f and the cost budget: %.8f \n'
@@ -188,9 +169,6 @@ def main(args):
         test_accuracy, test_loss = server.test(global_model)
         accuracy_accountant.append(test_accuracy)
         print_accuracy_and_loss(r, test_accuracy, test_loss)
-
-        if args.num_clients == 1:
-            accuracy_accountant = bytes2[2]
         
         if args.dp:
             privacy_accountant.append(max_accum_budget_accountant)
@@ -213,43 +191,38 @@ def main(args):
     # grad_var_t(log)
     # alpha_plot(log)
     # grad_dist(log)
-    
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='SVHN')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
-    parser.add_argument('--DRV2', type=bool, default=False)
+    parser.add_argument('--DRV2', type=bool, default=True)
     parser.add_argument('--DRtest', type=bool, default=False)
-    parser.add_argument('--global_round', type=int, default=2)
-    parser.add_argument('--local_round', type=int, default=2)
+    parser.add_argument('--global_round', type=int, default=20)
+    parser.add_argument('--local_round', type=int, default=20)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=1) 
     parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=3.0)
-    # parser.add_argument('--eps_2', type=float, default=0.02)
-    parser.add_argument('--noise_multiplier_g', type=float, default=0.803)
-    parser.add_argument('--noise_multiplier_p', type=float, default=0.81)
-    parser.add_argument('--noise_multiplier_a', type=float, default=2.0)
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
+    parser.add_argument('--eps', type=float, default=3)
+    parser.add_argument('--eps_2', type=float, default=0.02)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=2)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.2)
+    parser.add_argument('--grad_norm', type=float, default=1)
+    parser.add_argument('--grad_perp_norm', type=float, default=0.1)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
-    # parser.add_argument('--model', type=str, default='resnet')
-    parser.add_argument('--lr', type=float, default=0.01)
+    # parser.add_argument('--model', type=str, default='cnn5')
+    parser.add_argument('--lr', type=float, default=4)
     parser.add_argument('--glr', type=float, default=1, help='global learning rate')
-    parser.add_argument('--momentum', type=float, default=0.0)
+    parser.add_argument('--momentum', type=float, default=0.)
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--kf', type=bool, default=False)
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=10, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

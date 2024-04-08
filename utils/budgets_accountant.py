@@ -10,16 +10,16 @@ import math
 
 
 class BudgetsAccountant:
-    def __init__(self, epsilon, delta, noise_multiplier, noise_multiplier_2, noise_multiplier_3, 
+    def __init__(self, epsilon, delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a, 
                  accumulation=0):
 
         # self._public = None if priv_threshold is None else list(np.where(np.array(self._init) >= priv_threshold)[0])
         # self._private = None if self._public is None else list(set(range(N)).difference(set(self._public)))
         self.epsilon = epsilon
         self.delta = delta
-        self.noise_multiplier = noise_multiplier
-        self.noise_multiplier_2 = noise_multiplier_2
-        self.noise_multiplier_3 = noise_multiplier_3
+        self.noise_multiplier_g = noise_multiplier_g
+        self.noise_multiplier_p = noise_multiplier_p
+        self.noise_multiplier_a = noise_multiplier_a
         self.accum_bgts = 0
         self.finished = False
 

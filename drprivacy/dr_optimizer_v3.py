@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Union
 import torch
 from opt_einsum.contract import contract
 import copy
-from utils.dpsgd_utils import exp_topk
+# from utils.dpsgd_utils import exp_topk
 import math
 
 
@@ -42,7 +42,7 @@ class DrOptimizerV3(DPOptimizer):
         
         self.max_grad_norm = max_grad_norm[0]
         self.perp_grad_norm = max_grad_norm[1]
-        self.noise_multiplier_2 = max_grad_norm[2]
+        self.noise_multiplier_a = max_grad_norm[2]
         self.clip_paral =  max_grad_norm[3]
         self.last_grad = []
         self.last_normratio = []

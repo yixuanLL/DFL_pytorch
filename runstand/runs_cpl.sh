@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=stand_sgd
-#SBATCH --output=out_sgd_stand
+#SBATCH --job-name=stand_cpl
+#SBATCH --output=out_cpl_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=16GB
 # cur_path=`pwd`
@@ -15,7 +15,7 @@ echo "${dir_path}"
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_sgd_${data}_$cur_date
+logfile=${dir_path}/logs/standalone/log_cpl_${data}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -33,7 +33,7 @@ echo "${time}">>$logfile
 global_round=(20)
 seed=(0)
 momentum=(0.0)
-lr=(0.1 0.2 0.5)
+lr=(0.1)
 batch_size=(256)
 opt=('sgd')
 
@@ -49,13 +49,13 @@ do
             do
                 for b in ${batch_size[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
+                    # py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} ${k} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     echo "${py_req}"
                     echo "FedSVG without DP, but with clip">>$logfile
                     echo "${py_req}">>$logfile
                     start_time=$(date +%s)
-                    output=`${py_req}`;
+                    # output=`${py_req}`;
                     end_time=$(date +%s)
                     if [ $? -ne 0 ]; then
                         echo "[FAILED] ${py_req}"
@@ -80,30 +80,25 @@ done
 round=20
 seed=(0)
 momentum=(0.0)
-lr=(2)
-g_norm=(0.05 0.1 0.3 0.5 0.8 1)
+lr=(1 2)
+g_perp_norm=(0.05 0.1 0.3 0.5 0.8 1)
 eps=(3)
-iidflag=("--save_dir=result")
 opt=('sgd')
-batch=(256)
 
 output=0
 py_req='0'
 echo "====DP====">>$logfile
-for b in ${batch[@]}
+for m in ${momentum[@]}
 do
-    for o in ${opt[@]}
+    for e in ${eps[@]}
     do
-        for s in ${seed[@]}
+        for l in ${lr[@]}
         do
-            for gn in ${g_norm[@]}
+            for gpn in ${g_perp_norm[@]}
             do
-                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=2.0 --dataset=CIFAR10  --opt=${o} --num_clients=1 --batch_size=${b} --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
-                py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=2.0 --dataset=SVHN  --opt=${o} --num_clients=1 --batch_size=${b}  --noise_multiplier_g=0.775 --noise_multiplier_p=0.78 --noise_multiplier_a=2.0";
+                # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --num_clients=1 --momentum=${m}  --batch_size=${b}";
+                py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=3.0 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN --num_clients=1 --momentum=${m}  --batch_size=256  --noise_multiplier_g=0.775 --noise_multiplier_p=0.78 --noise_multiplier_a=2.0";
 
-                # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --momentum=${m}  --batch_size=${b} --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
-                # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
-                # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=cnn ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                 echo "${py_req}"
                 echo "${py_req}">>$logfile
                 start_time=$(date +%s)

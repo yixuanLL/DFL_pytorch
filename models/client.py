@@ -102,61 +102,51 @@ class Client(nn.Module):
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
         seed = 0
         # torch.manual_seed(seed)
-        noise = 0
-        noise_2 = 0
+        noise_g = 0
+        noise_p = 0
+        noise_a = 0
         if self.dp:
-            noise = self.budget_accountant.noise_multiplier
-            noise_2 = self.budget_accountant.noise_multiplier_2
-        if not self.dp and not self.DR and not self.DRV2 and not self.Topk and not self.cpl and not self.kfilter:
-            grad_norm = self.grad_norm
-            # clipping = 'clip_flat' #不需要单独验证clip的效果了
-            clipping = 'flat'
-        # if self.dp or self.Topk or self.DR or self.DRV2 or self.cpl:
-        if self.dp and not self.DR and not self.DRV2 and not self.kfilter and not self.cpl:
+            noise_g = self.budget_accountant.noise_multiplier_g
+            noise_p = self.budget_accountant.noise_multiplier_p
+            noise_a = self.budget_accountant.noise_multiplier_a
+            noise = noise_g
+        if self.dp and not self.DR and not self.DRV2 and not self.DRtest and not self.cpl:
             grad_norm = self.grad_norm
             clipping = 'flat'
         if not self.dp and self.DR:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, 0.0, self.clip_paral]
             clipping = 'dr_flat'
+            noise = 0.0
         if not self.dp and self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
-            if not self.kfilter:
-                clipping = 'dr_flat_test'
-            else:
-                clipping = 'drkf_flat_test'
+            grad_norm = [self.grad_norm, self.grad_perp_norm, 0.0, self.clip_paral]
+            clipping = 'dr_flat_test'
+            noise = 0.0
         if self.dp and self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral]
-            if not self.kfilter:
-                clipping = 'dr_dp_flat_test'
-            else:
-                clipping = 'drkf_dp_flat_test'
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral]
+            clipping = 'dr_dp_flat_test'
+            noise = noise_p
         if self.dp and self.DR: # for DRV5
-            noise_3 = self.budget_accountant.noise_multiplier_3
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.clip_paral, noise_3]
-            clipping = 'dr_dp_flat'  
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral, noise_g]
+            clipping = 'dr_dp_flat' 
+            noise = noise_p 
         if self.dp and self.DRV2:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2]
-            clipping = 'dr_dp_flat_v2'                
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a]
+            clipping = 'dr_dp_flat_v2'  
+            noise = noise_p              
         if self.Topk:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_2, self.rate_dr]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.rate_dr]
             clipping = 'topk_flat'
         if self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            if not self.kfilter:
-                clipping = 'cpl_dp_flat'    
-            else:
-                clipping = 'clip_kf_dp_flat'
+            clipping = 'cpl_dp_flat'   
+            noise = noise_p 
         if not self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'cpl_flat'  
-        if not self.dp and self.kfilter and not self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'kfilter_flat' 
-        if self.dp and self.kfilter and not self.DRtest:
-            grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
-            clipping = 'kfilter_dp_flat'                               
+            noise = 0.0
+                              
         # print('clipping:', clipping)
-        if self.dp or self.DR or self.DRtest:
+        if self.dp or self.DR or self.DRtest or self.DRV2:
             privacy_engine = PrivacyEngine(secure_mode=False)
             model, optimizer, train_loader = privacy_engine.make_private(module=model,
                                                                         optimizer=optimizer,
@@ -186,16 +176,6 @@ class Client(nn.Module):
                 # optimizer.last_grad = [p/norm for p in self.global_last_grad] # opt 1
                 # optimizer.last_grad = self.global_last_grad # opt 2
                 optimizer.last_grad_noisy = optimizer.last_grad
-            # for KF filter
-            if self.kfilter:
-                if self.dp:
-                    optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_perp_norm*noise/self.batch_size)**2)
-                else:
-                    optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (self.grad_perp_norm*0.1)**2)
-        if self.kfilter and not self.DRtest:
-            optimizer.last_grad = [p/self.batch_size for p in self.global_last_grad]
-            # entire gradient filter
-            optimizer.kfilter = KalmanFilter(optimizer.last_grad, (self.grad_norm*0.1)**2, (0.1*self.grad_norm*noise/self.batch_size)**2)
 
  
         optimizer.global_last_grad = self.global_last_grad # not used temporarily
@@ -235,8 +215,6 @@ class Client(nn.Module):
             # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
 
         updates = [weight.data for weight in model.state_dict().values()]
-        if self.FLalg == 'FedDrAvg_upload': # upload gi_perp costheta
-            updates = [optimizer.g_perp_sum, optimizer.cos_sum]
         num_parameter1 = 0
         # for u in updates:
         #     num_parameter1 += reduce(mul, u.shape)  # mul对u.shape进行相乘， reduce对这些相乘之后的每个u.shape进行相加

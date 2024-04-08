@@ -14,7 +14,7 @@ logfile=${dir_path}/logs/standalone/log_drv5_${data}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
-
+source /local/scratch/yliu270/anaconda3/bin/activate flamby
 if [ ! -f "$logfile" ]; then
  touch "$logfile"
 fi
@@ -28,20 +28,20 @@ round=20
 momentum=0.0
 seed=(0)
 lr=(2)
-g_p_norm=(0.1 0.5 1 1.5 2)
-clip_paral=(1 1.5) # alpha actucally
+g_p_norm=(0.5)
+clip_paral=(0.05) # alpha actucally
 index=(0)
 eps=(2.98)
 eps_2=(0.02)
 iidflag=("--save_dir=result")
 opt=('sgd')
-batch=(128)
+batch=(256)
 
 output=0
 echo "====DP: first 50 steps use SGD with different norm====">>$logfile
 for b in ${batch[@]}
 do
-    for i in ${index[@]}
+    for s in ${seed[@]}
     do
         for cp in ${clip_paral[@]}
         do
@@ -49,7 +49,9 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --DR=True --eps=${eps[${i}]} --eps_2=${eps_2[${i}]} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --clip_paral=${cp}  --num_clients=1 --momentum=${momentum} --batch_size=${b}";
+                    # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
+                    py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=SVHN --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.775 --noise_multiplier_p=0.78 --noise_multiplier_a=2.0";
+
                     # py_req="python ${dir_path}/main_stand.py --DR=True --eps=${e} --grad_norm=2 --grad_perp_norm=${gpn} --dp=True --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --model=mclr  --clip_paral=${cp} --opt=${o} --num_clients=1 --momentum=${momentum} --batch_size=32";
                     # py_req="python ${dir_path}/main_test.py --DRtest=True --eps=${e} --grad_perp_norm=${gpn} --dp=True --local_round=2 --global_round=100 --lr=${l} --dataset=MNIST --model=cnn";
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";

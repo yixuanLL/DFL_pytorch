@@ -43,6 +43,8 @@ for line in file:
                 algo = 'DR'
             if '--DRtest=T' in item:
                 algo = 'DRtest'
+            if '--DRV2=T' in item:
+                algo = 'Diff2'
             if '--eps=' in item:
                 eps = item.split('=')[1]
             if 'grad_norm' in item:

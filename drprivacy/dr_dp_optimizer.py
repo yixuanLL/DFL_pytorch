@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Union
 import torch
 from opt_einsum.contract import contract
 import copy
-from utils.dpsgd_utils import exp_topk
+# from utils.dpsgd_utils import exp_topk
 import math
 
 # add noise during decompose, and set norm as instant
@@ -41,7 +41,7 @@ class DrDPOptimizer(DPOptimizer):
         
         self.max_grad_norm = max_grad_norm[0]
         self.perp_grad_norm = max_grad_norm[1]
-        self.noise_multiplier_2 = max_grad_norm[2]
+        self.noise_multiplier_a = max_grad_norm[2]
         self.last_grad = []
         self.last_normratio = []
         self.norm = 1
@@ -88,7 +88,7 @@ class DrDPOptimizer(DPOptimizer):
         if self.last_grad != []:
             clip_p = 0.01
             paral_alpha = self.clip(paral_alpha, clip_p)
-            paral_alpha = self.add_noise_mean(paral_alpha, self.noise_multiplier_2, clip_p) 
+            paral_alpha = self.add_noise_mean(paral_alpha, self.noise_multiplier_a, clip_p) 
         else:
             paral_alpha = 0
         g_perp = self.recover_grad(g_perp, paral_alpha, costheta) 

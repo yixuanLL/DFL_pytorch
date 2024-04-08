@@ -5,7 +5,7 @@ from typing import Callable, List, Optional, Union
 import torch
 from opt_einsum.contract import contract
 import copy
-from utils.dpsgd_utils import exp_topk
+# from utils.dpsgd_utils import exp_topk
 import math
 
 class ClipOptimizer(DPOptimizer):
