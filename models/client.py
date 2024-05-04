@@ -16,7 +16,7 @@ from utils.grad_plot import grad_flat
 # from torchmetrics.functional.regression import mean_squared_error
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, num_clients, clip_paral):
+    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, alg, num_clients, clip_paral):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -59,6 +59,7 @@ class Client(nn.Module):
         self.ratio = 1
         self.opt = opt
         self.num_clients = num_clients
+        self.alg = alg
 
     def download(self, model, global_last_grad):
         # self.model = model
@@ -110,6 +111,9 @@ class Client(nn.Module):
             noise_p = self.budget_accountant.noise_multiplier_p
             noise_a = self.budget_accountant.noise_multiplier_a
             noise = noise_g
+        if self.alg == 'autoclip':
+            grad_norm = self.grad_norm
+            clipping = 'autoclip_flat'
         if self.dp and not self.DR and not self.DRV2 and not self.DRtest and not self.cpl:
             grad_norm = self.grad_norm
             clipping = 'flat'
@@ -132,14 +136,14 @@ class Client(nn.Module):
         if self.dp and self.DRV2:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a]
             clipping = 'dr_dp_flat_v2'  
-            noise = noise_p              
+            noise = noise_g              
         if self.Topk:
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.rate_dr]
             clipping = 'topk_flat'
         if self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'cpl_dp_flat'   
-            noise = noise_p 
+            noise = noise_g 
         if not self.dp and self.cpl:
             grad_norm = [self.grad_norm, self.grad_perp_norm, self.rate_dr]
             clipping = 'cpl_flat'  
@@ -205,7 +209,7 @@ class Client(nn.Module):
                 train_acc += correct.item()
                 train_loss += loss.item()
                 
-                # logs.append(copy.deepcopy(optimizer.log))
+                logs.append(copy.deepcopy(optimizer.log))
                 # self.longlogs.append(copy.deepcopy(optimizer.log))
             # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
             if self.num_clients == 1:

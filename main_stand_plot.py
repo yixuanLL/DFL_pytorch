@@ -14,16 +14,16 @@ from utils.dataloader import loader
 from models.client import Client
 print('__client__')
 from models.server import Server
-from utils.dpsgd_utils import compute_noise_multiplier
+from utils.dpsgd_utils import compute_noise_multiplier, privacy_check
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
-from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t, alpha_plot, grad_dist
+from utils.grad_plot import grad_plot, grad_var, grad_var_t, loss_plot, grad_plot_t, alpha_plot, grad_dist, grad_2D
 # os.environ['CUDA_VISIBLE_DEVICES'] ='1'
 
 MODEL_PARAMS={
     'MNIST': (784,10),
-    'CIFAR10': (3,10),
+    'CIFAR10': (3*32*32,10),
     'CIFAR100': (3,100),
     'SVHN': (3,10),
     'FLamby': (13,2),
@@ -31,7 +31,7 @@ MODEL_PARAMS={
 }
 DATA_MODEL={
     'MNIST': "cnn",
-    'CIFAR10': "resnet",
+    'CIFAR10': "cnn5",
     'CIFAR100': "resnet",
     'SVHN': "resnet",
     'FLamby': "mclr",
@@ -55,30 +55,48 @@ def main(args):
     # prepare local dataset
     x_train, y_train, x_test, y_test = loader(args.dataset, args.noniid)
     dataset, args.num_clients = prepare_local_dataset(args.noniid, args.num_clients, y_train, args.seed, args.dataset)
-    
+
     # set noise multiplier
     budget_accountant = None
-    noise_multiplier = 0
-    noise_multiplier_2 = 0
-    noise_multiplier_3 = 0
+    noise_multiplier_g = args.noise_multiplier_g
+    noise_multiplier_p = args.noise_multiplier_p
+    noise_multiplier_a = args.noise_multiplier_a
+    try:
+        data_size = len(dataset[0])
+    except:
+        data_size = len(y_train[0])
+    
 
     if args.dp or 'DP' in args.FLalg:
-        eps = args.eps
-        eps_2 = 10e6
+        budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)
         if args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
-            eps_2 = args.eps_2
-            # eps = args.eps - eps_2
-        try:
-            data_size = len(dataset[0])
-        except:
-            data_size = len(y_train[0])
-        noise_multiplier = compute_noise_multiplier(local_dataset_size=data_size,  local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                            epsilon=eps, delta=args.delta)
-        noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                epsilon=eps_2, delta=args.delta)
-        noise_multiplier_3 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
-                                epsilon=eps_2+eps, delta=args.delta)
-        budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2, noise_multiplier_3)
+            noise_list = [noise_multiplier_p, noise_multiplier_a]
+        else:
+            noise_list = [noise_multiplier_g]
+        flag = privacy_check(local_dataset_size=data_size,  local_batch_size=args.batch_size, epochs=args.global_round * args.sample_ratio,
+                                            epsilon_budget=args.eps, delta_budget=args.delta, noise_multiplier=noise_list)
+        if not flag:
+            print("noise multiplier is too small to satisfy privacy!", noise_list, args.eps)
+            exit(0)
+        budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)
+
+    # if args.dp or 'DP' in args.FLalg:
+    #     eps = args.eps
+    #     eps_2 = 10e6
+    #     if args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
+    #         eps_2 = args.eps_2
+    #         # eps = args.eps - eps_2
+    #     try:
+    #         data_size = len(dataset[0])
+    #     except:
+    #         data_size = len(y_train[0])
+    #     noise_multiplier = compute_noise_multiplier(local_dataset_size=data_size,  local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+    #                                         epsilon=eps, delta=args.delta)
+    #     noise_multiplier_2 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+    #                             epsilon=eps_2, delta=args.delta)
+    #     noise_multiplier_3 = compute_noise_multiplier(local_dataset_size=data_size, local_batch_size=args.batch_size, T=args.global_round * args.sample_ratio,
+    #                             epsilon=eps_2+eps, delta=args.delta)
+    #     budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier, noise_multiplier_2, noise_multiplier_3)
         
     # set clients
     clients = []
@@ -107,9 +125,10 @@ def main(args):
                         budget_accountant=budget_accountant,
                         device=device,
                         opt=args.opt,
+                        alg=args.alg,
                         num_clients=args.num_clients,
                         clip_paral=args.clip_paral))
-    print('client noise multiplier is %f, %f, %f' % (noise_multiplier, noise_multiplier_2, noise_multiplier_3)) 
+    print('client noise multiplier is %f, %f, %f' % (noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)) 
     
     # set server
     # model_path = '%s.%s' % ('models', args.model)
@@ -152,8 +171,8 @@ def main(args):
             server.aggregate(model_state, global_last_model)
             
             # log
-            # if p_id == 0:
-            #     log.append(bytes2[0])
+            if p_id == 0:
+                log.append(bytes2[0])
                 # loss.append(bytes2[1])
             
             # if args.dp:
@@ -188,39 +207,39 @@ def main(args):
         # if r > 3:
         #     break
     print(save_address)
+    grad_2D(log)
     # grad_plot(log)
     # grad_plot_t(log)
     # loss_plot(loss)
     # grad_var(log)
     # grad_var_t(log)
     # alpha_plot(log)
-    # f = open('/local/scratch/yliu270/workspace/DFL_pytorch/drv3_grad_dist_bsize5000/log.txt', 'w')
-    # f.write(log)
-    # f.close()
     # grad_dist(log)
-    
     
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='SVHN')
+    parser.add_argument('--dataset', type=str, default='FLamby')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
-    parser.add_argument('--DRtest', type=bool, default=True)
-    parser.add_argument('--global_round', type=int, default=2)
-    parser.add_argument('--local_round', type=int, default=2)
+    parser.add_argument('--DRtest', type=bool, default=False)
+    parser.add_argument('--global_round', type=int, default=5)
+    parser.add_argument('--local_round', type=int, default=5)
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=1) 
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
-    parser.add_argument('--eps', type=float, default=50)
-    parser.add_argument('--eps_2', type=float, default=50)
+    parser.add_argument('--eps', type=float, default=3.0)
+    # parser.add_argument('--eps_2', type=float, default=0.02)
+    parser.add_argument('--noise_multiplier_g', type=float, default=0.0)
+    parser.add_argument('--noise_multiplier_p', type=float, default=0.0)
+    parser.add_argument('--noise_multiplier_a', type=float, default=2.0)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=5)
-    parser.add_argument('--grad_perp_norm', type=float, default=0.5)
+    parser.add_argument('--grad_norm', type=float, default=1)
+    parser.add_argument('--grad_perp_norm', type=float, default=1)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)
     # parser.add_argument('--model', type=str, default='resnet')
@@ -228,11 +247,12 @@ if __name__ == '__main__':
     parser.add_argument('--glr', type=float, default=1, help='global learning rate')
     parser.add_argument('--momentum', type=float, default=0.0)
     parser.add_argument('--Topk', type=bool, default=False)
-    parser.add_argument('--cpl', type=bool, default=False)
+    parser.add_argument('--cpl', type=bool, default=True)
     parser.add_argument('--kf', type=bool, default=False)
+    parser.add_argument('--alg', type=str, default='none', help='baseline: autoclip, none')
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
-    parser.add_argument('--clip_paral', type=float, default=1.5, help='parallel alpha bound')
+    parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
     args = parser.parse_args() 
 
     # print arguments

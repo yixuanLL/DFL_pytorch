@@ -312,33 +312,46 @@ def compute_eps(orders, rdp, delta):
     return max(0, eps_vec[idx_opt]), orders_vec[idx_opt]
 
 if __name__ == '__main__':
-    datasets = 73000 #50000 cifar10
-    q=256/datasets
-    steps=int(20*datasets/256)
+    batch= 4096
+    datasets = 50000 #73000 SVHN #50000 cifar10 #60000 MNIST
+    q=batch/datasets
     epochs=20
+    steps=int(epochs*datasets/batch)
+
 
     # for dpdr MNIST
-    noise_multiplier1=0.81
-    noise_multiplier2=2.0
+    # noise_multiplier1=0.81 #0.6 eps=8 #0.81 eps=3 #1.47 eps=1
+    # noise_multiplier2=2.0 #0.8 eps=8 #2.0 eps=3 #3.5 eps=1
     # for dpsgd
-    # noise_multiplier1=0.803 
-    # noise_multiplier2=0.0
+    # noise_multiplier1=0.803 #eps=8 0.59 #eps=3 0.803 #eps=1 1.4
+    # noise_multiplier2=0.0 #eps=8 #eps=3 0.0
 
 
-    # for dpdr CIFAR10
-    noise_multiplier1=0.84
-    noise_multiplier2=3.0
+    # for dpdr CIFAR10 batchsize=256
+    # noise_multiplier1=0.84 #0.61 eps=8 #0.84 eps=3 #1.57 eps=1
+    # noise_multiplier2=3.0 #1.0 eps=8 #3.0 eps=3 #4.0 eps=1
     # for dpsgd
-    # noise_multiplier1=0.835
-    # noise_multiplier2=0.0
+    # noise_multiplier1=0.835 #0.605 eps=1 #0.835 eps=3 #1.5 eps=1
+    # noise_multiplier2=0.0 
+
+    # dpsgd eps=3 different batch size
+    # noise_multiplier1=2.14 # b=64 0.666; b=256 0.84; b=1024 1.23; b=4096 2.14
+    # noise_multiplier2=0.0 
+    # for dpdr eps=3
+    noise_multiplier1=2.2 # b=64 0.667; b=256 0.84; b=1024 1.24; b=4096 2.2
+    noise_multiplier2=8.0 # b=64 2.0; b=256 3; b=1024 6; b=4096 8
 
     #SVHN
     #for sgd
-    # noise_multiplier1=0.78
-    # noise_multiplier2=0.0
+    # noise_multiplier1=0.695 #0.527 eps=8 #0.695 eps=3  #1.075 eps=1
+    # noise_multiplier2=0.0 #0.0
     #for dpdr
-    noise_multiplier1=0.78
-    noise_multiplier2=2.0
+    # noise_multiplier1=0.696 #0.531 eps=8 #0.696 eps=3 #1.08 eps=1
+    # noise_multiplier2=2.0 #0.8 eps=8 #2.0 eps=3 #3.5 eps=1
+
+    #test
+    # noise_multiplier1 = 1.8
+    # noise_multiplier2=8.0 
 
     ORDERS = [1 + x / 10.0 for x in range(1, 100)] + list(range(2, 64)) + [128, 256, 512]
     # flag = privacy_check( datasets, 256, epochs, 3.0, 1e-5, [noise_multiplier1, noise_multiplier2])
@@ -359,3 +372,13 @@ if __name__ == '__main__':
     # print("rdp:",rdp)
     # print("dp:",dp)
     # print("order:",order)
+
+    # steps = 0
+    # for e in range(1, epochs+1):
+    #     steps = int(e*datasets/batch)
+    #     rdp1 = compute_rdp(q, noise_multiplier1, steps, ORDERS)
+    #     # rdp2 = compute_rdp(q, noise_multiplier2, steps, ORDERS)
+    #     rdp2 = 0
+    #     dp,order=compute_eps(ORDERS,rdp1+rdp2,1e-5)
+    #     print("epochs, dp:",dp)
+    #     # print("order:",order)

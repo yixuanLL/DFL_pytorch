@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
+from opt_einsum.contract import contract
 
 def alpha_plot(log):
     global_round = len(log)
@@ -382,4 +383,116 @@ def grad_dist(log):
         plt.show()
         root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/'
         plt.savefig(root_path+'Norm.png', dpi=600)
+        plt.close()
+
+def decompose_grad(grad_samples, last_grad):
+    # last_grad = [torch.mean(g, dim=0) for g in last_grad]
+    last_grad_norms = [g.reshape(-1).norm(2, dim=-1) for g in last_grad] # norm of per laryer of last gradient
+    paral_alpha = [torch.sum(g.reshape(-1)*lg.reshape(-1))/(lg_norm*lg_norm) for (g, lg, lg_norm) in zip(grad_samples, last_grad, last_grad_norms)]
+    gi_paral = [paral * lg for paral, lg in zip(paral_alpha, last_grad)]
+    gi_perp = [(g-gl) for g, gl in zip(grad_samples, gi_paral)] 
+    return gi_perp, paral_alpha
+
+def clip_g_perp(g_perp):
+    per_param_norms = [g.reshape(-1).norm(2, dim=-1) for g in g_perp] # norm of per laryer of per sample gradient
+    per_sample_norms = torch.stack(per_param_norms).norm(2) # norm of per sample gradient
+    per_sample_clip_factor = (0.1 / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
+    g_perp_clipped = [per_sample_clip_factor * g for g in g_perp]
+    return g_perp_clipped
+
+def clip_alpha(alpha):
+    per_param_norms = [g.norm(2, dim=-1) for g in alpha] # norm of per laryer of per sample gradient
+    per_sample_norms = torch.stack(per_param_norms).norm(2) # norm of per sample gradient
+    per_sample_clip_factor = (0.1 / (per_sample_norms + 1e-6)).clamp(max=1.0) # clip [ max min ]
+    g_perp_clipped = [per_sample_clip_factor * g for g in alpha]
+    return g_perp_clipped
+
+def recover_grad(g_perp_noisy, alpha_noisy, last_grad):
+    g_noisy = [gp + a * lg for gp, a, lg in zip(g_perp_noisy, alpha_noisy, last_grad)]
+    return g_noisy
+
+def grad_2D(log):
+    global_round = len(log)
+    gpn = [0]
+    bn=[0]
+    gn=[]
+    cn=[]
+    g1 = []
+    g2 = []
+    c1 = []
+    c2 = []
+    gp1 = []
+    gp2 = []
+    rounds = 0
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            # only print the certain batch of each local round
+            # if j%(local_round/2) != 0:
+            #     continue
+            g, c, _ = log[i][j]
+            g1.append(g[0].reshape(-1)[0].cpu())
+            g2.append(g[1].reshape(-1)[0].cpu())
+            c1.append(c[0].reshape(-1)[0].cpu())
+            c2.append(c[1].reshape(-1)[0].cpu())
+            print(g[1])
+            if j>0:
+                gl, _, _ = log[i][j-1]
+                gi_perp, alpha = decompose_grad(g, gl)
+                gp = clip_g_perp(gi_perp) 
+                g_noisy = recover_grad(gp, alpha, gl)
+                bias = [gn-gi for gn, gi in zip(g_noisy, g)]
+
+                # gp = [torch.mean(g, dim=0) for g in gi_perp]
+                gp1.append(gp[0].reshape(-1)[0].cpu())
+                gp2.append(gp[1].reshape(-1)[0].cpu())
+                gpn.append(torch.norm(grad_flat(gp), dim=0).cpu())
+                bn.append(torch.norm(grad_flat(bias), dim=0).cpu())
+
+            gn.append(torch.norm(grad_flat(g), dim=0).cpu())
+            cn.append(torch.norm(grad_flat(c), dim=0).cpu())
+            
+                
+            rounds += 1 
+
+            if j%40 == 0:
+                plt.switch_backend('agg')
+                r = range(rounds)
+                plt.plot(g1, g2, 'o', label='grad')
+                plt.plot(c1, c2, '.', label='diff')
+                plt.plot(gp1, gp2, '.', label='perp')
+
+                plt.ylabel('layer2 dim1')
+                plt.xlabel('layer1 dim1')
+                plt.legend(loc='lower right', fontsize=8)
+
+                # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+                plt.show()
+                root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/'
+                title= 'epoch'+ str(j)
+                plt.savefig(root_path+title, dpi=600)
+                plt.close()
+                g1 = []
+                g2 = []
+                c1 = []
+                c2 = []
+                gp1=[]
+                gp2=[]
+
+        plt.switch_backend('agg')
+        r = range(rounds)
+        # plt.plot(r, gn, '-', label='grad')
+        # plt.plot(r, cn, 'r', label='diff')
+        # plt.plot(r, gpn,'g', label='perp')
+        plt.plot(r, bn,'g', label='bias')
+
+        plt.ylabel('norm')
+        plt.xlabel('epochs')
+        plt.legend(loc='lower right', fontsize=8)
+
+        # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+        plt.show()
+        root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/'
+        title= "Norm"
+        plt.savefig(root_path+title, dpi=600)
         plt.close()

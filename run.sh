@@ -7,14 +7,10 @@
 source /local/scratch/yliu270/anaconda3/bin/activate flamby
 start_time=$(date +%s)
 
-# py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand.py 
-# --DRtest=True --eps=100 --eps_2=100 --grad_norm=5 --grad_perp_norm=0.3 
-# --dp=True --local_round=2 --global_round=2 --lr=0.1 --dataset=SVHN  
-# --clip_paral=0.1 --opt=sgd --num_clients=1 --momentum=0.0 --batch_size=128"
+py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_diff2_stand.py  --eps=3 --seed=0 --grad_norm=5 --grad_perp_norm=0.1 --dp=True --eps=3 --local_round=20 --global_round=20 --lr=0.1 --dataset=MNIST  --opt=sgd --num_clients=1 --momentum=0.0 --batch_size=256"
 
 # py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand_plot.py"
 
-py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand.py --DRtest=True --grad_norm=5 --grad_perp_norm=0.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=CIFAR10 --clip_paral=1.5 --num_clients=1 --momentum=0.0 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.835 --noise_multiplier_a=80.0"
 
 
 echo "${py_req}"

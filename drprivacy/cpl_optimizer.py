@@ -44,7 +44,7 @@ class CplOptimizer(DPOptimizer):
         self.last_grad = []
         self.last_grad_noisy = []
         self.global_last_grad = []
-        self.log = []
+        self.log = [0,0,0]
         self.steps = 1
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -65,12 +65,12 @@ class CplOptimizer(DPOptimizer):
         if self._check_skip_next_step():
             self._is_last_step_skipped = True
             return False
-        a = copy.deepcopy(self.last_grad[0]*127)        
+        # a = copy.deepcopy(self.last_grad[0]*127)        
         self.complement_process()
         
         self.add_noise()
 
-        b = copy.deepcopy(self.last_grad[0])
+        # b = copy.deepcopy(self.last_grad[0])
         # print('last grad:', torch.sum(a))
         # print('delta last grad:', torch.sum(b-a)/128.0)
 
@@ -88,6 +88,7 @@ class CplOptimizer(DPOptimizer):
         else:
             delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]    
         gi_cpl_clipped = self.clip_g_perp(delta_g)
+        self.log[1] = [g/len(self.grad_samples[0]) for g in gi_cpl_clipped]
         # print([torch.norm(g, keepdim=False) for g in gi_cpl_clipped])
 
         g_reverse = self.reverse_process(gi_cpl_clipped)
@@ -150,6 +151,7 @@ class CplOptimizer(DPOptimizer):
         # self.last_grad = [p.grad for p in self.params] 
         # self.last_grad = g_noisy # wrong
         self.last_grad = copy.deepcopy([p.grad/len(self.grad_samples[0]) for p in self.params]) 
+        self.log[0] = self.last_grad
         # accumulative gradients
         # mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
         # if self.steps == 1:
@@ -212,7 +214,7 @@ class CplDPOptimizer(CplOptimizer):
         self.rate_dr = max_grad_norm[2]
         self.last_grad = []
         self.global_last_grad = []
-        self.log = []
+        self.log = [0,0,0]
         self.steps = 1
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -224,11 +226,11 @@ class CplDPOptimizer(CplOptimizer):
         g_cpl_clipped = self.clip_g_perp(delta_g)
         self.add_noise_sum(g_cpl_clipped, self.noise_multiplier, self.perp_grad_norm)
         # print([torch.norm(g, keepdim=False) for g in g_cpl_clipped])
-
+        self.log[1] = [g/len(self.grad_samples[0]) for g in g_cpl_clipped]
 
         g_reverse = self.reverse_process(g_cpl_clipped)
         # g_reverse = [torch.sum(g, dim=0) for g in gi_reverse]
-
+        self.log[0] = self.last_grad
         for p,gi in zip(self.params, g_reverse):
             if p.summed_grad is not None:
                 p.summed_grad += gi
@@ -253,30 +255,4 @@ class CplDPOptimizer(CplOptimizer):
             # if i==0:
             #     print('noise:',torch.sum(noise))
         return vec
-    # def add_noise(self):
-    #     """
-    #     Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
-    #     """
-    #     # self.last_grad = [p.summed_grad/len(p.grad_sample) for p in self.params] # self.last_grad采用clean gradients
-    #     # self.last_grad = [for p in self.grad_samples]# self.last_grad采用robust gradients
-    #     # if self.last_grad == []:
-    #     #     print('DPcpl')
-    #     for p in self.params:
-    #         _check_processed_flag(p.summed_grad)
-    #         # print(torch.norm(p.summed_grad))
-    #         noise = _generate_noise(
-    #             std=self.noise_multiplier * self.perp_grad_norm,
-    #             reference=p.summed_grad,
-    #             generator=self.generator,
-    #             secure_mode=self.secure_mode,
-    #         )
-    #         p.grad = (p.summed_grad + noise).view_as(p)
-    #         # print(torch.norm(p.grad))
-    #         _mark_as_processed(p.summed_grad)
-    #     self.last_grad = [p.grad for p in self.params] 
-    #     # accumulative gradients
-    #     # mean_g = [p.grad for p in self.params] 
-    #     # if self.steps == 1:
-    #     #     self.last_grad = mean_g
-    #     # else:
-    #     #     self.last_grad = [(g+lg*self.steps)/(self.steps+1) for g, lg in zip(mean_g, self.last_grad)]
+

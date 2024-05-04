@@ -33,7 +33,7 @@ DATA_MODEL={
     'MNIST': "cnn",
     'CIFAR10': "cnn5",
     'CIFAR100': "resnet",
-    'SVHN': "cnn5",
+    'SVHN': "resnet",
     'FLamby': "mclr",
     'CAHouse': "mclr"
 }

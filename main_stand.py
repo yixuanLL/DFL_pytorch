@@ -33,7 +33,7 @@ DATA_MODEL={
     'MNIST': "cnn",
     'CIFAR10': "cnn5",
     'CIFAR100': "resnet",
-    'SVHN': "cnn5",
+    'SVHN': "resnet",
     'FLamby': "mclr",
     'CAHouse': "mclr"
 }
@@ -125,6 +125,7 @@ def main(args):
                         budget_accountant=budget_accountant,
                         device=device,
                         opt=args.opt,
+                        alg=args.alg,
                         num_clients=args.num_clients,
                         clip_paral=args.clip_paral))
     print('client noise multiplier is %f, %f, %f' % (noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)) 
@@ -219,7 +220,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='SVHN')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
@@ -247,6 +248,7 @@ if __name__ == '__main__':
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--kf', type=bool, default=False)
+    parser.add_argument('--alg', type=str, default='none', help='baseline: autoclip, none')
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')

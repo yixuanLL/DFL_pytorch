@@ -34,7 +34,7 @@ global_round=(20)
 seed=(0)
 momentum=(0.0)
 lr=(0.1 0.2 0.5)
-batch_size=(256)
+batch_size=(128)
 opt=('sgd')
 
 py_req='0'
@@ -49,7 +49,7 @@ do
             do
                 for b in ${batch_size[@]}
                 do
-                    py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
+                    # py_req="python ${dir_path}/main_stand.py --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --opt=${o} --num_clients=1 --momentum=${m} --batch_size=${b}";
                     # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";
                     echo "${py_req}"
                     echo "FedSVG without DP, but with clip">>$logfile
@@ -80,17 +80,17 @@ done
 round=20
 seed=(0)
 momentum=(0.0)
-lr=(2)
-g_norm=(0.05 0.1 0.3 0.5 0.8 1)
+lr=(0.001 0.005)
+g_norm=(0.05 0.1 0.3 0.5 1)
 eps=(3)
 iidflag=("--save_dir=result")
-opt=('sgd')
-batch=(256)
+opt=('adam')
+batch=(128)
 
 output=0
 py_req='0'
 echo "====DP====">>$logfile
-for b in ${batch[@]}
+for l in ${lr[@]}
 do
     for o in ${opt[@]}
     do
@@ -98,8 +98,17 @@ do
         do
             for gn in ${g_norm[@]}
             do
-                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=2.0 --dataset=CIFAR10  --opt=${o} --num_clients=1 --batch_size=${b} --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
-                py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=2.0 --dataset=SVHN  --opt=${o} --num_clients=1 --batch_size=${b}  --noise_multiplier_g=0.775 --noise_multiplier_p=0.78 --noise_multiplier_a=2.0";
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --batch_size=256 --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10  --opt=${o} --num_clients=1 --batch_size=256 --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN  --opt=${o} --num_clients=1 --batch_size=128 --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0";
+
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --batch_size=256 --noise_multiplier_g=0.59 --noise_multiplier_p=0.6 --noise_multiplier_a=0.8";
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10  --opt=${o} --num_clients=1 --batch_size=256 --noise_multiplier_g=0.605 --noise_multiplier_p=0.61 --noise_multiplier_a=1.0";
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN  --opt=${o} --num_clients=1 --batch_size=128 --noise_multiplier_g=0.527 --noise_multiplier_p=0.531 --noise_multiplier_a=0.8";
+
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=1 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --batch_size=256 --noise_multiplier_g=1.4 --noise_multiplier_p=1.47 --noise_multiplier_a=3.5";
+                # py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=1 --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10  --opt=${o} --num_clients=1 --batch_size=256 --noise_multiplier_g=1.5 --noise_multiplier_p=1.57 --noise_multiplier_a=4.0";
+                py_req="python ${dir_path}/main_stand.py --seed=${s} --grad_norm=${gn} --dp=True --eps=1 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN  --opt=${o} --num_clients=1 --batch_size=128 --noise_multiplier_g=1.075 --noise_multiplier_p=1.08 --noise_multiplier_a=3.5";
 
                 # py_req="python ${dir_path}/main_stand.py --grad_norm=${gn} --dp=True --eps=3 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --momentum=${m}  --batch_size=${b} --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
                 # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --model=cnn5 ${k} --opt=${o}  --num_clients=1 --momentum=${m}  --batch_size=256";

@@ -8,7 +8,7 @@ import copy
 # from utils.dpsgd_utils import exp_topk
 import math
 
-class ClipOptimizer(DPOptimizer):
+class AutoClipOptimizer(DPOptimizer):
     ## use max_grad_norm as grad norm, perp norm and rate_dr
     def __init__(self,
         optimizer: DPOptimizer,
@@ -42,20 +42,46 @@ class ClipOptimizer(DPOptimizer):
         self.max_grad_norm = max_grad_norm
         self.log = []
 
-    def add_noise(self):
+    # def add_noise(self):
+    #     """
+    #     Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
+    #     """
+    #     for p in self.params:
+    #         _check_processed_flag(p.summed_grad)
+
+    #         p.grad = (p.summed_grad).view_as(p)
+
+    #         _mark_as_processed(p.summed_grad)
+    #     # ns = len(self.grad_samples[0])
+    #     # self.log = [[p.summed_grad/ns for p in self.params], [p.grad/ns for p in self.params], []]
+
+    def clip_and_accumulate(self):
         """
-        Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
+        Performs gradient clipping.
+        Stores clipped and aggregated gradients into `p.summed_grad```
         """
+
+        if len(self.grad_samples[0]) == 0:
+            # Empty batch
+            per_sample_clip_factor = torch.zeros((0,))
+        else:
+            per_param_norms = [
+                g.reshape(len(g), -1).norm(2, dim=-1) for g in self.grad_samples
+            ]
+            per_sample_norms = torch.stack(per_param_norms, dim=1).norm(2, dim=1)
+            per_sample_clip_factor = self.max_grad_norm / (per_sample_norms + 0.01)
+
         for p in self.params:
-            _check_processed_flag(p.summed_grad)
+            _check_processed_flag(p.grad_sample)
+            grad_sample = self._get_flat_grad_sample(p)
+            grad = contract("i,i...", per_sample_clip_factor, grad_sample)
 
-            p.grad = (p.summed_grad).view_as(p)
+            if p.summed_grad is not None:
+                p.summed_grad += grad
+            else:
+                p.summed_grad = grad
 
-            _mark_as_processed(p.summed_grad)
-        # ns = len(self.grad_samples[0])
-        # self.log = [[p.summed_grad/ns for p in self.params], [p.grad/ns for p in self.params], []]
-
-
+            _mark_as_processed(p.grad_sample)
 
 
 
