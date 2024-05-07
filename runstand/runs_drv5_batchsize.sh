@@ -3,7 +3,7 @@
 #SBATCH --output=out_drv5_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=24GB
-data="SVHN"
+data="CIFAR10"
 
 dir_path=$(dirname $(pwd))
 echo "${dir_path}"
@@ -28,8 +28,8 @@ round=20
 momentum=0.0
 seed=(0)
 lr=(2)
-g_p_norm=(0.8 1 1.5)
-clip_paral=(0.05 1.5 2) # alpha actucally
+g_p_norm=(0.8)
+clip_paral=(0.05) # alpha actucally
 
 iidflag=("--save_dir=result")
 opt=('sgd')

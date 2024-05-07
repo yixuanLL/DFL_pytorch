@@ -14,6 +14,7 @@ from utils.kalman_filter import KalmanFilter, KalmanFilterLayer
 import copy
 from utils.grad_plot import grad_flat
 # from torchmetrics.functional.regression import mean_squared_error
+from opacus.utils.batch_memory_manager import BatchMemoryManager
 
 class Client(nn.Module):
     def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, alg, num_clients, clip_paral):
@@ -186,37 +187,45 @@ class Client(nn.Module):
         logs = []
         losses = []
         accs =[]
-        
         # train
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
-            for x_train, y_train in data_loader:
-                x_train, y_train = x_train.to(self.device), y_train.to(self.device)
+            with BatchMemoryManager(
+                    data_loader=train_loader, 
+                    max_physical_batch_size=1024, 
+                    optimizer=optimizer
+                ) as memory_safe_data_loader:
+                for i, (x_train, y_train) in enumerate(memory_safe_data_loader):
+                # for i, (x_train, y_train) in enumerate(data_loader):
+            
+                    x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
-                y_pred = model(x_train)
-                loss = criterion(y_pred, y_train)
+                    y_pred = model(x_train)
+                    loss = criterion(y_pred, y_train)
 
-                _, test_pred = torch.max(y_pred, 1)
-                correct = (test_pred == y_train).sum()
+                    _, test_pred = torch.max(y_pred, 1)
+                    correct = (test_pred == y_train).sum()
 
-                optimizer.zero_grad() # clear grad from last batch
-                
-                loss.backward() # back propogation & get gradients
-                optimizer.step() # adding noises & update model parameters
-                
-                optimizer.steps += 1
-                train_acc += correct.item()
-                train_loss += loss.item()
-                
-                logs.append(copy.deepcopy(optimizer.log))
-                # self.longlogs.append(copy.deepcopy(optimizer.log))
-            # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
-            if self.num_clients == 1:
-                test_acc, test_loss = self.test(copy.deepcopy(model))
-                print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f, Test acc: %.4f, Test loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size, test_acc, test_loss))
-                accs.append(test_acc)
-            # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
+                    optimizer.zero_grad() # clear grad from last batch
+                    loss.backward() # back propogation & get gradients
+
+                    optimizer.step() # adding noises & update model parameters
+                    
+                    # else:
+                    #     optimizer.virtual_step()                    
+                    optimizer.steps += 1
+                    train_acc += correct.item()
+                    train_loss += loss.item()
+                    
+                    logs.append(copy.deepcopy(optimizer.log))
+                    # self.longlogs.append(copy.deepcopy(optimizer.log))
+                # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
+                if self.num_clients == 1:
+                    test_acc, test_loss = self.test(copy.deepcopy(model))
+                    print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f, Test acc: %.4f, Test loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size, test_acc, test_loss))
+                    accs.append(test_acc)
+                # print('Epoch is: %d, Train acc: %.4f, Train loss: %.4f' % ((epoch + 1), train_acc / self.dataset_size, train_loss / self.dataset_size))
 
         updates = [weight.data for weight in model.state_dict().values()]
         num_parameter1 = 0

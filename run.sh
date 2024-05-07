@@ -7,7 +7,8 @@
 source /local/scratch/yliu270/anaconda3/bin/activate flamby
 start_time=$(date +%s)
 
-py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_diff2_stand.py  --eps=3 --seed=0 --grad_norm=5 --grad_perp_norm=0.1 --dp=True --eps=3 --local_round=20 --global_round=20 --lr=0.1 --dataset=MNIST  --opt=sgd --num_clients=1 --momentum=0.0 --batch_size=256"
+py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand.py --seed=0 --DR=True --grad_norm=0.8 --grad_perp_norm=1.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=CIFAR10 --clip_paral=0.05 --num_clients=1 --batch_size=1024  --noise_multiplier_g=1.23 --noise_multiplier_p=1.24 --noise_multiplier_a=6
+"
 
 # py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand_plot.py"
 
