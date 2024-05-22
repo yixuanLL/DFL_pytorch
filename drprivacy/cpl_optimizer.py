@@ -88,7 +88,7 @@ class CplOptimizer(DPOptimizer):
         else:
             delta_g = [p.grad_sample - torch.tile(lg.unsqueeze(0),[len(p.grad_sample)]+[1]*len(lg.shape)) for lg, p  in zip(self.last_grad, self.params)]    
         gi_cpl_clipped = self.clip_g_perp(delta_g)
-        self.log[1] = [g/len(self.grad_samples[0]) for g in gi_cpl_clipped]
+        # self.log[1] = [g/len(self.grad_samples[0]) for g in gi_cpl_clipped]
         # print([torch.norm(g, keepdim=False) for g in gi_cpl_clipped])
 
         g_reverse = self.reverse_process(gi_cpl_clipped)
@@ -151,7 +151,7 @@ class CplOptimizer(DPOptimizer):
         # self.last_grad = [p.grad for p in self.params] 
         # self.last_grad = g_noisy # wrong
         self.last_grad = copy.deepcopy([p.grad/len(self.grad_samples[0]) for p in self.params]) 
-        self.log[0] = self.last_grad
+        # self.log[0] = self.last_grad
         # accumulative gradients
         # mean_g = [p.grad/len(p.grad_sample) for p in self.params] 
         # if self.steps == 1:
@@ -226,11 +226,11 @@ class CplDPOptimizer(CplOptimizer):
         g_cpl_clipped = self.clip_g_perp(delta_g)
         self.add_noise_sum(g_cpl_clipped, self.noise_multiplier, self.perp_grad_norm)
         # print([torch.norm(g, keepdim=False) for g in g_cpl_clipped])
-        self.log[1] = [g/len(self.grad_samples[0]) for g in g_cpl_clipped]
+        # self.log[1] = [g/len(self.grad_samples[0]) for g in g_cpl_clipped]
 
         g_reverse = self.reverse_process(g_cpl_clipped)
         # g_reverse = [torch.sum(g, dim=0) for g in gi_reverse]
-        self.log[0] = self.last_grad
+        # self.log[0] = self.last_grad
         for p,gi in zip(self.params, g_reverse):
             if p.summed_grad is not None:
                 p.summed_grad += gi

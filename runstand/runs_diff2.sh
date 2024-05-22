@@ -19,7 +19,7 @@ fi
 if [ ! -f "$logfile" ]; then
  touch "$logfile"
 fi
-
+echo "$logfile"
 source /local/scratch/yliu270/anaconda3/bin/activate flamby
 
 #CIFAR10
@@ -70,15 +70,16 @@ done
 round=20
 momentum=(0.0)
 seed=(0)
-lr=(2)
-g_p_norm=(0.01 0.05 0.1 0.5)
-eps=(8)
+lr=(0.1)
+g_p_norm=(0.02 0.05 0.1 0.5)
+eps=(3)
 iidflag=("--save_dir=result")
 opt=('sgd')
 batch=(256)
 
 
 output=0
+py_req=0
 echo "====DP====">>$logfile
 for b in ${batch[@]}
 do
@@ -99,7 +100,7 @@ do
 
                         # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --seed=0 --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256  --noise_multiplier_g=0.59 --noise_multiplier_p=0.6 --noise_multiplier_a=0.8";
                         # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --seed=0 --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256 --noise_multiplier_g=0.605 --noise_multiplier_p=0.61 --noise_multiplier_a=1.0";
-                        # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --seed=0 --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=128 --noise_multiplier_g=0.527 --noise_multiplier_p=0.531 --noise_multiplier_a=0.8";
+                        py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --seed=0 --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=8 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=128 --noise_multiplier_g=0.527 --noise_multiplier_p=0.531 --noise_multiplier_a=0.8";
 
                         # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --seed=0 --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=1 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256  --noise_multiplier_g=1.4 --noise_multiplier_p=1.47 --noise_multiplier_a=3.5";
                         # py_req="python ${dir_path}/main_diff2_stand.py --DRV2=True --eps=${e} --seed=0 --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=1 --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10  --opt=${o} --num_clients=1 --momentum=${m} --batch_size=256 --noise_multiplier_g=1.5 --noise_multiplier_p=1.57 --noise_multiplier_a=4.0";

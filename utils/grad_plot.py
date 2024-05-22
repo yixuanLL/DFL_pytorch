@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import torch
 import numpy as np
 from opt_einsum.contract import contract
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 
 def alpha_plot(log):
     global_round = len(log)
@@ -207,6 +210,14 @@ def grad_flat(param):
         vec = torch.cat((vec, p.reshape(-1).to(device)))
     return vec
 
+def grad_flat_per_sample(param):
+    device = 'cpu'
+    vec = torch.tensor([]).to(device)
+    ns = len(param[0])
+    for p in param:
+        vec = torch.cat((vec, p.reshape(ns, -1).to(device)), 1)
+    return vec
+
 def grad_var(log): #variance of certain dimension along time step (var of t-1 gradients)
     plt.switch_backend('agg')
     global_round = len(log)
@@ -342,48 +353,51 @@ def grad_dist(log):
     rounds = 0
     for i in range(global_round):
         local_round = len(log[i])
-        for j in range(local_round):
+        for r in range(local_round):
+            j = local_round - r -1
             a = log[i][j]
             grad = (grad_flat(a[0])).numpy()
             grad_p = (grad_flat(a[1])).numpy()
-            # grad_d = (grad_flat(a[2])).numpy()
+            grad_d = (grad_flat(a[2])).numpy()
 
             rounds += 1 
-            if j % 100 == 0:
+            if j % 5 == 0:
                 # print(grad_d)
                 # print(grad)
                 plt.switch_backend('agg')
-                plt.hist(grad, bins=500, color='skyblue', label='grad', alpha=1)
-                plt.hist(grad_p,  bins=500, color='green', label='grad_perp', alpha=0.4)
+                plt.hist(grad, bins=5, label='grad', alpha=1)
+                # plt.hist(grad_p,  bins=500, color='green', label='grad_perp', alpha=0.4)
                 # plt.hist(grad_d,  bins=500, color='red', label='grad_diff', alpha=0.2)
-                plt.ylabel('Amounts')
-                plt.xlabel('Value')
-                plt.xlim(-0.01,0.01)
-                plt.legend(loc='lower right', fontsize=8)
-
-                plt.show()
-                root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/'
-                plt.savefig(root_path+str(rounds-1)+' epochs.png', dpi=600)
-                plt.close()
-            grads.append(np.linalg.norm(grad))
-            grads_p.append(np.linalg.norm(grad_p))
-            ratio.append(np.linalg.norm(grad_p)/np.linalg.norm(grad))
-            # grads_d.append(np.linalg.norm(grad_d))
-
-        plt.switch_backend('agg')
-        r = range(rounds)
-        plt.plot(r, grads, color='skyblue', label='grad', alpha=0.8)
-        plt.plot(r, grads_p,  color='green', label='grad_perp', alpha=0.6)
-        plt.plot(r, ratio,  color='red', label='ratio', alpha=0.6)
-        # plt.plot(r, grads_d,  color='red', label='grad_diff', alpha=0.6)
-        plt.ylabel('Norm')
-        plt.xlabel('Steps')
+        plt.ylabel('Amounts')
+        plt.xlabel('Value')
+        # plt.xlim(-0.01,0.01)
         plt.legend(loc='lower right', fontsize=8)
 
         plt.show()
-        root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/'
-        plt.savefig(root_path+'Norm.png', dpi=600)
+        root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+        plt.savefig(root_path+str(rounds-1)+' epochs.png', dpi=600)
         plt.close()
+        #     grads.append(np.linalg.norm(grad))
+        #     grads_p.append(np.linalg.norm(grad_p))
+        #     ratio.append(np.linalg.norm(grad_p)/np.linalg.norm(grad))
+        #     grads_d.append(np.linalg.norm(grad_d))
+        # grads_d[0] = 0
+        # grads_p[0] = 0
+        # ratio[0] = 0
+        # plt.switch_backend('agg')
+        # r = range(rounds)
+        # plt.plot(r, grads, color='skyblue', label='grad', alpha=0.8)
+        # plt.plot(r, grads_p,  color='green', label='grad_perp', alpha=0.6)
+        # plt.plot(r, ratio,  color='red', label='ratio', alpha=0.6)
+        # plt.plot(r, grads_d,  color='orange', label='grad_diff', alpha=0.6)
+        # plt.ylabel('Norm')
+        # plt.xlabel('Steps')
+        # plt.legend(loc='lower right', fontsize=8)
+
+        # plt.show()
+        # root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+        # plt.savefig(root_path+'Norm_drv3.png', dpi=600)
+        # plt.close()
 
 def decompose_grad(grad_samples, last_grad):
     # last_grad = [torch.mean(g, dim=0) for g in last_grad]
@@ -412,6 +426,7 @@ def recover_grad(g_perp_noisy, alpha_noisy, last_grad):
     return g_noisy
 
 def grad_2D(log):
+
     global_round = len(log)
     gpn = [0]
     bn=[0]
@@ -494,5 +509,323 @@ def grad_2D(log):
         plt.show()
         root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/'
         title= "Norm"
+        plt.savefig(root_path+title, dpi=600)
+        plt.close()
+
+
+def grad_norm_save(log, dataset, model):
+    global_round = len(log)
+    grads = []
+    grads_p = []
+    grads_d = []
+    ratio = []
+    lgrads = []
+    lgrads_p = []
+    lgrads_d = []
+    lratio = []
+    rounds = 0
+    root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+    file_path = root_path+dataset + '_' + model + '.txt'
+    f = open(file_path, 'w') 
+
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            # if dataset == 'SVHN':
+            if True:
+                a = log[i][j]
+                gn = torch.tensor(a[0]).cpu().data.numpy()
+                gpn = torch.tensor(a[1]).cpu().data.numpy()
+                gdn = torch.tensor(a[2]).cpu().data.numpy()
+            else:
+                a = log[i][j]
+                g = a[0]
+                grad = (grad_flat(a[0]))
+                gn = torch.norm(grad, dim=0).cpu().numpy()
+                if i==0 and j==0:
+                    gpn = 0
+                    gdn = 0
+                else:
+                    if i!=0 and j==0:
+                        gl = log[i-1][-1][0]
+                    else:
+                        gl = log[i][j-1][0]
+                    gi_perp, alpha = decompose_grad(g, gl)
+                    gi_diff = [gi-gli for gi, gli in zip(g, gl)]
+                    # gp = clip_g_perp(gi_perp) 
+                    # alpha = clip_alpha(alpha)
+                    # g_noisy = recover_grad(gp, alpha, gl)
+                    # bias = [gn-gi for gn, gi in zip(g_noisy, g)]
+
+                    gpn = torch.norm(grad_flat(gi_perp), dim=0).cpu().numpy()
+                    gdn = torch.norm(grad_flat(gi_diff), dim=0).cpu().numpy()
+            grads.append(str(gn))
+            grads_p.append(str(gpn))
+            grads_d.append(str(gdn))
+            ratio.append(str(gpn/gn))
+            lgrads.append(gn)
+            lgrads_p.append(gpn)
+            lgrads_d.append(gdn)
+            lratio.append(gpn/gn)
+            rounds += 1
+        str_j = str(j)
+        f.write(str_j + ','+'grad_norm,'+','.join(grads) + '\n')
+        f.write(str_j + ','+'gperp_norm,'+','.join(grads_p) + '\n')
+        f.write(str_j + ','+'gdiff_norm,'+','.join(grads_d) + '\n')
+        f.write(str_j + ','+'gpn2gn,'+','.join(ratio) + '\n')
+
+        grads = []
+        grads_p = []
+        grads_d = []
+        ratio = []
+    plt.switch_backend('agg')
+    r = range(rounds)
+    plt.plot(r, lgrads, color='skyblue', label='grad', alpha=0.8)
+    plt.plot(r, lgrads_p,  color='green', label='grad_perp', alpha=0.6)
+    plt.plot(r, lratio,  color='red', label='ratio', alpha=0.6)
+    plt.plot(r, lgrads_d,  color='gold', label='grad_diff', alpha=0.6)
+    plt.ylabel('Norm')
+    plt.xlabel('Steps')
+    plt.legend(loc='lower right', fontsize=8)
+
+    plt.show()
+    root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+    plt.savefig(root_path+'Norm_dp.png', dpi=600)
+    plt.close()
+    f.close()
+
+
+def grad_pca(log, dataset):
+
+    global_round = len(log)
+    rounds = 0
+    pca = PCA()
+    pipe = Pipeline([('scaler', StandardScaler()),
+                 ('pca', pca)])
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            # only print the certain batch of each local round
+            # if j%(local_round/2) != 0:
+            #     continue
+            g, c, p = log[i][j]
+            if c == 0:
+                continue
+            ns = len(g[0])
+            # 按向量 pca
+            # g1 = grad_flat(g).numpy().reshape(ns,-1)
+            # c1 = grad_flat(c).numpy().reshape(ns,-1)
+            # gp1 = grad_flat(p).numpy().reshape(ns,-1)
+            # for m in range(len(g)): #按层
+                # g1=g[m].cpu().numpy().reshape(ns,-1)
+                # c1=c[m].cpu().numpy().reshape(ns,-1)
+                # gp1=p[m].cpu().numpy().reshape(ns,-1)
+            #按层和维度
+            rounds += 1 
+            for m in range(len(g)-1):
+                if True:
+                    gtx = g[m].cpu().numpy().reshape(ns,-1)[:,0]
+                    gty = g[m+1].cpu().numpy().reshape(ns,-1)[:,0]
+                    ctx = c[m].cpu().numpy().reshape(ns,-1)[:,0]
+                    cty = c[m+1].cpu().numpy().reshape(ns,-1)[:,0]            
+                    gptx = p[m].cpu().numpy().reshape(ns,-1)[:,0]
+                    gpty = p[m+1].cpu().numpy().reshape(ns,-1)[:,0]
+                    
+                    plt.switch_backend('agg')
+
+                    r = range(rounds)
+                    plt.scatter(gtx, gty, label='grad', marker='o')
+                    plt.scatter(ctx, cty, label='diff', marker='+')
+                    plt.scatter(gptx, gpty, label='perp', marker='*', c="none", edgecolors='g')
+                # if j%49 == 1:
+                # if True: #按向量pca
+                    # gt = pipe.fit_transform(np.array(g1))
+                    # ct = pipe.fit_transform(np.array(c1))
+                    # gpt = pipe.fit_transform(np.array(gp1))
+
+                    
+                    # plt.switch_backend('agg')
+
+                    # r = range(rounds)
+                    # plt.scatter(gt[:,0], gt[:,1], label='grad', marker='o')
+                    # plt.scatter(ct[:,0], ct[:,1], label='diff', marker='+')
+                    # plt.scatter(gpt[:,0], gpt[:,1], label='perp', marker='*', c="none", edgecolors='g')
+
+                    # plt.ylabel('layer2 dim1')
+                    # plt.xlabel('layer1 dim1')
+                    # plt.xlim(-20,20)
+                    # plt.ylim(-20,20)
+                    plt.legend(loc='lower right', fontsize=8)
+
+                    # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+                    plt.show()
+                    root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+                    title= 'pca_'+dataset+ str(j) + 'layer' + str(m) + '.pdf'
+                    plt.savefig(root_path+title, dpi=600)
+                    plt.close()
+
+def grad_pca(log, dataset):
+
+    global_round = len(log)
+    rounds = 0
+    pca = PCA()
+    pipe = Pipeline([('scaler', StandardScaler()),
+                 ('pca', pca)])
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            # only print the certain batch of each local round
+            # if j%(local_round/2) != 0:
+            #     continue
+            g, c, p = log[i][j]
+            if c == 0:
+                continue
+            ns = len(g[0])
+            # 按向量 pca
+            # g1 = grad_flat(g).numpy().reshape(ns,-1)
+            # c1 = grad_flat(c).numpy().reshape(ns,-1)
+            # gp1 = grad_flat(p).numpy().reshape(ns,-1)
+            # for m in range(len(g)): #按层
+                # g1=g[m].cpu().numpy().reshape(ns,-1)
+                # c1=c[m].cpu().numpy().reshape(ns,-1)
+                # gp1=p[m].cpu().numpy().reshape(ns,-1)
+            #按层和维度
+            rounds += 1 
+            for m in range(len(g)-1):
+                if True:
+                    gtx = g[m].cpu().numpy().reshape(ns,-1)[:,0]
+                    gty = g[m+1].cpu().numpy().reshape(ns,-1)[:,0]
+                    ctx = c[m].cpu().numpy().reshape(ns,-1)[:,0]
+                    cty = c[m+1].cpu().numpy().reshape(ns,-1)[:,0]            
+                    gptx = p[m].cpu().numpy().reshape(ns,-1)[:,0]
+                    gpty = p[m+1].cpu().numpy().reshape(ns,-1)[:,0]
+                    
+                    plt.switch_backend('agg')
+
+                    r = range(rounds)
+                    plt.scatter(gtx, gty, label='grad', marker='o')
+                    plt.scatter(ctx, cty, label='diff', marker='+')
+                    plt.scatter(gptx, gpty, label='perp', marker='*', c="none", edgecolors='g')
+                # if j%49 == 1:
+                # if True: #按向量pca
+                    # gt = pipe.fit_transform(np.array(g1))
+                    # ct = pipe.fit_transform(np.array(c1))
+                    # gpt = pipe.fit_transform(np.array(gp1))
+
+                    
+                    # plt.switch_backend('agg')
+
+                    # r = range(rounds)
+                    # plt.scatter(gt[:,0], gt[:,1], label='grad', marker='o')
+                    # plt.scatter(ct[:,0], ct[:,1], label='diff', marker='+')
+                    # plt.scatter(gpt[:,0], gpt[:,1], label='perp', marker='*', c="none", edgecolors='g')
+
+                    # plt.ylabel('layer2 dim1')
+                    # plt.xlabel('layer1 dim1')
+                    # plt.xlim(-20,20)
+                    # plt.ylim(-20,20)
+                    plt.legend(loc='lower right', fontsize=8)
+
+                    # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+                    plt.show()
+                    root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+                    title= 'pca_'+dataset+ str(j) + 'layer' + str(m) + '.pdf'
+                    plt.savefig(root_path+title, dpi=600)
+                    plt.close()
+def grad_pca_vec(log, dataset):
+
+    global_round = len(log)
+    rounds = 0
+    pca = PCA()
+    pipe = Pipeline([('scaler', StandardScaler()),
+                 ('pca', pca)])
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            # only print the certain batch of each local round
+            # if j%(local_round/2) != 0:
+            #     continue
+            g, c, p = log[i][j]
+            if c == 0:
+                continue
+            ns = len(g[0])
+            # 按向量 pca
+            g1 = grad_flat_per_sample(g).numpy()
+            c1 = grad_flat_per_sample(c).numpy()
+            gp1 = grad_flat_per_sample(p).numpy()
+            #按层和维度
+            rounds += 1 
+
+            if True: #按向量pca
+                gt = pipe.fit_transform(np.array(g1))
+                ct = pipe.fit_transform(np.array(c1))
+                gpt = pipe.fit_transform(np.array(gp1))
+
+                
+                plt.switch_backend('agg')
+
+                r = range(rounds)
+                plt.scatter(gt[:,0], gt[:,1], label='grad', marker='o')
+                plt.scatter(ct[:,0], ct[:,1], label='diff', marker='+')
+                plt.scatter(gpt[:,0], gpt[:,1], label='perp', marker='*', c="none", edgecolors='g')
+
+                plt.ylabel('layer2 dim1')
+                plt.xlabel('layer1 dim1')
+                # plt.xlim(-20,20)
+                # plt.ylim(-20,20)
+                plt.legend(loc='lower right', fontsize=8)
+
+                # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+                plt.show()
+                root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+                title= 'pcavec_'+dataset+ str(j) + '.pdf'
+                plt.savefig(root_path+title, dpi=600)
+                plt.close()
+def grad_norm_hist(log, dataset):
+    # CIFAR10 norm=500 lr=0.005 batch size=256
+    cl = ['orange', 'yellowgreen',  'dodgerblue', 'slategrey','blueviolet', 'darkcyan']
+    a = [1, 0.8, 0.6,0.4]
+    global_round = len(log)
+    rounds = 0
+    # plt.figure(41)
+    # fignum = 410
+    fig, ax = plt.subplots(4,1, sharey=True, sharex=True)
+    plt.switch_backend('agg')
+    steps = 0
+    for i in range(global_round):
+        local_round = len(log[i])
+        for j in range(local_round):
+            gn, c, p = log[i][j]
+            gn = gn.cpu().numpy()
+            # 按向量
+            # g1 = grad_flat_per_sample(g).numpy()
+            # gn = np.linalg.norm(g1, axis=1)
+
+            rounds += 1 
+            # if j%49 == 1:
+            if True:
+
+
+                if j >= 4:
+                    break
+                ax[j].hist(gn,  bins=5,  color='cornflowerblue', label='Steps '+str(steps), alpha=1)
+                steps += 50
+                # legend1 = ax.legend([line1], ["line1"], loc="upper right")
+                # ax.add_artist(legend1)
+                ax[j].legend(loc='upper right', fontsize=8)
+
+
+        plt.xlabel('Norm')
+        plt.ylabel('Frequency')
+        plt.xlim(2,8)
+        # plt.ylim(-20,20)
+        plt.xticks(fontsize=6)
+        plt.yticks(fontsize=6)
+        # plt.legend(loc='upper right', fontsize=8)
+
+        # plt.title('FLamby $\epsilon$=0.5', fontsize=9)
+        plt.show()
+        root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/res_grad/'
+        title= 'grad_hist_'+ dataset+ str(j) + '.pdf'
         plt.savefig(root_path+title, dpi=600)
         plt.close()

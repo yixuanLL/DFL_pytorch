@@ -28,12 +28,12 @@ round=20
 momentum=0.0
 seed=(0)
 lr=(2)
-g_p_norm=(0.8)
-clip_paral=(0.05) # alpha actucally
+g_p_norm=(0.3 0.35 0.4)
+clip_paral=(1.5) # alpha actucally
 
 iidflag=("--save_dir=result")
 opt=('sgd')
-index=(2)
+index=(0)
 batch=(64 256 1024 4096)
 noise_multiplier_g=(0.666 0.84 1.23 2.14)
 noise_multiplier_p=(0.667 0.84 1.24 2.2)
@@ -41,7 +41,7 @@ noise_multiplier_a=(2 3 6 8)
 
 
 output=0
-echo "====DP: first 50 steps use SGD with different norm====">>$logfile
+echo "====DP: first 50 steps use SGD with 0.03 norm====">>$logfile
 for id in ${index[@]}
 do
     for s in ${seed[@]}

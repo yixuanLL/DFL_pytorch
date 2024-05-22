@@ -44,6 +44,8 @@ class DrDPOptimizerV5(DPOptimizer):
         self.noise_multiplier_a = max_grad_norm[2]
         self.alpha_norm =  max_grad_norm[3]
         self.noise_multiplier_g = max_grad_norm[4]
+        self.steps_interval = max_grad_norm[5]
+        self.steps_dr = max_grad_norm[6]
         self.last_grad = []
         self.last_normratio = []
         self.norm = 1
@@ -68,8 +70,8 @@ class DrDPOptimizerV5(DPOptimizer):
         """
 
         self.clip_and_accumulate()
-        
-        if self.steps<50:
+        if self.steps % self.steps_interval < self.steps_dr:
+        # if self.steps<50:
             self.dr_process() 
             if self._check_skip_next_step():
                 self._is_last_step_skipped = True
@@ -78,12 +80,12 @@ class DrDPOptimizerV5(DPOptimizer):
             self.add_noise_sum(self.alpha_sum, self.noise_multiplier_a, self.alpha_norm) 
             self.recover_grad(self.g_perp_sum, self.alpha_sum) 
         else: 
-            # self.dpsgd(0.2)  # for cifar10 256
-            self.dpsgd(0.8) # for cifar10 1024
+            norm_dpsgd = 0.2 #cifar10 256-0.2; 1024-1; 4096-2; 64-0.02
+            self.dpsgd(norm_dpsgd) 
             if self._check_skip_next_step():
                 self._is_last_step_skipped = True
                 return False
-            self.add_noise_dpsgd()
+            self.add_noise_dpsgd(norm_dpsgd)
 
         self.scale_grad()
         # self.log = [[torch.mean(g, dim=0) for g in self.grad_samples], self.last_grad, []]
@@ -202,11 +204,11 @@ class DrDPOptimizerV5(DPOptimizer):
             self.alpha_sum = copy.deepcopy(vec)
         # return vec
 
-    def add_noise_dpsgd(self):
+    def add_noise_dpsgd(self,norm_dpsgd):
         """
         Adds noise to clipped gradients. Stores clipped and noised result in ``p.grad``
         """
-        std = self.noise_multiplier_g * self.max_grad_norm
+        std = self.noise_multiplier_g * norm_dpsgd
         for p in self.params:
             _check_processed_flag(p.summed_grad)
 

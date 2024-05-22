@@ -17,7 +17,7 @@ from utils.grad_plot import grad_flat
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, alg, num_clients, clip_paral):
+    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, alg, num_clients, clip_paral, steps_interval, steps_dr):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -61,6 +61,8 @@ class Client(nn.Module):
         self.opt = opt
         self.num_clients = num_clients
         self.alg = alg
+        self.steps_interval = steps_interval
+        self.steps_dr = steps_dr
 
     def download(self, model, global_last_grad):
         # self.model = model
@@ -131,7 +133,7 @@ class Client(nn.Module):
             clipping = 'dr_dp_flat_test'
             noise = noise_p
         if self.dp and self.DR: # for DRV5
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral, noise_g]
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral, noise_g, self.steps_interval, self.steps_dr]
             clipping = 'dr_dp_flat' 
             noise = noise_p 
         if self.dp and self.DRV2:
@@ -187,18 +189,19 @@ class Client(nn.Module):
         logs = []
         losses = []
         accs =[]
+        gl = None
         # train
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
             with BatchMemoryManager(
                     data_loader=train_loader, 
-                    max_physical_batch_size=1024, 
+                    max_physical_batch_size=32, 
                     optimizer=optimizer
                 ) as memory_safe_data_loader:
                 for i, (x_train, y_train) in enumerate(memory_safe_data_loader):
-                # for i, (x_train, y_train) in enumerate(data_loader):
-            
+            # if True: #original batch size, we use it for observing 
+            #     for i, (x_train, y_train) in enumerate(data_loader):
                     x_train, y_train = x_train.to(self.device), y_train.to(self.device)
 
                     y_pred = model(x_train)
@@ -218,8 +221,25 @@ class Client(nn.Module):
                     train_acc += correct.item()
                     train_loss += loss.item()
                     
-                    logs.append(copy.deepcopy(optimizer.log))
-                    # self.longlogs.append(copy.deepcopy(optimizer.log))
+                    # if optimizer.steps % 50 == 1: # log save per_sample
+                    if True: # log save mean
+                        logs.append(copy.deepcopy(optimizer.log))
+                    # for SVHN
+                    # if len(optimizer.log) > 1:
+
+                    #     if i==0 and epoch==0:
+                    #         gdn = 0
+                    #     else:
+                    #         gd = [gi-gli for gi, gli in zip(optimizer.log[0], gl)]
+                    #         gdn = torch.norm(grad_flat(gd))
+                    #     gg = grad_flat(optimizer.log[0])
+                    #     gn = torch.norm(gg)
+                        
+                    #     gl = copy.deepcopy(optimizer.log[0])
+                    #     logs.append([gn, gdn, 0])
+
+
+
                 # losses.append(copy.deepcopy(train_loss)/self.dataset_size)
                 if self.num_clients == 1:
                     test_acc, test_loss = self.test(copy.deepcopy(model))

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=stand_cpl
-#SBATCH --output=out_cpl_stand
+#SBATCH --output=out_cpl_stand2
 #SBATCH --gres=gpu:1
 #SBATCH --mem=16GB
 # cur_path=`pwd`
@@ -80,8 +80,8 @@ done
 round=20
 seed=(0)
 momentum=(0.0)
-lr=(0.1 0.5 1)
-g_perp_norm=(0.05 0.1 0.2 0.3 0.5 0.8 1)
+lr=(0.1)
+g_perp_norm=(0.01 0.1 0.5 1)
 eps=(3)
 opt=('sgd')
 
@@ -98,7 +98,7 @@ do
             do
                 # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=${e} --local_round=${round} --global_round=${round} --lr=${l} --dataset=${data} --num_clients=1 --momentum=${m}  --batch_size=${b}";
                 # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=3.0 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --num_clients=1 --momentum=${m}  --batch_size=256 --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
-                # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=3.0 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN --num_clients=1 --momentum=${m}  --batch_size=128 --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0";
+                py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=3.0 --local_round=${round} --global_round=${round} --lr=${l} --dataset=SVHN --num_clients=1 --momentum=${m}  --batch_size=128 --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0";
                 # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=3.0 --local_round=${round} --global_round=${round} --lr=${l} --dataset=CIFAR10 --num_clients=1 --momentum=${m}  --batch_size=256 --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
 
                 # py_req="python ${dir_path}/main_stand.py --cpl=T --grad_perp_norm=${gpn} --dp=True --eps=8.0 --local_round=${round} --global_round=${round} --lr=${l} --dataset=MNIST --num_clients=1 --momentum=${m}  --batch_size=256 --noise_multiplier_g=0.59 --noise_multiplier_p=0.6 --noise_multiplier_a=0.8";

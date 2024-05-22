@@ -106,8 +106,11 @@ def main(args):
                         budget_accountant=budget_accountant,
                         device=device,
                         opt=args.opt,
+                        alg=args.alg,
                         num_clients=args.num_clients,
-                        clip_paral=args.clip_paral))
+                        clip_paral=args.clip_paral,
+                        steps_interval=args.steps_interval,
+                        steps_dr=args.steps_dr))
     print('client noise multiplier is %f, %f, %f' % (noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)) 
 
     # set server
@@ -200,7 +203,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='SVHN')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
@@ -226,9 +229,12 @@ if __name__ == '__main__':
     parser.add_argument('--Topk', type=bool, default=False)
     parser.add_argument('--cpl', type=bool, default=False)
     parser.add_argument('--kf', type=bool, default=False)
+    parser.add_argument('--alg', type=str, default='none', help='baseline: autoclip, none')
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
+    parser.add_argument('--steps_dr', type=int, default=50, help='intervals allow dr')
+    parser.add_argument('--steps_interval', type=int, default=40000, help='interval')
     args = parser.parse_args() 
 
     # print arguments
