@@ -191,7 +191,7 @@ def main(args):
         print_accuracy_and_loss(r, test_accuracy, test_loss)
 
         if args.num_clients == 1:
-            accuracy_accountant = bytes2[2]
+            accuracy_accountant = bytes2[2] 
         
         if args.dp:
             privacy_accountant.append(max_accum_budget_accountant)

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
 from matplotlib.colors import LogNorm
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -77,16 +78,18 @@ def SGD_visualization():
     # ct_in = axins.contour(np.linspace(start,end,201),np.linspace(start,end,201),losses,levels=[0.5,1])
     # axins.clabel(ct_in, inline=1, fontsize=10)
     # mark_inset(ax, axins, loc1=1, loc2=2, fc="none", ec='k', lw=1)
-    ax.set_xlabel('Weight', fontsize=16)
-    ax.set_ylabel('Bias', fontsize=16)
+    ax.set_xlabel('参数 w', fontsize=16, fontproperties='SimHei')
+    ax.set_ylabel('参数 b', fontsize=16, fontproperties='SimHei')
     ax.set_xlim(start, end+1)
     ax.set_ylim(start, end)
     ax.set_aspect('equal')  # 确保x和y的比例相同
     # 显示图像
     plt.show()
-    root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/'
+    # root_path = '/local/scratch/yliu270/workspace/DFL_pytorch/pics/'
+    root_path = '/home/liuyixuan/workspace/DFL_pytorch/pics/'
     file_list_path = root_path
-    file_name = 'SGD.pdf'
+    file_name = 'SGD_ch.pdf'
     plt.savefig(file_list_path+file_name, dpi=600)
     plt.close()
 SGD_visualization()
+
