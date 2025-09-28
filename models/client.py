@@ -17,7 +17,7 @@ from utils.grad_plot import grad_flat
 from opacus.utils.batch_memory_manager import BatchMemoryManager
 
 class Client(nn.Module):
-    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, alg, num_clients, clip_paral, steps_interval, steps_dr):
+    def __init__(self, x_train, y_train, x_test, y_test, dataset, dataname, batch_size, FLalg, dp, DR, DRV2, DRtest,Topk, cpl, kfilter, rate_dr, local_round, grad_norm, grad_perp_norm, lr, momentum, budget_accountant, device, opt, alg, num_clients, clip_paral, steps_interval, steps_dr, weight_alpha):
         super(Client, self).__init__()
         self.x_train = x_train
         self.y_train = y_train
@@ -63,6 +63,7 @@ class Client(nn.Module):
         self.alg = alg
         self.steps_interval = steps_interval
         self.steps_dr = steps_dr
+        self.weight_alpha = weight_alpha
 
     def download(self, model, global_last_grad):
         # self.model = model
@@ -132,8 +133,8 @@ class Client(nn.Module):
             grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral]
             clipping = 'dr_dp_flat_test'
             noise = noise_p
-        if self.dp and self.DR: # for DRV5
-            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral, noise_g, self.steps_interval, self.steps_dr]
+        if self.dp and self.DR: # for DRV7
+            grad_norm = [self.grad_norm, self.grad_perp_norm, noise_a, self.clip_paral, noise_g, self.steps_interval, self.steps_dr, self.weight_alpha]
             clipping = 'dr_dp_flat' 
             noise = noise_p 
         if self.dp and self.DRV2:
