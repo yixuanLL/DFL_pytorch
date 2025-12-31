@@ -70,8 +70,8 @@ round=20
 momentum=(0.0)
 seed=(0)
 lr=(2)
-g_p_norm=(0.1 0.2 0.3 0.5 1)
-clip_paral=(0.05 1.5) # alpha actucally
+g_p_norm=(0.2)
+clip_paral=(0.05) # alpha actucally
 index=(0)
 iidflag=("--save_dir=result")
 opt=('sgd')
@@ -88,7 +88,7 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    # py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
+                    py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
                     # py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
                     # py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=SVHN --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=128  --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0";
 
@@ -98,7 +98,7 @@ do
 
                     # py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=1  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=1.4 --noise_multiplier_p=1.47 --noise_multiplier_a=3.5";
                     # py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=1  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=1.5 --noise_multiplier_p=1.57 --noise_multiplier_a=4.0";
-                    py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=1  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=SVHN --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=128  --noise_multiplier_g=1.075 --noise_multiplier_p=1.08 --noise_multiplier_a=3.5";
+                    # py_req="python ${dir_path}/main_stand.py --DRtest=True --seed=${s} --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=1  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=SVHN --clip_paral=${cp} --num_clients=1 --momentum=${m} --batch_size=128  --noise_multiplier_g=1.075 --noise_multiplier_p=1.08 --noise_multiplier_a=3.5";
 
                     # py_req="python ${dir_path}/main_flamby.py --seed=${s} --DRtest=True --dp=True --eps=${e} --grad_perp_norm=${gpn} --local_round=2 --global_round=50 --lr=${l} --batch_size=2 --eps_2=0.02 --dataset=FLamby --model=mclr --clip_p=0.001 ${k}";
                     echo "${py_req}"

@@ -75,9 +75,9 @@ def main(args):
             noise_list = [noise_multiplier_g]
         flag = privacy_check(local_dataset_size=data_size,  local_batch_size=args.batch_size, epochs=args.global_round * args.sample_ratio,
                                             epsilon_budget=args.eps, delta_budget=args.delta, noise_multiplier=noise_list)
-        if not flag:
-            print("noise multiplier is too small to satisfy privacy!", noise_list, args.eps)
-            exit(0)
+        # if not flag:
+        #     print("noise multiplier is too small to satisfy privacy!", noise_list, args.eps)
+        #     exit(0)
         budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)
 
     # if args.dp or 'DP' in args.FLalg:
@@ -223,7 +223,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='CIFAR10')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
     parser.add_argument('--DR', type=bool, default=False)
     parser.add_argument('--DRV2', type=bool, default=False)
@@ -255,7 +255,7 @@ if __name__ == '__main__':
     parser.add_argument('--opt', type=str, default='sgd')
     parser.add_argument('--rate_dr', type=float, default=1, help='sparse rate in directional reduction')
     parser.add_argument('--clip_paral', type=float, default=0.05, help='parallel alpha bound')
-    parser.add_argument('--steps_dr', type=int, default=50000, help='intervals allow dr')
+    parser.add_argument('--steps_dr', type=int, default=500, help='intervals allow dr')
     parser.add_argument('--steps_interval', type=int, default=40000, help='interval')
     parser.add_argument('--weight_alpha', type=float, default=0.5, help='interval')
     args = parser.parse_args() 

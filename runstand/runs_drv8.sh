@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=drv7_stand
-#SBATCH --output=out_drv7_stand
+#SBATCH --job-name=drv8_stand
+#SBATCH --output=out_drv8_stand
 #SBATCH --gres=gpu:1
 #SBATCH --mem=24GB
 data="SVHN"
@@ -10,7 +10,7 @@ echo "${dir_path}"
 cur_date="`date +%Y%m%d`" 
 
 logfile_path=${dir_path}/logs/
-logfile=${dir_path}/logs/standalone/log_drv7_${data}_$cur_date
+logfile=${dir_path}/logs/standalone/log_drv8_${data}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
@@ -28,19 +28,19 @@ round=20
 momentum=0.0
 # seed=(0)
 lr=(2)
-g_p_norm=(0)
-clip_paral=(0) # alpha actucally
+g_p_norm=(0.2)
+clip_paral=(0.05) # alpha actucally
 index=(0)
 eps=(3)
 eps_2=(0)
 iidflag=("--save_dir=result")
 opt=('sgd')
 batch=(256)
-weight_alpha=(0.1 0.5 1 2)
-# weight_alpha=(0.1)
+# weight_alpha=(0.001 0.01 0.03)
+weight_alpha=(0.1)
 
 output=0
-echo "====DP: no early stop, V7, per user weight====">>$logfile
+echo "====DP: no early stop, V8, calculate perp and paral seperately====">>$logfile
 for b in ${batch[@]}
 do
     for w in ${weight_alpha[@]}
@@ -51,8 +51,8 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    # py_req="python ${dir_path}/main_stand.py --seed=0 --DR=True --grad_norm=0.2 --grad_perp_norm=1 --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=1 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=10 --noise_multiplier_a=10.0 --weight_alpha=${w}";
-                    py_req="python ${dir_path}/main_stand.py --seed=0 --DR=True --grad_norm=0.2 --grad_perp_norm=1 --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=1 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0 --weight_alpha=${w}";
+                    py_req="python ${dir_path}/main_stand.py --seed=0 --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=100 --noise_multiplier_p=0.803 --noise_multiplier_a=0.803 --weight_alpha=${w}";
+                    # py_req="python ${dir_path}/main_stand.py --seed=0 --DR=True --grad_norm=0.3 --grad_perp_norm=1 --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=1 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0 --weight_alpha=${w}";
                     # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=SVHN --clip_paral=${cp} --num_clients=1 --batch_size=128 --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0";
 
                     # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=8  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.59 --noise_multiplier_p=0.6 --noise_multiplier_a=0.8";

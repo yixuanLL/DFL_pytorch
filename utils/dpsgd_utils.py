@@ -312,8 +312,8 @@ def compute_eps(orders, rdp, delta):
     return max(0, eps_vec[idx_opt]), orders_vec[idx_opt]
 
 if __name__ == '__main__':
-    batch= 4096
-    datasets = 50000 #73000 SVHN #50000 cifar10 #60000 MNIST
+    batch= 256
+    datasets = 60000 #73000 SVHN #50000 cifar10 #60000 MNIST
     q=batch/datasets
     epochs=20
     steps=int(epochs*datasets/batch)
@@ -325,6 +325,9 @@ if __name__ == '__main__':
     # for dpsgd
     # noise_multiplier1=0.803 #eps=8 0.59 #eps=3 0.803 #eps=1 1.4
     # noise_multiplier2=0.0 #eps=8 #eps=3 0.0
+    # for dpdr_v8
+    noise_multiplier1=0.803 #eps=8 0.59 #eps=3 0.803 #eps=1 1.4
+    noise_multiplier2=0.803 #eps=8 #eps=3 0.0
 
 
     # for dpdr CIFAR10 batchsize=256
@@ -338,8 +341,8 @@ if __name__ == '__main__':
     # noise_multiplier1=2.14 # b=64 0.666; b=256 0.84; b=1024 1.23; b=4096 2.14
     # noise_multiplier2=0.0 
     # for dpdr eps=3
-    noise_multiplier1=2.2 # b=64 0.667; b=256 0.84; b=1024 1.24; b=4096 2.2
-    noise_multiplier2=8.0 # b=64 2.0; b=256 3; b=1024 6; b=4096 8
+    # noise_multiplier1=2.2 # b=64 0.667; b=256 0.84; b=1024 1.24; b=4096 2.2
+    # noise_multiplier2=8.0 # b=64 2.0; b=256 3; b=1024 6; b=4096 8
 
     #SVHN
     #for sgd
