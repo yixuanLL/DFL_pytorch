@@ -22,7 +22,7 @@ class Client(nn.Module):
         self.x_train = x_train
         self.y_train = y_train
         self.x_test = x_test
-        self.y_test = y_test
+        self.y_test = y_test 
         self.dataset = dataset
         self.dataname = dataname
 
@@ -217,12 +217,13 @@ class Client(nn.Module):
                     
                     # else:
                     #     optimizer.virtual_step()                    
-                    optimizer.steps += 1
+                    if hasattr(optimizer, "steps"):
+                        optimizer.steps += 1
                     train_acc += correct.item()
                     train_loss += loss.item()
                     
                     # if optimizer.steps % 50 == 1: # log save per_sample
-                    if True: # log save mean
+                    if hasattr(optimizer, "log"): # log save mean
                         logs.append(copy.deepcopy(optimizer.log))
                     # for SVHN
                     # if len(optimizer.log) > 1:

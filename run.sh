@@ -7,7 +7,7 @@
 source /local/scratch/yliu270/anaconda3/bin/activate flamby
 start_time=$(date +%s)
 
-py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand.py --seed=0 --grad_norm=0.15 --dp=True --eps=3 --local_round=20 --global_round=20 --lr=2 --dataset=SVHN  --opt=sgd --num_clients=1 --batch_size=128  --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0"
+py_req="python main_stand.py --seed=0 --grad_perp_norm=0.2 --clip_paral=0.05 --dp=True --eps=3 --local_round=20 --global_round=20 --lr=2 --dataset=MNIST  --opt=sgd --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0"
 
 # py_req="python /local/scratch/yliu270/workspace/DFL_pytorch/main_stand_save.py"
 
@@ -18,4 +18,4 @@ output=`${py_req}`;
 echo "${output}"
 end_time=$(date +%s)
 cost_time=$[ $end_time-$start_time ]
-echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s"
+echo "[time] build py time is $(($cost_time/60))min $(($cost_time%60))s" 

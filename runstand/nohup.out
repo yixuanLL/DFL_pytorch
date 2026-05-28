@@ -1,0 +1,61 @@
+/Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch
+touch: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 21: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 23: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 39: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+python /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/main_stand.py --seed=0 --DR=True --grad_norm=5 --grad_perp_norm=0.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=MNIST --clip_paral=0.05 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0
+runs_drv5.sh: line 66: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+Traceback (most recent call last):
+  File "/Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/main_stand.py", line 7, in <module>
+    import torch
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/site-packages/torch/__init__.py", line 22, in <module>
+    import textwrap
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/textwrap.py", line 17, in <module>
+    class TextWrapper:
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/textwrap.py", line 81, in TextWrapper
+    wordsep_re = re.compile(r'''
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/re.py", line 252, in compile
+    return _compile(pattern, flags)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/re.py", line 304, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 792, in compile
+    code = _code(p, flags)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 631, in _code
+    _compile(code, p.data, flags)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 184, in _compile
+    _compile(code, p, _combine_flags(flags, add_flags, del_flags))
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 225, in _compile
+    _compile(code, av, flags)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 164, in _compile
+    _compile(code, av[2], flags)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 136, in _compile
+    charset, hascased = _optimize_charset(av, iscased, tolower, fixes)
+  File "/Users/liu/miniconda3/envs/venv/lib/python3.9/sre_compile.py", line 371, in _optimize_charset
+    runs.append((p, q))
+KeyboardInterrupt
+/Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch
+touch: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 21: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 23: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 39: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+python /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/main_stand.py --seed=0 --DR=True --grad_norm=5 --grad_perp_norm=0.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=MNIST --clip_paral=0.05 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0
+runs_drv5.sh: line 66: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 76: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 79: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+[time] build py time is 15min 40s
+runs_drv5.sh: line 81: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+runs_drv5.sh: line 90: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+[finished]!
+runs_drv5.sh: line 92: /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/logs/standalone/log_drv5_MNIST_20251114: No such file or directory
+/Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch
+python /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/main_stand.py --seed=0 --DR=True --grad_norm=5 --grad_perp_norm=0.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=MNIST --clip_paral=0.05 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0
+[time] build py time is 20min 24s
+[finished]!
+/Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch
+python /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/main_stand.py --seed=0 --DR=True --grad_norm=5 --grad_perp_norm=0.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=MNIST --clip_paral=0.05 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0
+[time] build py time is 12min 48s
+[finished]!
+/Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch
+python /Users/liu/Desktop/Research/2024_DPDR/2025restart/code/DFL_pytorch/main_stand.py --seed=0 --DR=True --grad_norm=5 --grad_perp_norm=0.2 --dp=True --eps=3  --local_round=20 --global_round=20 --lr=2  --dataset=MNIST --clip_paral=0.05 --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0
+[time] build py time is 14min 15s
+[finished]!

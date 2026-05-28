@@ -14,7 +14,7 @@ from utils.dataloader import loader
 from models.client import Client
 print('__client__')
 from models.server import Server
-from utils.dpsgd_utils import compute_noise_multiplier, privacy_check
+from utils.dpsgd_utils import compute_noise_multiplier, privacy_check, privacy_check_gdp_dpdr, privacy_check_gdp_dpsgd
 from utils.budgets_accountant import BudgetsAccountant
 from utils.main_utils import save_progress, print_accuracy_and_loss, setup_seed
 import os
@@ -69,12 +69,28 @@ def main(args):
 
     if args.dp or 'DP' in args.FLalg:
         budget_accountant = BudgetsAccountant(args.eps, args.delta, noise_multiplier_g, noise_multiplier_p, noise_multiplier_a)
-        if args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
+        if args.DR and args.dp:
+            flag = privacy_check_gdp_dpdr(
+                local_dataset_size=data_size,
+                local_batch_size=args.batch_size,
+                epochs=args.global_round * args.sample_ratio,
+                epsilon_budget=args.eps,
+                delta_budget=args.delta,
+                sigma_perp=noise_multiplier_p,
+                sigma_alpha=noise_multiplier_a,
+                sigma_g=noise_multiplier_g,
+                steps_dr=args.steps_dr,
+                steps_interval=args.steps_interval,
+            )
+            noise_list = [noise_multiplier_p, noise_multiplier_a, noise_multiplier_g]
+        elif args.DR or args.DRtest or args.DRV2 or 'DP' in args.FLalg:
             noise_list = [noise_multiplier_p, noise_multiplier_a]
+            flag = privacy_check(local_dataset_size=data_size,  local_batch_size=args.batch_size, epochs=args.global_round * args.sample_ratio,
+                                                epsilon_budget=args.eps, delta_budget=args.delta, noise_multiplier=noise_list)
         else:
             noise_list = [noise_multiplier_g]
-        flag = privacy_check(local_dataset_size=data_size,  local_batch_size=args.batch_size, epochs=args.global_round * args.sample_ratio,
-                                            epsilon_budget=args.eps, delta_budget=args.delta, noise_multiplier=noise_list)
+            flag = privacy_check_gdp_dpsgd(local_dataset_size=data_size,  local_batch_size=args.batch_size, epochs=args.global_round * args.sample_ratio,
+                                                epsilon_budget=args.eps, delta_budget=args.delta, sigma_g=noise_multiplier_g)
         if not flag:
             print("noise multiplier is too small to satisfy privacy!", noise_list, args.eps)
             exit(0)
@@ -197,14 +213,14 @@ def main(args):
         
         if args.dp:
             privacy_accountant.append(max_accum_budget_accountant)
-            if args.DR:
-                accum_nbytes_list1.append(accum_nbytes1)
-                accum_nbytes_list2.append(accum_nbytes2)
-                save_address = save_progress(args, accuracy_accountant, privacy_accountant, accum_nbytes_list1, accum_nbytes_list2)
-            else:
-               save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
-        else:
-            save_address = save_progress(args, accuracy_accountant)
+        #     if args.DR:
+        #         accum_nbytes_list1.append(accum_nbytes1)
+        #         accum_nbytes_list2.append(accum_nbytes2)
+        #         save_address = save_progress(args, accuracy_accountant, privacy_accountant, accum_nbytes_list1, accum_nbytes_list2)
+        #     else:
+        #        save_address = save_progress(args, accuracy_accountant, privacy_accountant) 
+        # else:
+        #     save_address = save_progress(args, accuracy_accountant)
         
         # if r > 3:
         #     break
@@ -222,9 +238,9 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--save_dir', type=str, default='result')
-    parser.add_argument('--dataset', type=str, default='CIFAR10')
+    parser.add_argument('--dataset', type=str, default='MNIST')
     parser.add_argument('--FLalg', type=str, default='FedAvg', help='Algorithm of FL')
-    parser.add_argument('--DR', type=bool, default=False)
+    parser.add_argument('--DR', type=bool, default=True)
     parser.add_argument('--DRV2', type=bool, default=False)
     parser.add_argument('--DRtest', type=bool, default=False)
     parser.add_argument('--global_round', type=int, default=2)
@@ -232,14 +248,14 @@ if __name__ == '__main__':
     parser.add_argument('--noniid', type=bool, default=False, help='if True, use noniid data')
     parser.add_argument('--num_clients', type=int, default=1) 
     parser.add_argument('--batch_size', type=int, default=256)
-    parser.add_argument('--dp', type=bool, default=False, help='if True, use differential privacy')
+    parser.add_argument('--dp', type=bool, default=True, help='if True, use differential privacy')
     parser.add_argument('--eps', type=float, default=3.0)
     # parser.add_argument('--eps_2', type=float, default=0.02)
     parser.add_argument('--noise_multiplier_g', type=float, default=0.803)
     parser.add_argument('--noise_multiplier_p', type=float, default=0.81)
     parser.add_argument('--noise_multiplier_a', type=float, default=2.0)
     parser.add_argument('--delta', type=float, default=1e-5, help='differential privacy parameter')
-    parser.add_argument('--grad_norm', type=float, default=2)
+    parser.add_argument('--grad_norm', type=float, default=5)
     parser.add_argument('--grad_perp_norm', type=float, default=0.2)
     parser.add_argument('--sample_ratio', type=float, default=1)
     parser.add_argument('--seed', type=int, default=0)

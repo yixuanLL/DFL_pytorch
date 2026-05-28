@@ -10,11 +10,272 @@ from __future__ import print_function
 import math
 import re
 import numpy as np
-import torch
-from scipy import special
+try:
+    import torch
+except ImportError:
+    torch = None
+try:
+    from scipy import special
+except ImportError:
+    class _SpecialFallback:
+        @staticmethod
+        def binom(n, k):
+            if k < 0 or k > n:
+                return 0.0
+            return math.exp(
+                math.lgamma(n + 1.0)
+                - math.lgamma(k + 1.0)
+                - math.lgamma(n - k + 1.0)
+            )
+
+        @staticmethod
+        def ndtr(x):
+            return 0.5 * math.erfc(-x / math.sqrt(2.0))
+
+        @staticmethod
+        def log_ndtr(x):
+            if x < -10.0:
+                return -0.5 * x * x - math.log(-x) - 0.5 * math.log(2.0 * math.pi)
+            p = _SpecialFallback.ndtr(x)
+            return -np.inf if p == 0.0 else math.log(p)
+
+    special = _SpecialFallback()
 # from opacus.accountants.utils import get_noise_multiplier
 # from opacus import PrivacyEngine
 np.random.seed(10)
+
+def _count_dpdr_steps(total_steps, steps_dr=None, steps_interval=None):
+    """Count GDR steps using DrDPOptimizerV5's actual step schedule."""
+    if total_steps <= 0:
+        return 0
+    if steps_dr is None:
+        return total_steps
+    if steps_dr <= 0:
+        return 0
+    if steps_interval is None or steps_interval <= 0:
+        return min(steps_dr, total_steps)
+    if steps_dr >= steps_interval:
+        return total_steps
+
+    full_cycles, remainder = divmod(total_steps, steps_interval)
+    # Optimizer steps are counted from 1, and GDR is used when
+    # step % steps_interval < steps_dr. This includes the cycle boundary
+    # step where modulo is 0.
+    gdr_per_full_cycle = steps_dr
+    gdr_steps = full_cycles * gdr_per_full_cycle
+    for step_mod in range(1, remainder + 1):
+        if step_mod % steps_interval < steps_dr:
+            gdr_steps += 1
+    return min(gdr_steps, total_steps)
+
+
+def _gdp_delta_at_zero(mu):
+    if mu <= 0:
+        return 0.0
+    return 2.0 * special.ndtr(-mu / 2.0)
+
+
+def gdp_delta(epsilon, mu):
+    """Convert Gaussian DP mu to delta at a given epsilon.
+
+    delta(eps; mu) = Phi(-eps/mu + mu/2)
+                     - exp(eps) Phi(-eps/mu - mu/2)
+    """
+    if epsilon < 0:
+        raise ValueError("epsilon must be non-negative.")
+    if mu < 0:
+        raise ValueError("mu must be non-negative.")
+    if mu == 0:
+        return 0.0
+    if math.isinf(mu):
+        return 1.0
+
+    log_term1 = special.log_ndtr(-epsilon / mu + mu / 2.0)
+    log_term2 = epsilon + special.log_ndtr(-epsilon / mu - mu / 2.0)
+    if log_term2 >= log_term1:
+        return 0.0
+    return float(math.exp(_log_sub(log_term1, log_term2)))
+
+
+def gdp_epsilon_from_mu(mu, delta):
+    """Return the smallest epsilon whose GDP delta is at most delta."""
+    if delta <= 0:
+        raise ValueError("delta must be positive.")
+    if mu < 0:
+        raise ValueError("mu must be non-negative.")
+    if mu == 0:
+        return 0.0
+    if math.isinf(mu):
+        return np.inf
+    if delta >= _gdp_delta_at_zero(mu):
+        return 0.0
+
+    low, high = 0.0, 1.0
+    while gdp_delta(high, mu) > delta:
+        high *= 2.0
+        if high > 1e12:
+            return np.inf
+
+    for _ in range(100):
+        mid = (low + high) / 2.0
+        if gdp_delta(mid, mu) > delta:
+            low = mid
+        else:
+            high = mid
+    return high
+
+
+def gdp_mu_from_epsilon(epsilon, delta):
+    """Invert GDP accounting: find the largest mu satisfying (epsilon, delta)."""
+    if epsilon < 0:
+        raise ValueError("epsilon must be non-negative.")
+    if delta <= 0:
+        raise ValueError("delta must be positive.")
+    if epsilon == 0:
+        return 0.0
+
+    low, high = 0.0, 1.0
+    while gdp_delta(epsilon, high) <= delta:
+        low = high
+        high *= 2.0
+        if high > 1e6:
+            return np.inf
+
+    for _ in range(100):
+        mid = (low + high) / 2.0
+        if gdp_delta(epsilon, mid) <= delta:
+            low = mid
+        else:
+            high = mid
+    return low
+
+
+def _poisson_gdp_term(mu0):
+    if mu0 == 0:
+        return 0.0
+    if math.isinf(mu0):
+        return np.inf
+    try:
+        return math.expm1(mu0 ** 2)
+    except OverflowError:
+        return np.inf
+
+
+def compute_dpdr_gdp_mu(local_dataset_size, local_batch_size, epochs,
+                        sigma_perp, sigma_alpha, sigma_g,
+                        steps_dr=None, steps_interval=None,
+                        return_details=False):
+    """Compute Poisson-GDP mu for DPDR with joint Gaussian GDR accounting.
+
+    DPDR's GDR stage releases the perpendicular component and alpha jointly,
+    so the per-step Gaussian-DP parameter is
+    sqrt(sigma_perp^-2 + sigma_alpha^-2). The gradient dimension d and
+    projection dimension m do not enter this privacy mu; dimensions only affect
+    utility/convergence through variance.
+    """
+    if local_dataset_size <= 0 or local_batch_size <= 0:
+        raise ValueError("dataset size and batch size must be positive.")
+
+    total_steps = int(local_dataset_size / local_batch_size * epochs)
+    q = local_batch_size / local_dataset_size
+    gdr_steps = _count_dpdr_steps(total_steps, steps_dr, steps_interval)
+    sgd_steps = total_steps - gdr_steps
+
+    if gdr_steps > 0 and (sigma_perp <= 0 or sigma_alpha <= 0):
+        mu_gdr_0 = np.inf
+    elif gdr_steps > 0:
+        mu_gdr_0 = math.sqrt(sigma_perp ** -2 + sigma_alpha ** -2)
+    else:
+        mu_gdr_0 = 0.0
+
+    if sgd_steps > 0 and sigma_g <= 0:
+        mu_sgd_0 = np.inf
+    elif sgd_steps > 0:
+        mu_sgd_0 = 1.0 / sigma_g
+    else:
+        mu_sgd_0 = 0.0
+
+    total_mu_sq = q ** 2 * (
+        gdr_steps * _poisson_gdp_term(mu_gdr_0)
+        + sgd_steps * _poisson_gdp_term(mu_sgd_0)
+    )
+    mu_total = np.inf if math.isinf(total_mu_sq) else math.sqrt(total_mu_sq)
+
+    if not return_details:
+        return mu_total
+    return {
+        "mu": mu_total,
+        "q": q,
+        "total_steps": total_steps,
+        "gdr_steps": gdr_steps,
+        "sgd_steps": sgd_steps,
+        "mu_gdr_0": mu_gdr_0,
+        "mu_sgd_0": mu_sgd_0,
+    }
+
+
+def privacy_check_gdp_dpdr(local_dataset_size, local_batch_size, epochs,
+                           epsilon_budget, delta_budget,
+                           sigma_perp, sigma_alpha, sigma_g,
+                           steps_dr=None, steps_interval=None):
+    details = compute_dpdr_gdp_mu(
+        local_dataset_size=local_dataset_size,
+        local_batch_size=local_batch_size,
+        epochs=epochs,
+        sigma_perp=sigma_perp,
+        sigma_alpha=sigma_alpha,
+        sigma_g=sigma_g,
+        steps_dr=steps_dr,
+        steps_interval=steps_interval,
+        return_details=True,
+    )
+    eps_real = gdp_epsilon_from_mu(details["mu"], delta_budget)
+    print(
+        "GDP privacy epsilon: %.6f (mu=%.6f, q=%.6f, total_steps=%d, "
+        "gdr_steps=%d, sgd_steps=%d)"
+        % (
+            eps_real,
+            details["mu"],
+            details["q"],
+            details["total_steps"],
+            details["gdr_steps"],
+            details["sgd_steps"],
+        )
+    )
+    return eps_real <= epsilon_budget
+
+
+def compute_dpsgd_gdp_mu(local_dataset_size, local_batch_size, epochs, sigma_g):
+    if local_dataset_size <= 0 or local_batch_size <= 0:
+        raise ValueError("dataset size and batch size must be positive.")
+    total_steps = int(local_dataset_size / local_batch_size * epochs)
+    if total_steps <= 0:
+        return 0.0
+    if sigma_g <= 0:
+        return np.inf
+    q = local_batch_size / local_dataset_size
+    mu0 = 1.0 / sigma_g
+    total_mu_sq = q ** 2 * total_steps * _poisson_gdp_term(mu0)
+    return np.inf if math.isinf(total_mu_sq) else math.sqrt(total_mu_sq)
+
+
+def privacy_check_gdp_dpsgd(local_dataset_size, local_batch_size, epochs,
+                            epsilon_budget, delta_budget, sigma_g):
+    total_steps = int(local_dataset_size / local_batch_size * epochs)
+    q = local_batch_size / local_dataset_size
+    mu = compute_dpsgd_gdp_mu(
+        local_dataset_size=local_dataset_size,
+        local_batch_size=local_batch_size,
+        epochs=epochs,
+        sigma_g=sigma_g,
+    )
+    eps_real = gdp_epsilon_from_mu(mu, delta_budget)
+    print(
+        "DPSGD GDP privacy epsilon: %.6f (mu=%.6f, q=%.6f, total_steps=%d)"
+        % (eps_real, mu, q, total_steps)
+    )
+    return eps_real <= epsilon_budget
+
 
 def privacy_check(local_dataset_size, local_batch_size, epochs, epsilon_budget, delta_budget, noise_multiplier):
     # from opacus.accountants.analysis import rdp
@@ -256,6 +517,8 @@ def compute_noise_multiplier(local_dataset_size, local_batch_size, T, epsilon, d
     return nm
 
 def exp_topk(idx_topk, topk_num, epsilon):
+    if torch is None:
+        raise ImportError("exp_topk requires torch to be installed.")
     # 计算R中每个回复的分数
     d = len(idx_topk)
     sensitivity = d-1

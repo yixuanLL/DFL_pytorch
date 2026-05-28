@@ -1,9 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=drv5_stand
-#SBATCH --output=out_drv5_stand
-#SBATCH --gres=gpu:1
-#SBATCH --mem=24GB
-data="SVHN"
+
+data="MNIST"
 
 dir_path=$(dirname $(pwd))
 echo "${dir_path}"
@@ -14,7 +11,8 @@ logfile=${dir_path}/logs/standalone/log_drv5_${data}_$cur_date
 if [ ! -x $logfile_path ]; then
  mkdir "$logfile_path"
 fi
-source /local/scratch/yliu270/anaconda3/bin/activate flamby
+# source /local/scratch/yliu270/anaconda3/bin/activate flamby
+source /Users/liu/miniconda3/bin/activate venv
 if [ ! -f "$logfile" ]; then
  touch "$logfile"
 fi
@@ -28,8 +26,8 @@ round=20
 momentum=0.0
 seed=(0)
 lr=(2)
-g_p_norm=(0.5 0.8)
-clip_paral=(0.05 0.1 0.25 0.5 0.75 1 1.5 2 2.5 3) # alpha actucally
+g_p_norm=(0.2)
+clip_paral=(0.05) # alpha actucally
 index=(0)
 eps=(2.98)
 eps_2=(0.02)
@@ -38,7 +36,7 @@ opt=('sgd')
 batch=(256)
 
 output=0
-echo "====DP: first 50 steps use SGD with different norm====">>$logfile
+echo "====DP: all the steps use DPDR====">>$logfile
 for b in ${batch[@]}
 do
     for s in ${seed[@]}
@@ -49,8 +47,8 @@ do
             do
                 for gpn in ${g_p_norm[@]}
                 do
-                    # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
-                    py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
+                    py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.803 --noise_multiplier_p=0.81 --noise_multiplier_a=2.0";
+                    # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=CIFAR10 --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.835 --noise_multiplier_p=0.84 --noise_multiplier_a=3.0";
                     # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=3  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=SVHN --clip_paral=${cp} --num_clients=1 --batch_size=128 --noise_multiplier_g=0.695 --noise_multiplier_p=0.696 --noise_multiplier_a=2.0";
 
                     # py_req="python ${dir_path}/main_stand.py --seed=${s} --DR=True --grad_norm=5 --grad_perp_norm=${gpn} --dp=True --eps=8  --local_round=${round} --global_round=${round} --lr=${l}  --dataset=MNIST --clip_paral=${cp} --num_clients=1 --batch_size=256  --noise_multiplier_g=0.59 --noise_multiplier_p=0.6 --noise_multiplier_a=0.8";
