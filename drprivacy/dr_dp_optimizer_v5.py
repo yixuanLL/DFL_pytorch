@@ -135,7 +135,7 @@ class DrDPOptimizerV5(DPOptimizer):
         if self.last_grad_norm is not None:
         # if False:
             # print('noisy grad norm, last_grad_clean_norm:', self.last_grad_norm,self.last_grad_clean_norm)
-            paral_alpha = [a*gn/gcn for a, gn, gcn in zip(paral_alpha, self.last_grad_norm, self.last_grad_clean_norm)]        
+            paral_alpha = [a*gn/(gcn + 1e-12) for a, gn, gcn in zip(paral_alpha, self.last_grad_norm, self.last_grad_clean_norm)]
         return gi_perp, paral_alpha
 
 

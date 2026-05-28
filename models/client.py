@@ -88,11 +88,12 @@ class Client(nn.Module):
         model = self.model.train()
         # parameters = model.parameters()
         # default optimizer: SGD
-        optimizer = torch.optim.SGD(model.nn_layer.parameters(), lr=self.lr, momentum=self.momentum)
+        trainable_params = [p for p in model.nn_layer.parameters() if p.requires_grad]
+        optimizer = torch.optim.SGD(trainable_params, lr=self.lr, momentum=self.momentum)
         if self.opt == 'rmsprop':
-            optimizer = torch.optim.RMSprop(model.nn_layer.parameters(), lr=self.lr)
+            optimizer = torch.optim.RMSprop(trainable_params, lr=self.lr)
         if self.opt == 'adam':
-            optimizer = torch.optim.Adam(model.nn_layer.parameters(), lr=self.lr)
+            optimizer = torch.optim.Adam(trainable_params, lr=self.lr)
 
         if self.dataname == 'CAHouse':
             criterion = nn.MSELoss(reduction='sum')
@@ -104,6 +105,7 @@ class Client(nn.Module):
 
         data_batch = TensorDataset(x_batch, y_batch)
         data_loader = DataLoader(data_batch, batch_size=self.batch_size, shuffle=True)
+        train_loader = data_loader
         seed = 0
         # torch.manual_seed(seed)
         noise_g = 0
@@ -194,12 +196,44 @@ class Client(nn.Module):
         for epoch in range(self.local_round):
             train_acc = 0
             train_loss = 0
-            with BatchMemoryManager(
-                    data_loader=train_loader, 
-                    max_physical_batch_size=32, 
+            if self.dp or self.DR or self.DRtest or self.DRV2:
+                batch_iter = BatchMemoryManager(
+                    data_loader=train_loader,
+                    max_physical_batch_size=32,
                     optimizer=optimizer
-                ) as memory_safe_data_loader:
-                for i, (x_train, y_train) in enumerate(memory_safe_data_loader):
+                )
+            else:
+                batch_iter = train_loader
+
+            if self.dp or self.DR or self.DRtest or self.DRV2:
+                context_loader = batch_iter
+            else:
+                context_loader = None
+
+            if context_loader is not None:
+                with context_loader as memory_safe_data_loader:
+                    for i, (x_train, y_train) in enumerate(memory_safe_data_loader):
+                        x_train, y_train = x_train.to(self.device), y_train.to(self.device)
+
+                        y_pred = model(x_train)
+                        loss = criterion(y_pred, y_train)
+
+                        _, test_pred = torch.max(y_pred, 1)
+                        correct = (test_pred == y_train).sum()
+
+                        optimizer.zero_grad()
+                        loss.backward()
+                        optimizer.step()
+
+                        if hasattr(optimizer, "steps"):
+                            optimizer.steps += 1
+                        train_acc += correct.item()
+                        train_loss += loss.item()
+
+                        if hasattr(optimizer, "log"):
+                            logs.append(copy.deepcopy(optimizer.log))
+            else:
+                for i, (x_train, y_train) in enumerate(batch_iter):
             # if True: #original batch size, we use it for observing 
             #     for i, (x_train, y_train) in enumerate(data_loader):
                     x_train, y_train = x_train.to(self.device), y_train.to(self.device)

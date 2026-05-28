@@ -14,6 +14,48 @@ import numpy as np
 # from torchtext.vocab import GloVe
 import string
 
+
+def _random_split_indices(num_examples, private_size, seed):
+    generator = torch.Generator()
+    generator.manual_seed(seed)
+    perm = torch.randperm(num_examples, generator=generator)
+    private_indices = perm[-private_size:]
+    pretrain_indices = perm[:-private_size]
+    return pretrain_indices, private_indices
+
+
+def _print_label_counts(name, split_name, labels):
+    counts = torch.bincount(labels.cpu(), minlength=int(labels.max().item()) + 1)
+    print("%s %s label counts: %s" % (name, split_name, counts.tolist()))
+
+
+def loader_cifar10_lora_split(split, private_size=10000, split_seed=0):
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    train_dataloader = datasets.CIFAR10(root='~/data', train=True, download=False, transform=transform)
+    train_data = torch.utils.data.DataLoader(train_dataloader, batch_size=50000, shuffle=False, num_workers=0)
+    x_train, y_train = next(iter(train_data))
+
+    pretrain_indices, private_indices = _random_split_indices(len(y_train), private_size, split_seed)
+    if split == 'pretrain':
+        indices_train = pretrain_indices
+    elif split == 'private':
+        indices_train = private_indices
+    else:
+        raise ValueError("split must be 'pretrain' or 'private'")
+
+    x_train = x_train[indices_train]
+    y_train = y_train[indices_train]
+    _print_label_counts('CIFAR10', split, y_train)
+
+    test_dataloader = datasets.CIFAR10(root='~/data', train=False, download=False, transform=transform)
+    test_data = torch.utils.data.DataLoader(test_dataloader, batch_size=10000, shuffle=False, num_workers=0)
+    x_test, y_test = next(iter(test_data))
+
+    print('Using CIFAR10 %s split for LoRA experiment!\n' % split)
+    return x_train, y_train, x_test, y_test
+
 # def tokenize(input):
 #     """
 #         Naive tokenizer, that lower-cases the input
